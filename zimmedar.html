@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zimmedar Panel - Telethon 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -13,32 +13,35 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
         .hidden { display: none !important; }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body class="p-4 sm:p-6 min-h-screen">
+<body class="p-3 sm:p-6 min-h-screen">
 
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-3xl mx-auto">
         
         <!-- ========================================== -->
         <!-- 1. LOGIN SECTION -->
         <!-- ========================================== -->
-        <div id="loginSection" class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200 mt-10 max-w-md mx-auto">
+        <div id="loginSection" class="bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-100 mt-10 max-w-md mx-auto">
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-indigo-600 mb-2">Zimmedar Login</h1>
-                <p class="text-slate-500 text-sm">Apni class ke teachers ka collection manage karein</p>
+                <h1 class="text-3xl font-poppins font-bold text-indigo-600 mb-2">Zimmedar Login</h1>
+                <p class="text-slate-500 text-sm">Apni class ke asatiza ka record manage karein</p>
             </div>
-            <form id="loginForm" class="space-y-5">
+            <form id="loginForm" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Username</label>
-                    <input type="text" id="loginUsername" required placeholder="Jaise: zaid_ula" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 bg-slate-50 outline-none transition">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Username</label>
+                    <input type="text" id="loginUsername" required placeholder="Jaise: zaid_ula" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50 outline-none transition font-semibold text-slate-700">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
-                    <input type="password" id="loginPassword" required placeholder="••••••" class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 bg-slate-50 outline-none transition">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50 outline-none transition font-semibold text-slate-700">
                 </div>
-                <button type="submit" id="loginBtn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition shadow-lg mt-4">
+                <button type="submit" id="loginBtn" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg mt-2 active:scale-[0.98]">
                     Login Karein
                 </button>
             </form>
@@ -50,26 +53,52 @@
         <div id="dashboardSection" class="hidden">
             
             <!-- Header -->
-            <header class="bg-indigo-600 text-white p-5 rounded-2xl shadow-lg flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold" id="displayZimmedarName">Zimmedar Name</h1>
-                    <p class="text-indigo-200 font-semibold text-sm mt-1 flex items-center gap-2">
-                        Assigned Class: <span id="displayClass" class="text-white font-bold px-3 py-1 bg-indigo-800 rounded-lg tracking-wide">Class</span>
+            <header class="bg-indigo-600 text-white p-4 sm:p-5 rounded-2xl shadow-md mb-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="text-center sm:text-left">
+                    <h1 class="text-xl sm:text-2xl font-poppins font-bold" id="displayZimmedarName">Name</h1>
+                    <p class="text-indigo-200 text-xs sm:text-sm mt-0.5">
+                        Class: <span id="displayClass" class="text-white font-bold px-2 py-0.5 bg-indigo-800 rounded-md">Class</span>
                     </p>
                 </div>
-                <button id="logoutBtn" class="bg-indigo-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-rose-500 transition shadow-md">Logout</button>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="openHistory()" class="flex-1 sm:flex-none bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-600 transition shadow-sm flex items-center justify-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Daily Records
+                    </button>
+                    <button id="logoutBtn" class="bg-indigo-800 text-indigo-100 px-4 py-2 rounded-xl text-sm font-bold hover:bg-rose-500 hover:text-white transition shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
             </header>
 
             <!-- Search Bar -->
-            <div class="mb-6 relative">
-                <input type="text" id="searchInput" placeholder="Jamia ya Ustaz ka naam search karein..." class="w-full pl-5 pr-5 py-4 border-2 border-slate-200 rounded-2xl focus:border-indigo-500 focus:ring-0 outline-none transition text-lg font-semibold text-slate-700 shadow-sm">
+            <div class="mb-4">
+                <input type="text" id="searchInput" placeholder="Jamia ya Ustaz ka naam search karein..." class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none transition text-sm font-semibold text-slate-700 shadow-sm bg-white">
             </div>
 
-            <!-- Jamias / Asatiza List -->
-            <div id="jamiaList" class="space-y-4">
-                <div class="text-center p-10 text-slate-500 font-semibold animate-pulse">Data load ho raha hai...</div>
+            <!-- Asatiza List -->
+            <div id="jamiaList" class="space-y-3">
+                <div class="text-center p-8 text-slate-500 font-semibold animate-pulse">Data load ho raha hai...</div>
             </div>
             
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. DAILY RECORDS & HISTORY MODAL -->
+    <!-- ========================================== -->
+    <div id="historyModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-center items-end sm:items-center p-0 sm:p-4 transition-all">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-[fade-up_0.3s_ease-out]">
+            <div class="bg-indigo-600 p-4 sm:p-5 flex justify-between items-center text-white shrink-0">
+                <h2 class="font-bold text-lg font-poppins flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Date-wise Records
+                </h2>
+                <button onclick="closeHistory()" class="font-bold text-2xl hover:text-rose-200 transition leading-none">&times;</button>
+            </div>
+            <div id="historyContent" class="p-4 overflow-y-auto flex-1 bg-slate-50 space-y-4">
+                <!-- Records list aayegi yahan -->
+            </div>
         </div>
     </div>
 
@@ -93,6 +122,16 @@
 
         let currentZimmedar = null;
 
+        // Photo URL Convert Helper
+        function getDirectImageUrl(url) {
+            if (!url) return "";
+            if (url.includes("drive.google.com/file/d/")) {
+                let fileId = url.split("/d/")[1].split("/")[0];
+                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+            }
+            return url;
+        }
+
         // ========================================================
         // 1. LOGIN LOGIC
         // ========================================================
@@ -114,7 +153,7 @@
         });
 
         // ========================================================
-        // 2. CHECK LOGIN & LOAD ASSIGNED CLASS DATA
+        // 2. AUTH STATE & LOAD DATA
         // ========================================================
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -122,13 +161,12 @@
                 if (doc.exists) {
                     currentZimmedar = doc.data();
                     
-                    document.getElementById('displayZimmedarName').innerText = currentZimmedar.ustazName + " (Zimmedar)";
+                    document.getElementById('displayZimmedarName').innerText = currentZimmedar.ustazName;
                     document.getElementById('displayClass').innerText = currentZimmedar.assignedClass;
 
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('dashboardSection').classList.remove('hidden');
 
-                    // Zimmedar ki Class wale asatiza ko load karein
                     loadJamias(currentZimmedar.assignedClass);
                 } else {
                     auth.signOut();
@@ -142,65 +180,72 @@
         });
 
         // ========================================================
-        // 3. LOAD JAMIAS / TEACHERS (From asatiza_details)
+        // 3. LOAD JAMIAS / TEACHERS
         // ========================================================
         function loadJamias(assignedClass) {
-            // Asatiza ki collection se wahi data nikalenge jiski class zimmedar ki class ke barabar ho
             db.collection('asatiza_details').where("className", "==", assignedClass).onSnapshot((snapshot) => {
                 const listDiv = document.getElementById('jamiaList');
                 listDiv.innerHTML = "";
 
                 if (snapshot.empty) {
-                    listDiv.innerHTML = '<div class="text-center p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-500 font-semibold">Aapki class mein abhi tak kisi Ustad ne form nahi bhara hai.</div>';
+                    listDiv.innerHTML = '<div class="text-center p-8 bg-white rounded-2xl shadow-sm border border-slate-200 text-slate-500 font-semibold">Is class mein abhi tak kisi Ustad ki entry nahi hai.</div>';
                     return;
                 }
 
-                // Data ko Jamia ke naam se A-Z sort karne ke liye Array mein daal rahe hain
                 let records = [];
-                snapshot.forEach(doc => {
-                    records.push({ id: doc.id, ...doc.data() });
-                });
+                snapshot.forEach(doc => { records.push({ id: doc.id, ...doc.data() }); });
                 records.sort((a, b) => (a.jamiaName || "").localeCompare(b.jamiaName || ""));
 
                 records.forEach((data) => {
                     const docId = data.id;
                     const totalSoFar = parseFloat(data.amount) || 0;
                     const totalUnit = (totalSoFar / 7000).toFixed(1);
+                    
+                    const photoSrc = getDirectImageUrl(data.photoUrl);
+                    const photoHtml = photoSrc 
+                        ? `<img src="${photoSrc}" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-100 shadow-sm flex-shrink-0" alt="pic" />`
+                        : `<div class="w-12 h-12 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-xs text-slate-400 font-bold flex-shrink-0">No Pic</div>`;
 
                     const card = document.createElement('div');
-                    card.className = "jamia-card bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col lg:flex-row justify-between items-center gap-6 transition hover:shadow-md";
-                    card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()} ${(data.region||'').toLowerCase()}`);
+                    card.className = "jamia-card bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3 transition hover:border-indigo-200";
+                    card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()}`);
 
                     card.innerHTML = `
-                        <div class="w-full lg:w-3/5">
-                            <h3 class="text-xl font-bold text-indigo-700">${data.jamiaName}</h3>
-                            <div class="text-sm text-slate-500 mt-2 grid grid-cols-2 gap-2">
-                                <div><span class="font-bold text-slate-700">Ustaz:</span> ${data.ustazName}</div>
-                                <div><span class="font-bold text-slate-700">Region:</span> ${data.region}</div>
-                                <div><span class="font-bold text-slate-700">Section:</span> ${data.section || '-'}</div>
-                                <div><span class="font-bold text-slate-700">Mobile:</span> ${data.mobileNo || '-'}</div>
+                        <!-- TOP: Photo & Names -->
+                        <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                            ${photoHtml}
+                            <div class="leading-tight">
+                                <h3 class="text-base font-bold text-slate-800">${data.ustazName}</h3>
+                                <div class="text-sm font-bold text-indigo-600 mt-0.5">${data.jamiaName}</div>
                             </div>
                         </div>
 
-                        <!-- Amount Display Area -->
-                        <div class="w-full lg:w-auto flex flex-col sm:flex-row gap-4 items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                            <div class="text-center px-4">
-                                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Total Jama Raqam</div>
-                                <div class="text-xl font-bold text-emerald-600">₹ ${totalSoFar.toLocaleString('en-IN')}</div>
-                                <div class="text-xs font-bold text-sky-600 mt-1">${totalUnit} Units</div>
+                        <!-- MIDDLE: Total Amount & Input Row -->
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="text-center shrink-0">
+                                <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Total Jama</div>
+                                <div class="text-xl font-poppins font-bold text-emerald-600 leading-none mt-1">₹${totalSoFar.toLocaleString('en-IN')}</div>
+                                <div class="text-[10px] font-bold text-sky-500 mt-0.5">${totalUnit} Units</div>
                             </div>
                             
-                            <div class="w-px h-12 bg-slate-200 hidden sm:block"></div>
-                            
-                            <div class="flex flex-col gap-2 w-full sm:w-auto">
-                                <div class="flex gap-2">
-                                    <input type="number" id="amt_${docId}" placeholder="Nayi Raqam (₹)" class="w-full sm:w-32 px-3 py-2 border-2 border-slate-200 rounded-lg focus:border-indigo-500 outline-none font-bold text-slate-700 text-sm">
-                                    <button onclick="submitEntry('${docId}', '${data.jamiaName}')" id="btn_${docId}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition shrink-0 shadow-sm active:scale-95">
-                                        Add
-                                    </button>
-                                </div>
-                                <p class="text-[10px] text-slate-400 font-semibold text-center leading-tight">Yahan amount dalne se pichli<br>raqam me auto plus (jod) jayega.</p>
+                            <div class="w-px h-10 bg-slate-100 shrink-0"></div>
+
+                            <div class="flex-1 flex gap-2">
+                                <input type="number" id="amt_${docId}" placeholder="Raqam..." class="w-full px-2 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-700 text-sm text-center bg-slate-50">
+                                <button onclick="submitEntry('add', '${docId}', '${data.jamiaName}')" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 active:scale-95 transition shadow-sm">
+                                    + Add
+                                </button>
                             </div>
+                        </div>
+
+                        <!-- BOTTOM: Override & Reset Actions -->
+                        <div class="flex justify-between items-center pt-1">
+                            <button onclick="submitEntry('set', '${docId}', '${data.jamiaName}')" class="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 bg-emerald-50 px-2 py-1 rounded">
+                                Set Final Total
+                            </button>
+                            <button onclick="submitEntry('reset', '${docId}', '${data.jamiaName}')" class="text-[11px] font-bold text-rose-500 hover:text-rose-700 bg-rose-50 px-2 py-1 rounded">
+                                Delete/Reset (₹0)
+                            </button>
                         </div>
                     `;
                     listDiv.appendChild(card);
@@ -208,68 +253,169 @@
             });
         }
 
-        // Live Search Filter
+        // Search Filter
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const cards = document.querySelectorAll('.jamia-card');
-            
             cards.forEach(card => {
-                const text = card.getAttribute('data-search');
-                if (text.includes(searchTerm)) {
-                    card.classList.remove('hidden');
-                } else {
-                    card.classList.add('hidden');
-                }
+                if (card.getAttribute('data-search').includes(searchTerm)) card.classList.remove('hidden');
+                else card.classList.add('hidden');
             });
         });
 
         // ========================================================
-        // 4. SUBMIT AMOUNT (Auto-Plus / Increment Logic)
+        // 4. SUBMIT AMOUNT (Add, Set, Reset)
         // ========================================================
-        window.submitEntry = async function(docId, jamiaName) {
-            const inputField = document.getElementById(`amt_${docId}`);
-            const btn = document.getElementById(`btn_${docId}`);
-            const amountToAdd = parseFloat(inputField.value);
-
-            if (!amountToAdd || amountToAdd <= 0) {
-                alert("Kripya sahi raqam (amount) darj karein!");
-                return;
+        window.submitEntry = async function(action, docId, jamiaName) {
+            let amountVal = 0;
+            
+            if (action !== 'reset') {
+                const inputField = document.getElementById(`amt_${docId}`);
+                amountVal = parseFloat(inputField.value);
+                if (!amountVal || amountVal < 0) {
+                    alert("Kripya box mein sahi raqam (amount) darj karein!");
+                    return;
+                }
             }
 
-            if (!confirm(`${jamiaName} ke purane amount mein ₹${amountToAdd} jama (add) kar dein?`)) return;
+            let confirmMsg = "";
+            let updatePayload = {};
+            let historyAction = action;
 
-            btn.innerText = "...";
-            btn.disabled = true;
+            if (action === 'add') {
+                confirmMsg = `Kya aap ${jamiaName} ke account mein ₹${amountVal} JOD (Add) karna chahte hain?`;
+                updatePayload = { amount: firebase.firestore.FieldValue.increment(amountVal) };
+            } else if (action === 'set') {
+                confirmMsg = `Kya aap ${jamiaName} ka TOTAL amount ₹${amountVal} fix karna chahte hain?\n(Purana amount khatam ho jayega)`;
+                updatePayload = { amount: amountVal };
+            } else if (action === 'reset') {
+                confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${jamiaName} ka amount Delete karke ₹0 (Zero) karna chahte hain?`;
+                updatePayload = { amount: 0 };
+                amountVal = 0;
+            }
+
+            if (!confirm(confirmMsg)) return;
 
             try {
-                // 1. Database me Total Amount ko Plus (Increment) karna
-                // firebase.firestore.FieldValue.increment automatically purane amount me naya jod deta hai
-                await db.collection('asatiza_details').doc(docId).update({
-                    amount: firebase.firestore.FieldValue.increment(amountToAdd)
-                });
+                // Update Main Table
+                await db.collection('asatiza_details').doc(docId).update(updatePayload);
 
-                // 2. History record save karna (Takein pata rahe kab kitne paise dale gaye)
+                // Save to History
                 await db.collection('entries_history').add({
                     asatizaId: docId,
                     jamiaName: jamiaName,
-                    amountAdded: amountToAdd,
+                    actionType: historyAction,
+                    amountVal: amountVal,
                     zimmedarUid: auth.currentUser.uid,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                inputField.value = ""; // Input khali karo
+                if (action !== 'reset') document.getElementById(`amt_${docId}`).value = "";
                 
             } catch (error) {
                 console.error("Entry fail:", error);
                 alert("Entry save nahi hui, kripya internet check karein.");
-            } finally {
-                btn.innerText = "Add";
-                btn.disabled = false;
             }
         };
 
         // ========================================================
-        // 5. LOGOUT
+        // 5. DATE-WISE DAILY RECORDS HISTORY
+        // ========================================================
+        async function openHistory() {
+            document.getElementById('historyModal').classList.remove('hidden');
+            const content = document.getElementById('historyContent');
+            content.innerHTML = '<div class="text-center text-slate-500 py-10 animate-pulse font-semibold">Records load ho rahe hain...</div>';
+
+            try {
+                const snapshot = await db.collection('entries_history')
+                    .where('zimmedarUid', '==', auth.currentUser.uid)
+                    .get();
+                
+                let records = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if(data.timestamp) records.push(data);
+                });
+
+                // Naye record upar dikhane ke liye sort
+                records.sort((a,b) => b.timestamp.toDate() - a.timestamp.toDate());
+
+                // Date-wise Group karna
+                let groupedByDate = {};
+                records.forEach(r => {
+                    const dateObj = r.timestamp.toDate();
+                    const dateStr = dateObj.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+                    
+                    if(!groupedByDate[dateStr]) groupedByDate[dateStr] = { totalAdded: 0, items: [] };
+                    
+                    groupedByDate[dateStr].items.push(r);
+                    
+                    // Daily total mein sirf "Add" kiya hua amount judega
+                    if(r.actionType === 'add' || !r.actionType) {
+                        groupedByDate[dateStr].totalAdded += (r.amountVal || r.amountAdded || 0);
+                    }
+                });
+
+                if(Object.keys(groupedByDate).length === 0) {
+                    content.innerHTML = '<div class="text-center text-slate-500 py-10">Abhi tak aapne koi entry nahi ki hai.</div>';
+                    return;
+                }
+
+                let html = "";
+                for(let date in groupedByDate) {
+                    html += `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex justify-between items-center">
+                                <span class="font-bold text-indigo-800">${date}</span>
+                                <div class="text-right">
+                                    <span class="block text-[9px] uppercase font-bold text-indigo-400 leading-tight">Daily Total Add</span>
+                                    <span class="font-bold text-emerald-600 text-sm">₹${groupedByDate[date].totalAdded.toLocaleString('en-IN')}</span>
+                                </div>
+                            </div>
+                            <div class="p-2 space-y-1">
+                    `;
+                    
+                    groupedByDate[date].items.forEach(item => {
+                        const timeStr = item.timestamp.toDate().toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'});
+                        let actionText = "";
+                        let colorClass = "";
+                        const amt = item.amountVal || item.amountAdded || 0;
+
+                        if(item.actionType === 'add' || !item.actionType) { 
+                            actionText = `+ ₹${amt} Add kiye`; colorClass = "text-emerald-600 bg-emerald-50"; 
+                        } else if(item.actionType === 'set') { 
+                            actionText = `Total ₹${amt} Set kiya`; colorClass = "text-sky-600 bg-sky-50"; 
+                        } else if(item.actionType === 'reset') { 
+                            actionText = `Reset (Delete) kiya`; colorClass = "text-rose-500 bg-rose-50"; 
+                        }
+
+                        html += `
+                            <div class="flex justify-between items-center text-xs p-2.5 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100 transition">
+                                <div>
+                                    <div class="font-bold text-slate-700 text-sm">${item.jamiaName}</div>
+                                    <div class="text-slate-400 font-medium">${timeStr}</div>
+                                </div>
+                                <div class="font-bold px-2 py-1 rounded ${colorClass}">${actionText}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div></div>`;
+                }
+                content.innerHTML = html;
+
+            } catch(err) {
+                console.error(err);
+                content.innerHTML = `<div class="text-rose-500 text-center py-4">Error loading history: ${err.message}</div>`;
+            }
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        // ========================================================
+        // 6. LOGOUT
         // ========================================================
         document.getElementById('logoutBtn').addEventListener('click', () => {
             auth.signOut();
