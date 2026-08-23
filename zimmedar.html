@@ -194,7 +194,9 @@
 
                 let records = [];
                 snapshot.forEach(doc => { records.push({ id: doc.id, ...doc.data() }); });
-                records.sort((a, b) => (a.jamiaName || "").localeCompare(b.jamiaName || ""));
+                
+                // 👇 YAHAN BADLAAW KIYA HAI: Ab Jamia ki jagah Ustaz ke naam se A-Z sort hoga
+                records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
 
                 records.forEach((data) => {
                     const docId = data.id;
@@ -202,8 +204,10 @@
                     const totalUnit = (totalSoFar / 7000).toFixed(1);
                     
                     const photoSrc = getDirectImageUrl(data.photoUrl);
+                    
+                    // 👇 YAHAN BADLAAW KIYA HAI: Photo tag mein referrerpolicy="no-referrer" add kiya hai taaki Drive ki image block na ho
                     const photoHtml = photoSrc 
-                        ? `<img src="${photoSrc}" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-100 shadow-sm flex-shrink-0" alt="pic" />`
+                        ? `<img src="${photoSrc}" referrerpolicy="no-referrer" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-100 shadow-sm flex-shrink-0" alt="pic" />`
                         : `<div class="w-12 h-12 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-xs text-slate-400 font-bold flex-shrink-0">No Pic</div>`;
 
                     const card = document.createElement('div');
