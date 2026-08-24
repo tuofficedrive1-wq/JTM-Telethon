@@ -272,11 +272,11 @@
         const secondaryAuth = secondaryApp.auth();
 
         // --- GOOGLE DRIVE LINK CONVERTER (UPDATED NAYA RULE) ---
+      // --- NEW GOOGLE DRIVE PHOTO FIX (100% WORKING) ---
         function getDirectImageUrl(url) {
             if (!url) return "";
             if (url.includes("drive.google.com/file/d/")) {
                 let fileId = url.split("/d/")[1].split("/")[0];
-                // Yahan naya lh3.googleusercontent.com wala tarika lagaya gaya hai
                 return `https://lh3.googleusercontent.com/d/${fileId}`;
             }
             return url;
