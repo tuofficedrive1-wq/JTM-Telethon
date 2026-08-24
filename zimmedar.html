@@ -223,8 +223,9 @@
                         <div class="flex items-center gap-4">
                             ${photoHtml}
                             <div class="flex-1 leading-tight">
-                                <h2 class="text-lg font-poppins font-bold text-indigo-700 uppercase tracking-wide">${data.jamiaName}</h2>
-                                <div class="text-[15px] font-bold text-slate-700 mt-1">${data.ustazName}</div>
+                                <!-- UPDATE: Ab yahan Ustaz Name bada aur Jamia Name chhota hai -->
+                                <h2 class="text-lg font-poppins font-bold text-indigo-700 uppercase tracking-wide">${data.ustazName}</h2>
+                                <div class="text-[15px] font-bold text-slate-700 mt-1">${data.jamiaName}</div>
                                 <div class="text-[11px] font-semibold text-slate-500 mt-0.5 tracking-wide">Mob: ${data.mobileNo || '-'}</div>
                             </div>
                         </div>
@@ -244,14 +245,15 @@
                             </button>
                         </div>
                         
-                        <!-- Extra Options (Set/Delete) -->
-                        <div class="flex justify-between items-center px-1">
+                        <!-- Extra Options (Set/Minus) -->
+                        <div class="flex justify-between items-center px-1 mt-1">
                             <button onclick="submitEntry('set', '${docId}', '${data.jamiaName}', '${data.ustazName}')" class="text-[11px] font-bold text-slate-500 hover:text-indigo-600 transition underline underline-offset-2">
                                 Set Total Amount
                             </button>
-                            <button onclick="submitEntry('reset', '${docId}', '${data.jamiaName}', '${data.ustazName}')" class="text-[11px] font-bold text-rose-400 hover:text-rose-600 transition flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                Delete/Reset
+                            <!-- UPDATE: Delete hata kar Minus ka button laga diya gaya hai -->
+                            <button onclick="submitEntry('minus', '${docId}', '${data.jamiaName}', '${data.ustazName}')" class="text-[11px] font-bold text-rose-500 hover:text-rose-700 transition flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg>
+                                Minus Amount
                             </button>
                         </div>
                     `;
@@ -271,18 +273,16 @@
         });
 
         // ========================================================
-        // 4. SUBMIT AMOUNT (Auto-Plus, Set Total, Delete)
+        // 4. SUBMIT AMOUNT (Auto-Plus, Set Total, Minus)
         // ========================================================
         window.submitEntry = async function(action, docId, jamiaName, ustazName) {
-            let amountVal = 0;
+            // Har action (add, set, minus) ke liye input box se value lena zaroori hai
+            const inputField = document.getElementById(`amt_${docId}`);
+            let amountVal = parseFloat(inputField.value);
             
-            if (action !== 'reset') {
-                const inputField = document.getElementById(`amt_${docId}`);
-                amountVal = parseFloat(inputField.value);
-                if (!amountVal || amountVal <= 0) {
-                    alert("Kripya box mein sahi raqam (amount) darj karein!");
-                    return;
-                }
+            if (!amountVal || amountVal <= 0) {
+                alert("Kripya box mein sahi raqam (amount) darj karein!");
+                return;
             }
 
             let confirmMsg = "";
@@ -294,10 +294,10 @@
             } else if (action === 'set') {
                 confirmMsg = `Kya aap ${ustazName} ka TOTAL amount ₹${amountVal} fix karna chahte hain?\n(Purana amount overwrite ho jayega)`;
                 updatePayload = { amount: amountVal };
-            } else if (action === 'reset') {
-                confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ka amount Delete karke wapas ₹0 (Zero) karna chahte hain?`;
-                updatePayload = { amount: 0 };
-                amountVal = 0;
+            } else if (action === 'minus') {
+                // UPDATE: Minus ke liye naya logic
+                confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`;
+                updatePayload = { amount: firebase.firestore.FieldValue.increment(-amountVal) };
             }
 
             if (!confirm(confirmMsg)) return;
@@ -317,7 +317,8 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                if (action !== 'reset') document.getElementById(`amt_${docId}`).value = "";
+                // Clear input box
+                document.getElementById(`amt_${docId}`).value = "";
                 
             } catch (error) {
                 console.error("Entry fail:", error);
@@ -355,9 +356,11 @@
                     
                     groupedByDate[dateStr].items.push(r);
                     
-                    // Daily total mein sirf "Add" kiya hua amount judega
+                    // Add amount daily total me jodega, aur minus utni raqam ghata dega
                     if(r.actionType === 'add') {
                         groupedByDate[dateStr].dailyTotal += r.amountVal;
+                    } else if (r.actionType === 'minus') {
+                        groupedByDate[dateStr].dailyTotal -= r.amountVal;
                     }
                 });
 
@@ -373,7 +376,7 @@
                             <div class="bg-indigo-50 px-4 py-3 border-b border-indigo-100 flex justify-between items-center">
                                 <span class="font-bold text-indigo-800 text-sm font-poppins">${date}</span>
                                 <div class="text-right">
-                                    <span class="block text-[9px] uppercase font-bold text-indigo-400 leading-tight">Daily Total Added</span>
+                                    <span class="block text-[9px] uppercase font-bold text-indigo-400 leading-tight">Daily Total</span>
                                     <span class="font-bold text-emerald-600 text-sm font-poppins">₹${groupedByDate[date].dailyTotal.toLocaleString('en-IN')}</span>
                                 </div>
                             </div>
@@ -390,8 +393,9 @@
                             actionText = `+ ₹${amt} Add`; colorClass = "text-emerald-600 bg-emerald-50 border-emerald-100"; 
                         } else if(item.actionType === 'set') { 
                             actionText = `Set: ₹${amt}`; colorClass = "text-sky-600 bg-sky-50 border-sky-100"; 
-                        } else if(item.actionType === 'reset') { 
-                            actionText = `Deleted`; colorClass = "text-rose-500 bg-rose-50 border-rose-100"; 
+                        } else if(item.actionType === 'minus') { 
+                            // Minus History Color
+                            actionText = `- ₹${amt} Minus`; colorClass = "text-rose-600 bg-rose-50 border-rose-100"; 
                         }
 
                         html += `
