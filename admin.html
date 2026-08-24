@@ -38,24 +38,30 @@
         <!-- ========================================== -->
         <div id="zimmedarTab" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
-                <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Naya Zimmedar Add Karein</h2>
+                <!-- Change: Title updated -->
+                <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2" id="zimmedarFormTitle">Naya Zimmedar Add Karein</h2>
                 <form id="createUserForm" class="space-y-4">
+                    <!-- Naya Field: Hidden ID Edit ke liye -->
+                    <input type="hidden" id="zimmedarDocId">
+                    
                     <div>
                         <label class="block text-sm font-semibold">Zimmedar Ka Naam</label>
                         <input type="text" id="ustazName" required class="w-full px-3 py-2 border rounded-lg">
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold">Jamia Name (Zimmedar Ka)</label>
-                        <input type="text" id="jamiaName" required class="w-full px-3 py-2 border rounded-lg">
-                    </div>
+                    
+                    <!-- HATA DIYA GAYA: Jamia Name (Zimmedar Ka) field -->
+
                     <div>
                         <label class="block text-sm font-semibold">Assign Class</label>
                         <select id="assignedClass" required class="w-full px-3 py-2 border rounded-lg">
                             <option value="">Class Select Karein...</option>
+                            <!-- UPDATE: Class list Asatiza form wali kardi gayi hai -->
+                            <option value="Prep Class">Prep Class</option>
                             <option value="Hifz Class">Hifz Class</option>
                             <option value="Ibtidaiya">Ibtidaiya</option>
                             <option value="Sale Awwal">Sale Awwal</option>
                             <option value="Sale Duwam">Sale Duwam</option>
+                            <option value="Sale Duwam Khususi">Sale Duwam Khususi</option>
                             <option value="Ula">Ula</option>
                             <option value="Saniya">Saniya</option>
                             <option value="Salisa">Salisa</option>
@@ -70,11 +76,14 @@
                         <label class="block text-sm font-semibold text-indigo-600">Username (Login ke liye)</label>
                         <input type="text" id="username" required placeholder="Jaise: zaid_ula" class="w-full px-3 py-2 border rounded-lg bg-indigo-50">
                     </div>
-                    <div>
+                    <!-- UPDATE: Password div id added to hide during edit -->
+                    <div id="passwordDiv">
                         <label class="block text-sm font-semibold text-indigo-600">Password</label>
-                        <input type="text" id="password" required placeholder="Kam se kam 6 huroof" class="w-full px-3 py-2 border rounded-lg bg-indigo-50">
+                        <input type="text" id="password" placeholder="Kam se kam 6 huroof" class="w-full px-3 py-2 border rounded-lg bg-indigo-50">
                     </div>
                     <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-lg hover:bg-indigo-700">Account Banayein</button>
+                    <!-- Naya Button: Edit Cancel karne ke liye -->
+                    <button type="button" id="cancelEditZimmedarBtn" onclick="resetZimmedarForm()" class="hidden w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:bg-slate-300 mt-2">Cancel Edit</button>
                 </form>
             </div>
 
@@ -101,8 +110,9 @@
                             <tr class="bg-slate-100 text-slate-600 text-sm">
                                 <th class="p-3 border-b">Username</th>
                                 <th class="p-3 border-b">Zimmedar Name</th>
-                                <th class="p-3 border-b">Jamia</th>
                                 <th class="p-3 border-b">Class</th>
+                                <!-- UPDATE: Action header added -->
+                                <th class="p-3 border-b text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="userTableBody" class="text-sm"></tbody>
@@ -218,10 +228,13 @@
                 <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Class (Darja)</label>
                         <select id="editClassName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                            <!-- UPDATE: Class list Asatiza form wali kardi gayi hai -->
+                            <option value="Prep Class">Prep Class</option>
                             <option value="Hifz Class">Hifz Class</option>
                             <option value="Ibtidaiya">Ibtidaiya</option>
                             <option value="Sale Awwal">Sale Awwal</option>
                             <option value="Sale Duwam">Sale Duwam</option>
+                            <option value="Sale Duwam Khususi">Sale Duwam Khususi</option>
                             <option value="Ula">Ula</option>
                             <option value="Saniya">Saniya</option>
                             <option value="Salisa">Salisa</option>
@@ -296,47 +309,155 @@
             }
         }
 
-        // --- ZIMMEDAR CREATE LOGIC ---
+        // --- ZIMMEDAR CREATE/EDIT LOGIC ---
+        // Global object edit data store karne ke liye
+        let zimmedarDataMap = {};
+
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.innerHTML = "Creating..."; btn.disabled = true;
+            const isEditing = document.getElementById('zimmedarDocId').value !== "";
+            
+            btn.innerHTML = isEditing ? "Updating..." : "Creating..."; 
+            btn.disabled = true;
 
             const ustazName = document.getElementById('ustazName').value.trim();
-            const jamiaName = document.getElementById('jamiaName').value.trim();
             const assignedClass = document.getElementById('assignedClass').value;
             const username = document.getElementById('username').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
-            const fakeEmail = username + "@telethon.com";
-
-            try {
-                const userCredential = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, password);
-                await secondaryAuth.signOut();
-                await db.collection('users').doc(userCredential.user.uid).set({
-                    username: username, ustazName: ustazName, jamiaName: jamiaName,
-                    assignedClass: assignedClass, role: "zimmedar",
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                alert("✅ Zimmedar ka account successfully ban gaya!");
-                document.getElementById('createUserForm').reset();
-            } catch (error) { alert("❌ Error: " + error.message); } 
-            finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
+            
+            // Edit Mode
+            if (isEditing) {
+                const docId = document.getElementById('zimmedarDocId').value;
+                try {
+                    await db.collection('users').doc(docId).update({
+                        username: username, 
+                        ustazName: ustazName, 
+                        assignedClass: assignedClass
+                    });
+                    alert("✅ Zimmedar successfully update ho gaya!");
+                    resetZimmedarForm();
+                } catch (error) { 
+                    alert("❌ Error: " + error.message); 
+                } finally { 
+                    btn.innerHTML = "Account Banayein"; 
+                    btn.disabled = false; 
+                }
+            } 
+            // Create Mode
+            else {
+                if(!password) {
+                    alert("Kripya password darj karein.");
+                    btn.innerHTML = "Account Banayein"; 
+                    btn.disabled = false; 
+                    return;
+                }
+                const fakeEmail = username + "@telethon.com";
+                try {
+                    const userCredential = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, password);
+                    await secondaryAuth.signOut();
+                    await db.collection('users').doc(userCredential.user.uid).set({
+                        username: username, 
+                        ustazName: ustazName, 
+                        assignedClass: assignedClass, 
+                        role: "zimmedar",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    alert("✅ Zimmedar ka account successfully ban gaya!");
+                    resetZimmedarForm();
+                } catch (error) { 
+                    alert("❌ Error: " + error.message); 
+                } finally { 
+                    btn.innerHTML = "Account Banayein"; 
+                    btn.disabled = false; 
+                }
+            }
         });
+
+        // Naya Function: Zimmedar form reset karne ke liye
+        function resetZimmedarForm() {
+            document.getElementById('createUserForm').reset();
+            document.getElementById('zimmedarDocId').value = "";
+            document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein";
+            document.getElementById('submitBtn').innerText = "Account Banayein";
+            document.getElementById('passwordDiv').classList.remove('hidden');
+            document.getElementById('password').setAttribute('required', 'required');
+            document.getElementById('username').removeAttribute('disabled');
+            document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed');
+            document.getElementById('cancelEditZimmedarBtn').classList.add('hidden');
+        }
 
         // --- LOAD ZIMMEDARS ---
         db.collection('users').where("role", "==", "zimmedar").onSnapshot((snapshot) => {
             const tbody = document.getElementById('userTableBody');
             tbody.innerHTML = snapshot.empty ? '<tr><td colspan="4" class="p-4 text-center text-slate-500">Koi zimmedar add nahi hua abhi.</td></tr>' : "";
+            
+            // Map clear karna
+            zimmedarDataMap = {};
+
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                data.docId = doc.id; // doc id save kar rahe
+                zimmedarDataMap[doc.id] = data; // map me add karna
+
                 tbody.innerHTML += `<tr class="border-b hover:bg-slate-50">
                     <td class="p-3 font-semibold text-indigo-600">${data.username}</td>
                     <td class="p-3">${data.ustazName}</td>
-                    <td class="p-3">${data.jamiaName}</td>
+                    <!-- UPDATE: Jamia name hata diya gaya yahan se -->
                     <td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">${data.assignedClass}</span></td>
+                    <td class="p-3 text-center">
+                        <!-- UPDATE: Action buttons added -->
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="editZimmedar('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Zimmedar Edit Karein">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button onclick="deleteZimmedar('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Zimmedar Delete Karein">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </td>
                 </tr>`;
             });
         });
+
+        // Naya Function: Zimmedar Edit Karne ke liye
+        function editZimmedar(docId) {
+            const data = zimmedarDataMap[docId];
+            if (!data) return;
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Upar scroll
+            
+            document.getElementById('zimmedarDocId').value = docId;
+            document.getElementById('ustazName').value = data.ustazName;
+            document.getElementById('assignedClass').value = data.assignedClass;
+            document.getElementById('username').value = data.username;
+            
+            // UI changes for Edit Mode
+            document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein";
+            document.getElementById('submitBtn').innerText = "Update Record";
+            
+            // Password change allow nahi kar rahe abhi, so hide it
+            document.getElementById('passwordDiv').classList.add('hidden');
+            document.getElementById('password').removeAttribute('required');
+            
+            // Username disable kardo taaki change na ho (auth issue se bachne ke liye)
+            document.getElementById('username').setAttribute('disabled', 'disabled');
+            document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Show Cancel button
+            document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
+        }
+
+        // Naya Function: Zimmedar Delete Karne ke liye
+        async function deleteZimmedar(docId) {
+            if (confirm("Kya aap waqai is zimmedar ko delete karna chahte hain?\n\nNote: Isse unka login band nahi hoga (Auth delete nahi hota yahan se), sirf panel se record hatega.")) {
+                try {
+                    await db.collection('users').doc(docId).delete();
+                } catch (error) {
+                    alert("Delete karne mein error aaya: " + error.message);
+                }
+            }
+        }
 
         // --- LOAD ASATIZA DETAILS ---
         let allAsatizaData = []; 
@@ -659,73 +780,6 @@ const zimmedarList = {
             const data = window.renderedDataMap[docId];
             if(!data) return;
 
-            document.getElementById('editDocId').value = docId;
-            document.getElementById('editUstazName').value = data.ustazName || '';
-            document.getElementById('editJamiaName').value = data.jamiaName || '';
-            document.getElementById('editMobileNo').value = data.mobileNo || '';
-            document.getElementById('editRegion').value = data.region || '';
-            document.getElementById('editState').value = data.state || '';
-            
-            document.getElementById('editClassName').value = data.className || '';
-            document.getElementById('editSection').value = data.section || ''; // Naya Section field load karna
-            
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-            document.getElementById('editRecordForm').reset();
-        }
-
-        document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const docId = document.getElementById('editDocId').value;
-            const btn = document.getElementById('saveEditBtn');
-            btn.innerHTML = "Updating..."; btn.disabled = true;
-
-            try {
-                await db.collection('asatiza_details').doc(docId).update({
-                    ustazName: document.getElementById('editUstazName').value.trim(),
-                    jamiaName: document.getElementById('editJamiaName').value.trim(),
-                    mobileNo: document.getElementById('editMobileNo').value.trim(),
-                    region: document.getElementById('editRegion').value.trim(),
-                    state: document.getElementById('editState').value.trim(),
-                    className: document.getElementById('editClassName').value,
-                    section: document.getElementById('editSection').value // Section Database me save hoga
-                });
-                closeEditModal();
-            } catch (error) {
-                alert("Update karne mein error aaya: " + error.message);
-            } finally {
-                btn.innerHTML = "Update Record"; btn.disabled = false;
-            }
-        });
-
-        // --- SMART SEARCH (Debounce) LOGIC ---
-        let searchTimeout;
-        function filterTable() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                renderTableAndFilter();
-            }, 300); 
-        }
-
-        // --- ENTRY DELETE LOGIC ---
-        async function deleteEntry(docId) {
-            if (confirm("Kya aap waqai is entry ko delete karna chahte hain? Yeh hamesha ke liye delete ho jayegi.")) {
-                try {
-                    await db.collection('asatiza_details').doc(docId).delete();
-                } catch (error) {
-                    alert("Delete karne mein error aaya: " + error.message);
-                }
-            }
-        }
-
-        // --- ENTRY EDIT & UPDATE LOGIC ---
-        function openEditModal(docId) {
-            const data = window.renderedDataMap[docId];
-            if(!data) return;
-
             // Form me purana data bharna
             document.getElementById('editDocId').value = docId;
             document.getElementById('editUstazName').value = data.ustazName || '';
@@ -771,6 +825,26 @@ const zimmedarList = {
                 btn.innerHTML = "Update Record"; btn.disabled = false;
             }
         });
+
+        // --- SMART SEARCH (Debounce) LOGIC ---
+        let searchTimeout;
+        function filterTable() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                renderTableAndFilter();
+            }, 300); 
+        }
+
+        // --- ENTRY DELETE LOGIC ---
+        async function deleteEntry(docId) {
+            if (confirm("Kya aap waqai is entry ko delete karna chahte hain? Yeh hamesha ke liye delete ho jayegi.")) {
+                try {
+                    await db.collection('asatiza_details').doc(docId).delete();
+                } catch (error) {
+                    alert("Delete karne mein error aaya: " + error.message);
+                }
+            }
+        }
 
         // --- EXPORT TO EXCEL LOGIC ---
         function exportToExcel() {
