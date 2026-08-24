@@ -242,7 +242,7 @@
                             <option value="D">D</option>
                         </select>
                     </div>
-                </div>
+                
 
                 <div class="pt-4 border-t border-slate-100 flex gap-3 justify-end">
                     <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
@@ -271,12 +271,13 @@
         const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
         const secondaryAuth = secondaryApp.auth();
 
-        // --- GOOGLE DRIVE LINK CONVERTER ---
+        // --- GOOGLE DRIVE LINK CONVERTER (UPDATED NAYA RULE) ---
         function getDirectImageUrl(url) {
             if (!url) return "";
             if (url.includes("drive.google.com/file/d/")) {
                 let fileId = url.split("/d/")[1].split("/")[0];
-                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                // Yahan naya lh3.googleusercontent.com wala tarika lagaya gaya hai
+                return `https://lh3.googleusercontent.com/d/${fileId}`;
             }
             return url;
         }
