@@ -173,7 +173,6 @@
 
         // --- MAIN DASHBOARD COMPONENT ---
         function TelethoneDashboard() {
-            // "All Classes" naya tab add kiya gaya
             const allClasses = ['All Jamiaat', 'All Classes', 'Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis'];
             
             const [activeTab, setActiveTab] = useState("All Jamiaat");
@@ -183,6 +182,13 @@
             const [posterData, setPosterData] = useState(null);
             const [isDownloading, setIsDownloading] = useState(false);
             const posterContainerRef = useRef(null);
+
+            // Naya function: Class name me se A, B, C, D (Section) hatane ke liye
+            const getBaseClass = (className) => {
+                if (!className) return "N/A";
+                // Agar class ke aakhir me space ke baad A, B, C, ya D ho to use hata dega (e.g. "Ula A" -> "Ula")
+                return className.replace(/\s+[A-D]$/i, '').trim();
+            };
 
             useEffect(() => {
                 posterContainerRef.current = document.getElementById('poster-container');
@@ -262,23 +268,24 @@
                 displayedData.sort((a, b) => b.totalAmount - a.totalAmount);
 
             } else if (isClassView) {
-                // Group by Class
+                // Group by Base Class (Sections merged together)
                 const classMap = {};
                 allData.forEach(d => {
-                    if (!classMap[d.className]) {
-                        classMap[d.className] = { id: d.className, className: d.className, totalAmount: 0, teacherCount: 0 };
+                    const baseClass = getBaseClass(d.className);
+                    if (!classMap[baseClass]) {
+                        classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 };
                     }
-                    classMap[d.className].totalAmount += d.amount;
-                    classMap[d.className].teacherCount += 1;
+                    classMap[baseClass].totalAmount += d.amount;
+                    classMap[baseClass].teacherCount += 1;
                 });
                 
                 displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) }));
                 displayedData.sort((a, b) => b.totalAmount - a.totalAmount);
                 
             } else {
-                // Regular Teacher View
+                // Regular Teacher View (Also merges sections, eg: "Ula" tab shows "Ula A", "Ula B" etc.)
                 displayedData = allData
-                    .filter(d => d.className === activeTab)
+                    .filter(d => getBaseClass(d.className) === activeTab)
                     .sort((a, b) => b.amount - a.amount);
             }
 
@@ -417,7 +424,11 @@
                                             {displayedData.map((it, idx) => (
                                                 <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                                     <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
-                                                    <div className="col-span-3 font-semibold text-slate-800 uppercase">{it.ustazName}</div>
+                                                    <div className="col-span-3 font-semibold text-slate-800 uppercase">
+                                                        {it.ustazName}
+                                                        {/* Agar class Ula A/B hai to name ke neeche show hoga */}
+                                                        {it.className !== activeTab && <div className="text-[11px] text-indigo-500 normal-case mt-0.5">Section: {it.className.slice(-1)}</div>}
+                                                    </div>
                                                     <div className="col-span-4 font-bold text-indigo-600">{it.jamiaName}</div>
                                                     <div className="col-span-1 text-center">
                                                         <div className="text-sm font-bold text-slate-700">{it.region}</div>
@@ -462,8 +473,11 @@
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <div className="font-bold text-slate-800 text-lg uppercase">{it.ustazName}</div>
-                                                    <div className="text-xs font-semibold text-indigo-500">{it.jamiaName}</div>
+                                                    <div className="font-bold text-slate-800 text-lg uppercase">
+                                                        {it.ustazName}
+                                                        {it.className !== activeTab && <span className="ml-2 text-[10px] text-white bg-indigo-500 px-1.5 py-0.5 rounded-full normal-case">Sec {it.className.slice(-1)}</span>}
+                                                    </div>
+                                                    <div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div>
                                                 </div>
                                             )}
                                         </div>
