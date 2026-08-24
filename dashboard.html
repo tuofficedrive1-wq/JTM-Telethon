@@ -26,14 +26,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         
-        /* Highlight animation for new entries */
-        .highlight-pulse { animation: pulse-ring 0.6s cubic-bezier(0, 0, 0.2, 1) forwards; }
-        @keyframes pulse-ring {
-            0% { transform: scale(1); box-shadow: 0 0 0 0px rgba(99, 102, 241, 0.4); }
-            100% { transform: scale(1.01); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0); }
-        }
-
-        /* Custom Loader */
         .loader {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #4f46e5;
@@ -53,7 +45,6 @@
 <body class="bg-slate-100">
 
     <div id="root"></div>
-    <!-- Off-screen container for Poster Generation -->
     <div id="poster-container" style="position: absolute; left: -9999px; top: 0;"></div>
 
     <!-- React CDN -->
@@ -82,7 +73,7 @@
         // --- POSTER COMPONENT (For HTML2Canvas) ---
         const ListPoster = ({ data }) => {
             if (!data) return null;
-            const { className, items } = data;
+            const { className, items, isJamiaView } = data;
             const dateStr = new Date().toLocaleDateString('en-IN');
 
             return (
@@ -95,63 +86,63 @@
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
-                    {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                         <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '72px', color: '#1e3a8a', letterSpacing: '2px', margin: 0 }}>TELETHON 2026 LEADERBOARD</h1>
-                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>ASATIZA RECORD - {className}</p>
+                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
+                            {isJamiaView ? "OVERALL JAMIAAT RANKING" : `ASATIZA RECORD - ${className}`}
+                        </p>
                     </div>
                     
-                    {/* Table Structure */}
                     <div style={{ flexGrow: 1 }}>
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '80px 1.5fr 1.5fr 1fr 1.2fr 100px',
-                            alignItems: 'center',
-                            gap: '16px',
-                            padding: '12px 16px',
-                            background: '#dbeafe',
-                            borderRadius: '12px',
-                            fontWeight: 'bold',
-                            fontSize: '18px',
-                            color: '#1e3a8a',
-                            marginBottom: '12px',
-                            textTransform: 'uppercase'
-                        }}>
-                            <span>Rank</span>
-                            <span>Ustaz Name</span>
-                            <span>Jamia Name</span>
-                            <span style={{textAlign: 'center'}}>Region</span>
-                            <span style={{textAlign: 'right'}}>Total Amount</span>
-                            <span style={{textAlign: 'right'}}>Units</span>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {items.map((it, idx) => (
-                                <div key={idx} style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '80px 1.5fr 1.5fr 1fr 1.2fr 100px',
-                                    alignItems: 'center',
-                                    gap: '16px',
-                                    padding: '16px',
-                                    background: 'rgba(255,255,255,0.8)',
-                                    borderRadius: '12px',
-                                    fontSize: '20px',
-                                    color: '#1e293b',
-                                    fontWeight: 600,
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                                }}>
-                                    <span style={{color: '#64748b', fontSize:'24px', fontWeight:'bold'}}>#{idx + 1}</span>
-                                    <span>{it.ustazName}</span>
-                                    <span style={{color: '#4338ca'}}>{it.jamiaName}</span>
-                                    <span style={{textAlign: 'center', fontSize: '18px', color: '#64748b'}}>{it.region}</span>
-                                    <span style={{textAlign: 'right', color: '#059669', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>₹{it.amount.toLocaleString('en-IN')}</span>
-                                    <span style={{textAlign: 'right', color: '#0ea5e9'}}>{it.units}</span>
+                        {isJamiaView ? (
+                            // --- POSTER: ALL JAMIAAT (JAMIA ONLY) ---
+                            <div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 1fr 1fr', alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#dbeafe', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', color: '#1e3a8a', marginBottom: '12px', textTransform: 'uppercase' }}>
+                                    <span>Rank</span>
+                                    <span>Jamia Name</span>
+                                    <span style={{textAlign: 'center'}}>Region</span>
+                                    <span style={{textAlign: 'center'}}>Teachers</span>
+                                    <span style={{textAlign: 'right'}}>Total Units</span>
                                 </div>
-                            ))}
-                        </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {items.map((it, idx) => (
+                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 1fr 1fr', alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', fontSize: '20px', color: '#1e293b', fontWeight: 600, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                            <span style={{color: '#64748b', fontSize:'24px', fontWeight:'bold'}}>#{idx + 1}</span>
+                                            <span style={{color: '#4338ca'}}>{it.jamiaName}</span>
+                                            <span style={{textAlign: 'center', fontSize: '18px', color: '#64748b'}}>{it.region}</span>
+                                            <span style={{textAlign: 'center'}}>{it.teacherCount}</span>
+                                            <span style={{textAlign: 'right', color: '#0ea5e9', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>{it.units}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            // --- POSTER: SPECIFIC CLASS (TEACHER VIEW) ---
+                            <div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1.5fr 1fr 1.2fr 100px', alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#dbeafe', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', color: '#1e3a8a', marginBottom: '12px', textTransform: 'uppercase' }}>
+                                    <span>Rank</span>
+                                    <span>Ustaz Name</span>
+                                    <span>Jamia Name</span>
+                                    <span style={{textAlign: 'center'}}>Region</span>
+                                    <span style={{textAlign: 'right'}}>Total Amount</span>
+                                    <span style={{textAlign: 'right'}}>Units</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {items.map((it, idx) => (
+                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 1.5fr 1fr 1.2fr 100px', alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', fontSize: '20px', color: '#1e293b', fontWeight: 600, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                            <span style={{color: '#64748b', fontSize:'24px', fontWeight:'bold'}}>#{idx + 1}</span>
+                                            <span>{it.ustazName}</span>
+                                            <span style={{color: '#4338ca'}}>{it.jamiaName}</span>
+                                            <span style={{textAlign: 'center', fontSize: '18px', color: '#64748b'}}>{it.region}</span>
+                                            <span style={{textAlign: 'right', color: '#059669', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>₹{it.amount.toLocaleString('en-IN')}</span>
+                                            <span style={{textAlign: 'right', color: '#0ea5e9'}}>{it.units}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     
-                    {/* Footer */}
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #dbeafe'}}>
                         <p style={{ color: '#475569', fontSize: '20px', fontWeight: 'bold' }}>Majlis Talimi Umoor India</p>
                         <p style={{ color: '#475569', fontSize: '18px', fontWeight: '600' }}>Date: {dateStr}</p>
@@ -162,14 +153,12 @@
 
         // --- MAIN DASHBOARD COMPONENT ---
         function TelethoneDashboard() {
-            // Tabs Options
             const allClasses = ['All Jamiaat', 'Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis'];
             
             const [activeTab, setActiveTab] = useState("All Jamiaat");
             const [allData, setAllData] = useState([]);
             const [isLoading, setIsLoading] = useState(true);
             
-            // Poster State
             const [posterData, setPosterData] = useState(null);
             const [isDownloading, setIsDownloading] = useState(false);
             const posterContainerRef = useRef(null);
@@ -181,7 +170,6 @@
                     .onSnapshot(snapshot => {
                         const parsedData = snapshot.docs.map(doc => {
                             const data = doc.data();
-                            const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
                             const amt = parseFloat(data.amount) || 0;
                             const unt = (amt / 7000).toFixed(1);
 
@@ -190,7 +178,6 @@
                                 ustazName: data.ustazName || "N/A",
                                 jamiaName: data.jamiaName || "N/A",
                                 className: data.className || "N/A",
-                                displayClass: classWithSection || "N/A",
                                 region: data.region || "N/A",
                                 state: data.state || "N/A",
                                 amount: amt,
@@ -209,11 +196,10 @@
                 return () => unsubscribe();
             }, []);
 
-            // Handle Poster Generation
             useEffect(() => {
                 if (!posterData) return;
                 const generateImage = async () => {
-                    await new Promise(resolve => setTimeout(resolve, 300)); // wait for DOM to update
+                    await new Promise(resolve => setTimeout(resolve, 300));
                     const element = document.getElementById('poster-to-download');
                     if(element && window.html2canvas) {
                         try {
@@ -235,18 +221,48 @@
                 generateImage();
             }, [posterData]);
 
-            // Data ko Amount ke hisab se ZYADA se KAM (Descending) order me Sort kiya gaya hai
-            const displayedData = (activeTab === "All Jamiaat" 
-                ? allData 
-                : allData.filter(d => d.className === activeTab)
-            ).sort((a, b) => b.amount - a.amount);
+            // --- DATA PROCESSING FOR VIEWS ---
+            let displayedData = [];
+            const isJamiaView = activeTab === "All Jamiaat";
+
+            if (isJamiaView) {
+                // Group by Jamia Name & Calculate Total Units
+                const jamiaMap = {};
+                allData.forEach(d => {
+                    if (!jamiaMap[d.jamiaName]) {
+                        jamiaMap[d.jamiaName] = {
+                            id: d.jamiaName,
+                            jamiaName: d.jamiaName,
+                            region: d.region,
+                            totalAmount: 0,
+                            teacherCount: 0
+                        };
+                    }
+                    jamiaMap[d.jamiaName].totalAmount += d.amount;
+                    jamiaMap[d.jamiaName].teacherCount += 1;
+                });
+                
+                displayedData = Object.values(jamiaMap).map(j => ({
+                    ...j,
+                    units: (j.totalAmount / 7000).toFixed(1)
+                }));
+                
+                // Sort by total amount (or units) descending
+                displayedData.sort((a, b) => b.totalAmount - a.totalAmount);
+            } else {
+                // Regular Teacher View Sort
+                displayedData = allData
+                    .filter(d => d.className === activeTab)
+                    .sort((a, b) => b.amount - a.amount);
+            }
 
             const handleDownloadPoster = () => {
                 if(displayedData.length === 0) return;
                 setIsDownloading(true);
                 setPosterData({
                     className: activeTab,
-                    items: displayedData
+                    items: displayedData,
+                    isJamiaView: isJamiaView
                 });
             };
 
@@ -259,21 +275,20 @@
 
             return (
                 <div className="min-h-screen bg-gray-50 pb-10">
-                    {/* Render off-screen Poster */}
                     {posterData && ReactDOM.createPortal(<ListPoster data={posterData} />, posterContainerRef.current)}
 
                     <div className="max-w-7xl mx-auto p-4 sm:p-6">
                         
-                        {/* Header */}
                         <header className="mb-6 text-center">
                              <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-indigo-600 tracking-wide">
                                 TELETHON 2026
                             </h1>
                             <p className="text-xl sm:text-2xl font-['Bebas_Neue'] text-slate-600 tracking-widest mt-2">LIVE LEADERBOARD</p>
-                            <p className="text-sm text-slate-500 mt-2">Class-wise Live Registration & Amount Status</p>
+                            <p className="text-sm text-slate-500 mt-2">
+                                {isJamiaView ? "Overall Jamiaat Ranking based on Total Units" : "Class-wise Live Registration & Amount Status"}
+                            </p>
                         </header>
 
-                        {/* Class Tabs */}
                         <nav className="mb-6">
                             <div className="flex flex-wrap gap-2 justify-center">
                                 {allClasses.map((opt) => (
@@ -288,7 +303,6 @@
                             </div>
                         </nav>
 
-                        {/* Main Content Box */}
                         <main className="bg-white border rounded-2xl p-4 sm:p-6 shadow-xl relative min-h-[400px]">
                             
                             {isLoading && (
@@ -300,12 +314,11 @@
                                 </div>
                             )}
 
-                            {/* Section Title & Download Button */}
                             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
                                 <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 uppercase flex items-center gap-3">
                                     {activeTab} 
                                     <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">
-                                        {displayedData.length} Teachers
+                                        {displayedData.length} {isJamiaView ? 'Jamiaat' : 'Teachers'}
                                     </span>
                                 </h2>
                                 <button 
@@ -318,73 +331,114 @@
                                 </button>
                             </div>
 
-                            {/* Table Structure (Desktop) */}
+                            {/* --- DESKTOP TABLE VIEW --- */}
                             <div className="hidden md:block">
-                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider">
-                                    <div className="col-span-1">Rank</div>
-                                    <div className="col-span-3">Ustaz Name</div>
-                                    <div className="col-span-4">Jamia Name</div>
-                                    <div className="col-span-1 text-center">Region</div>
-                                    <div className="col-span-2 text-right text-emerald-600">Total Amount</div>
-                                    <div className="col-span-1 text-right text-sky-500">Units</div>
-                                </div>
-                                <div className="space-y-2 mt-2">
-                                    {displayedData.map((it, idx) => (
-                                        <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
-                                            <div className="col-span-3 font-semibold text-slate-800">
-                                                {it.ustazName}
-                                                {activeTab === 'All Jamiaat' && <div className="text-xs text-indigo-500 mt-0.5">{it.displayClass}</div>}
-                                            </div>
-                                            <div className="col-span-4 font-bold text-indigo-600">{it.jamiaName}</div>
-                                            <div className="col-span-1 text-center">
-                                                <div className="text-sm font-bold text-slate-700">{it.region}</div>
-                                                <div className="text-xs text-slate-500">{it.state}</div>
-                                            </div>
-                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-emerald-600 text-lg tracking-wide">
-                                                ₹{it.amount.toLocaleString('en-IN')}
-                                            </div>
-                                            <div className="col-span-1 text-right font-bold text-sky-600 bg-sky-50 py-1 px-2 rounded-lg border border-sky-100 text-sm w-fit ml-auto">
-                                                {it.units}
-                                            </div>
+                                {isJamiaView ? (
+                                    // DESKTOP: JAMIA VIEW (No Amount, No Teacher Name, Only Units)
+                                    <div>
+                                        <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider">
+                                            <div className="col-span-1">Rank</div>
+                                            <div className="col-span-5">Jamia Name</div>
+                                            <div className="col-span-3 text-center">Region</div>
+                                            <div className="col-span-1 text-center">Teachers</div>
+                                            <div className="col-span-2 text-right text-sky-500">Total Units</div>
                                         </div>
-                                    ))}
-                                    {displayedData.length === 0 && !isLoading && (
-                                        <div className="text-slate-500 p-8 text-center font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                                            Is class me abhi kisi ustad ki entry nahi aayi hai.
+                                        <div className="space-y-2 mt-2">
+                                            {displayedData.map((it, idx) => (
+                                                <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
+                                                    <div className="col-span-5 font-bold text-indigo-600 text-lg">{it.jamiaName}</div>
+                                                    <div className="col-span-3 text-center font-bold text-slate-700">{it.region}</div>
+                                                    <div className="col-span-1 text-center font-semibold text-slate-500 bg-slate-50 py-1 rounded-md">{it.teacherCount}</div>
+                                                    <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    // DESKTOP: TEACHER VIEW (Rank, Ustaz, Jamia, Amount, Units)
+                                    <div>
+                                        <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider">
+                                            <div className="col-span-1">Rank</div>
+                                            <div className="col-span-3">Ustaz Name</div>
+                                            <div className="col-span-4">Jamia Name</div>
+                                            <div className="col-span-1 text-center">Region</div>
+                                            <div className="col-span-2 text-right text-emerald-600">Total Amount</div>
+                                            <div className="col-span-1 text-right text-sky-500">Units</div>
+                                        </div>
+                                        <div className="space-y-2 mt-2">
+                                            {displayedData.map((it, idx) => (
+                                                <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
+                                                    <div className="col-span-3 font-semibold text-slate-800">{it.ustazName}</div>
+                                                    <div className="col-span-4 font-bold text-indigo-600">{it.jamiaName}</div>
+                                                    <div className="col-span-1 text-center">
+                                                        <div className="text-sm font-bold text-slate-700">{it.region}</div>
+                                                        <div className="text-xs text-slate-500">{it.state}</div>
+                                                    </div>
+                                                    <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-emerald-600 text-lg tracking-wide">
+                                                        ₹{it.amount.toLocaleString('en-IN')}
+                                                    </div>
+                                                    <div className="col-span-1 text-right font-bold text-sky-600 bg-sky-50 py-1 px-2 rounded-lg border border-sky-100 text-sm w-fit ml-auto">
+                                                        {it.units}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {displayedData.length === 0 && !isLoading && (
+                                    <div className="text-slate-500 p-8 text-center font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                                        Data abhi mojood nahi hai.
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Mobile Structure */}
+                            {/* --- MOBILE TABLE VIEW --- */}
                             <div className="md:hidden space-y-3 mt-4">
                                 {displayedData.map((it, idx) => (
                                     <div key={it.id} className="p-4 rounded-xl shadow-sm bg-white border border-slate-100 relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 bg-gradient-to-l from-emerald-100 to-transparent p-2 rounded-bl-xl text-emerald-700 font-bold text-sm">
+                                        <div className={`absolute top-0 right-0 bg-gradient-to-l ${isJamiaView ? 'from-sky-100' : 'from-emerald-100'} to-transparent p-2 rounded-bl-xl ${isJamiaView ? 'text-sky-700' : 'text-emerald-700'} font-bold text-sm`}>
                                             Rank #{idx + 1}
                                         </div>
+                                        
                                         <div className="border-b pb-3 mb-3 pr-20">
-                                            <div className="font-bold text-slate-800 text-lg">
-                                                {it.ustazName}
-                                            </div>
-                                            <div className="text-xs font-semibold text-indigo-500">{activeTab === 'All Jamiaat' ? it.displayClass : it.jamiaName}</div>
+                                            {isJamiaView ? (
+                                                <div>
+                                                    <div className="font-bold text-indigo-700 text-xl leading-tight mb-1">{it.jamiaName}</div>
+                                                    <div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers Registered</div>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <div className="font-bold text-slate-800 text-lg">{it.ustazName}</div>
+                                                    <div className="text-xs font-semibold text-indigo-500">{it.jamiaName}</div>
+                                                </div>
+                                            )}
                                         </div>
+                                        
                                         <div className="grid grid-cols-3 gap-2 text-sm items-center">
                                             <div className="col-span-1">
                                                 <span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span>
                                                 <span className="font-semibold text-slate-600">{it.region}</span>
                                             </div>
-                                            <div className="col-span-2 flex flex-col items-end">
-                                                <span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span>
-                                                <span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span>
-                                            </div>
+                                            
+                                            {isJamiaView ? (
+                                                <div className="col-span-2 flex flex-col items-end">
+                                                    <span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span>
+                                                    <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span>
+                                                </div>
+                                            ) : (
+                                                <div className="col-span-2 flex flex-col items-end">
+                                                    <span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span>
+                                                    <span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                                 {displayedData.length === 0 && !isLoading && (
                                     <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                                        Is class me abhi kisi ki entry nahi hai.
+                                        Data abhi mojood nahi hai.
                                     </div>
                                 )}
                             </div>
