@@ -1,26 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telethon 2026 - Admin Panel (Updated)</title>
+    <title>Telethon 2026 - Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    
-    <!-- Utilities -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
     <style>body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; } .hidden { display: none !important; }</style>
 </head>
 <body class="p-6">
-
     <div class="max-w-7xl mx-auto">
         <!-- Header & Tabs -->
         <header class="mb-6 flex flex-col md:flex-row justify-between items-center bg-indigo-600 text-white p-4 rounded-xl shadow-lg gap-4">
@@ -31,25 +24,20 @@
             <div class="flex gap-2 bg-indigo-800 p-1 rounded-lg flex-wrap justify-center">
                 <button onclick="switchTab('zimmedarTab')" id="btnZimmedar" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition">Zimmedar Manage</button>
                 <button onclick="switchTab('asatizaTab')" id="btnAsatiza" class="px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition">Asatiza Detail</button>
-                <!-- NAYA TAB BUTTON -->
                 <button onclick="switchTab('settingsTab')" id="btnSettings" class="px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition">Dashboard Settings</button>
             </div>
         </header>
 
-        <!-- ========================================== -->
-        <!-- TAB 1: ZIMMEDAR MANAGE -->
-        <!-- ========================================== -->
+        <!-- ZIMMEDAR MANAGE TAB -->
         <div id="zimmedarTab" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2" id="zimmedarFormTitle">Naya Zimmedar Add Karein</h2>
                 <form id="createUserForm" class="space-y-4">
                     <input type="hidden" id="zimmedarDocId">
-                    
                     <div>
                         <label class="block text-sm font-semibold">Zimmedar Ka Naam</label>
                         <input type="text" id="ustazName" required class="w-full px-3 py-2 border rounded-lg">
                     </div>
-                    
                     <div>
                         <label class="block text-sm font-semibold">Assign Class</label>
                         <select id="assignedClass" required class="w-full px-3 py-2 border rounded-lg">
@@ -82,7 +70,6 @@
                     <button type="button" id="cancelEditZimmedarBtn" onclick="resetZimmedarForm()" class="hidden w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:bg-slate-300 mt-2">Cancel Edit</button>
                 </form>
             </div>
-
             <div class="col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-200">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Registered Zimmedars</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
@@ -103,10 +90,7 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-100 text-slate-600 text-sm">
-                                <th class="p-3 border-b">Username</th>
-                                <th class="p-3 border-b">Zimmedar Name</th>
-                                <th class="p-3 border-b">Class</th>
-                                <th class="p-3 border-b text-center">Action</th>
+                                <th class="p-3 border-b">Username</th><th class="p-3 border-b">Zimmedar Name</th><th class="p-3 border-b">Class</th><th class="p-3 border-b text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="userTableBody" class="text-sm"></tbody>
@@ -115,81 +99,49 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- TAB 2: ASATIZA REPORT -->
-        <!-- ========================================== -->
+        <!-- ASATIZA REPORT TAB -->
         <div id="asatizaTab" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200">
             <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 border-b pb-4">
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    Asatiza Records
-                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Live Updates</span>
-                </h2>
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">Asatiza Records<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Live Updates</span></h2>
                 <div class="flex flex-wrap justify-end gap-3 w-full md:w-auto">
                     <div class="relative w-full sm:w-64">
                         <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Jamia, Naam, Zimmedar ya Class..." class="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-indigo-500">
                         <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <button onclick="downloadTableAsImage(event)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap shadow-sm">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Download List Image</span>
-                    </button>
-                    <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Export Excel
-                    </button>
+                    <button onclick="downloadTableAsImage(event)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap shadow-sm"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span>Download List Image</span></button>
+                    <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Export Excel</button>
                 </div>
             </div>
-
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse" id="asatizaMainTable">
                     <thead>
                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider">
-                            <th class="p-3 border-b font-bold">Sr.</th>
-                            <th class="p-3 border-b font-semibold">Photo</th>
-                            <th class="p-3 border-b font-semibold">Ustaz Name</th>
-                            <th class="p-3 border-b font-semibold">Jamia Name</th>
-                            <th class="p-3 border-b font-bold text-indigo-700">Zimmedar</th>
-                            <th class="p-3 border-b font-semibold">Region & State</th>
-                            <th class="p-3 border-b font-semibold">Mobile No.</th>
-                            <th class="p-3 border-b font-semibold">Darja (Class)</th>
-                            <th class="p-3 border-b font-semibold">Date</th>
-                            <th class="p-3 border-b font-semibold text-center">Action</th>
+                            <th class="p-3 border-b font-bold">Sr.</th><th class="p-3 border-b font-semibold">Photo</th><th class="p-3 border-b font-semibold">Ustaz Name</th><th class="p-3 border-b font-semibold">Jamia Name</th><th class="p-3 border-b font-bold text-indigo-700">Zimmedar</th><th class="p-3 border-b font-semibold">Region & State</th><th class="p-3 border-b font-semibold">Mobile No.</th><th class="p-3 border-b font-semibold">Darja (Class)</th><th class="p-3 border-b font-semibold">Date</th><th class="p-3 border-b font-semibold text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="asatizaTableBody" class="text-sm">
-                        <tr><td colspan="10" class="p-4 text-center text-slate-500">Loading records...</td></tr>
-                    </tbody>
+                    <tbody id="asatizaTableBody" class="text-sm"><tr><td colspan="10" class="p-4 text-center text-slate-500">Loading records...</td></tr></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- TAB 3: DASHBOARD SETTINGS (NAYA TAB) -->
-        <!-- ========================================== -->
+        <!-- DASHBOARD SETTINGS TAB -->
         <div id="settingsTab" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- 1. Header Setting -->
+            <!-- 1. Live Header Change -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-indigo-900">1. Live Header Change</h2>
-                <label class="block text-sm font-semibold mb-1 text-slate-600">Heading Text</label>
-                <input type="text" id="headerText" placeholder="Eg. TELETHON 2026" class="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 outline-none">
-                
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-indigo-900">1. Sub-Heading Live Change</h2>
+                <label class="block text-sm font-semibold mb-1 text-slate-600">Line 1 Text (Eg. FINAL BIG TELETHON DAY)</label>
+                <input type="text" id="line1Text" placeholder="Pehli Line yahan likhein" class="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 outline-none">
                 <div class="flex gap-4 mb-4">
-                    <div class="w-1/3">
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Color</label>
-                        <input type="color" id="headerColor" value="#4f46e5" class="w-full h-10 border rounded-lg cursor-pointer p-1">
-                    </div>
                     <div class="w-2/3">
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Font Style</label>
-                        <select id="headerFont" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option value="Bebas Neue">Bebas Neue</option>
-                            <option value="Poppins">Poppins</option>
-                            <option value="Inter">Inter</option>
-                            <option value="Bowlby One SC">Bowlby One</option>
-                        </select>
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Line 2 Text (Eg. GREAT GRAND FINAL)</label>
+                        <input type="text" id="line2Text" placeholder="Dusri Line yahan likhein" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div class="w-1/3">
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Line 2 Color</label>
+                        <input type="color" id="line2Color" value="#f59e0b" class="w-full h-10 border rounded-lg cursor-pointer p-1">
                     </div>
                 </div>
-                <button onclick="updateHeader(event)" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-indigo-700 transition shadow-md">Update Header LIVE</button>
+                <button onclick="updateHeader(event)" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-indigo-700 transition shadow-md">Update Sub-Headings LIVE</button>
             </div>
 
             <!-- 2. Countdown Setting -->
@@ -197,13 +149,10 @@
                 <h2 class="text-lg font-bold mb-4 border-b pb-2 text-emerald-700">2. Result Countdown Settings</h2>
                 <label class="block text-sm font-semibold mb-1 text-slate-600">Time Kab Khatam Hoga?</label>
                 <input type="datetime-local" id="endTime" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-emerald-500 outline-none">
-                
                 <label class="block text-sm font-semibold mb-1 text-slate-600">Result Kitni Der Baad Dikhana Hai? (Minutes)</label>
                 <input type="number" id="resultDelay" placeholder="Eg. 5 (5 min baad result aayega)" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-emerald-500 outline-none">
-                
                 <label class="block text-sm font-semibold mb-1 text-slate-600">Top 3 Ke Sath Message</label>
                 <input type="text" id="resultMessage" placeholder="Eg. Mubarak Ho Top 3 Winners Ko!" class="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-emerald-500 outline-none">
-                
                 <button onclick="updateCountdown(event)" class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-emerald-700 transition shadow-md">Start Countdown</button>
             </div>
 
@@ -226,79 +175,40 @@
                 <button onclick="addCompetition(event)" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-amber-700 transition shadow-md">Save Match</button>
             </div>
         </div>
-
     </div>
 
-    <!-- Modals (Edit, Image) remian same -->
+    <!-- Modals -->
     <div id="imageModal" class="fixed inset-0 bg-black/80 hidden z-[60] flex items-center justify-center p-4" onclick="closeImageModal()">
         <img id="modalImage" src="" referrerpolicy="no-referrer" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl" onclick="event.stopPropagation()">
-        <button class="absolute top-4 right-4 text-white hover:text-gray-300" onclick="closeImageModal()">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        <button class="absolute top-4 right-4 text-white hover:text-gray-300" onclick="closeImageModal()"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
     </div>
-
+    
     <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
                 <h3 class="text-white font-bold text-lg">Edit Record</h3>
-                <button onclick="closeEditModal()" class="text-white/80 hover:text-white transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                <button onclick="closeEditModal()" class="text-white/80 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
             <form id="editRecordForm" class="p-6 space-y-4">
                 <input type="hidden" id="editDocId">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Ustaz Name</label>
-                    <input type="text" id="editUstazName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Ustaz Name</label><input type="text" id="editUstazName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Jamia Name</label><input type="text" id="editJamiaName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Mobile No</label><input type="tel" id="editMobileNo" required maxlength="10" pattern="[0-9]{10}" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Jamia Name</label>
-                        <input type="text" id="editJamiaName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Mobile No</label>
-                        <input type="tel" id="editMobileNo" required maxlength="10" pattern="[0-9]{10}" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                    </div>
+                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Region</label><input type="text" id="editRegion" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
+                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">State</label><input type="text" id="editState" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Region</label>
-                        <input type="text" id="editRegion" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">State</label>
-                        <input type="text" id="editState" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                    </div>
+                <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Class (Darja)</label>
+                    <select id="editClassName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                        <option value="Prep Class">Prep Class</option><option value="Hifz Class">Hifz Class</option><option value="Ibtidaiya">Ibtidaiya</option><option value="Sale Awwal">Sale Awwal</option><option value="Sale Duwam">Sale Duwam</option><option value="Sale Duwam Khususi">Sale Duwam Khususi</option><option value="Ula">Ula</option><option value="Saniya">Saniya</option><option value="Salisa">Salisa</option><option value="Rabia">Rabia</option><option value="Khamisa">Khamisa</option><option value="Sadisa">Sadisa</option><option value="Sabia">Sabia</option><option value="Doratul Hadis">Doratul Hadis</option>
+                    </select>
                 </div>
-                <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Class (Darja)</label>
-                        <select id="editClassName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                            <option value="Prep Class">Prep Class</option>
-                            <option value="Hifz Class">Hifz Class</option>
-                            <option value="Ibtidaiya">Ibtidaiya</option>
-                            <option value="Sale Awwal">Sale Awwal</option>
-                            <option value="Sale Duwam">Sale Duwam</option>
-                            <option value="Sale Duwam Khususi">Sale Duwam Khususi</option>
-                            <option value="Ula">Ula</option>
-                            <option value="Saniya">Saniya</option>
-                            <option value="Salisa">Salisa</option>
-                            <option value="Rabia">Rabia</option>
-                            <option value="Khamisa">Khamisa</option>
-                            <option value="Sadisa">Sadisa</option>
-                            <option value="Sabia">Sabia</option>
-                            <option value="Doratul Hadis">Doratul Hadis</option>
-                        </select>
-                </div>
-                <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Section</label>
-                        <select id="editSection" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                            <option value="">Koi Nahi</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                        </select>
+                <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Section</label>
+                    <select id="editSection" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                        <option value="">Koi Nahi</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                    </select>
                 </div>
                 <div class="pt-4 border-t border-slate-100 flex gap-3 justify-end">
                     <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
@@ -309,19 +219,7 @@
     </div>
 
     <script>
-        // ========================================================
-        // 🛑 APNA FIREBASE CONFIG YAHAN PASTE KAREIN 🛑
-        // ========================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg",
-            authDomain: "telethon-28c88.firebaseapp.com",
-            projectId: "telethon-28c88",
-            storageBucket: "telethon-28c88.firebasestorage.app",
-            messagingSenderId: "609452116316",
-            appId: "1:609452116316:web:e940fc5dc4537b34551999",
-            measurementId: "G-FYS0PJLQQB"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg", authDomain: "telethon-28c88.firebaseapp.com", projectId: "telethon-28c88", storageBucket: "telethon-28c88.firebasestorage.app", messagingSenderId: "609452116316", appId: "1:609452116316:web:e940fc5dc4537b34551999", measurementId: "G-FYS0PJLQQB" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
@@ -330,51 +228,39 @@
         function getDirectImageUrl(url) {
             if (!url) return "";
             const match = url.match(/[-\w]{25,}/); 
-            if (match && match[0]) {
-                return `https://lh3.googleusercontent.com/d/${match[0]}`;
-            }
+            if (match && match[0]) return `https://lh3.googleusercontent.com/d/${match[0]}`;
             return url;
         }
 
-        // --- TAB SWITCH LOGIC (UPDATED WITH SETTINGS) ---
         function switchTab(tabId) {
             document.getElementById('zimmedarTab').classList.add('hidden');
             document.getElementById('asatizaTab').classList.add('hidden');
-            document.getElementById('settingsTab').classList.add('hidden'); // Naya Tab
-
+            document.getElementById('settingsTab').classList.add('hidden');
             document.getElementById('btnZimmedar').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
             document.getElementById('btnAsatiza').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
             document.getElementById('btnSettings').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
-
             document.getElementById(tabId).classList.remove('hidden');
-            
-            if(tabId === 'zimmedarTab') {
-                document.getElementById('btnZimmedar').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
-            } else if(tabId === 'asatizaTab') {
-                document.getElementById('btnAsatiza').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
-            } else {
-                document.getElementById('btnSettings').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
-            }
+            if(tabId === 'zimmedarTab') document.getElementById('btnZimmedar').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
+            else if(tabId === 'asatizaTab') document.getElementById('btnAsatiza').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
+            else document.getElementById('btnSettings').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
         }
 
-        // --- DASHBOARD SETTINGS LOGIC (NAYA CODE) ---
+        // --- UPDATED DASHBOARD SETTINGS LOGIC ---
         function updateHeader(event) {
-            const text = document.getElementById('headerText').value.trim();
-            const color = document.getElementById('headerColor').value;
-            const font = document.getElementById('headerFont').value;
+            const line1 = document.getElementById('line1Text').value.trim();
+            const line2 = document.getElementById('line2Text').value.trim();
+            const color2 = document.getElementById('line2Color').value;
             
-            if(!text) { alert("Please heading text likhein"); return; }
-
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = "Updating..."; btn.disabled = true;
 
             db.collection('settings').doc('dashboard').set({
-                text: text,
-                color: color,
-                font: font
+                line1Text: line1,
+                line2Text: line2,
+                line2Color: color2
             }, {merge: true}).then(() => {
-                alert("✅ Header Updated LIVE on Dashboard!");
+                alert("✅ Sub-Headings Updated LIVE on Dashboard!");
             }).catch(err => alert("Error: " + err.message))
             .finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
@@ -383,103 +269,53 @@
             const endTime = document.getElementById('endTime').value;
             const delayMinutes = document.getElementById('resultDelay').value;
             const message = document.getElementById('resultMessage').value;
-
             if(!endTime || !delayMinutes) { alert("Waqt aur delay dono set karein"); return; }
-
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = "Starting..."; btn.disabled = true;
-
-            db.collection('settings').doc('timer').set({
-                endTime: endTime,
-                delayMinutes: parseInt(delayMinutes),
-                message: message
-            }).then(() => {
+            db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message }).then(() => {
                 alert("✅ Countdown Started on Dashboard!");
-            }).catch(err => alert("Error: " + err.message))
-            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+            }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
         function addCompetition(event) {
             const teamA = document.getElementById('teamA').value.trim();
             const teamB = document.getElementById('teamB').value.trim();
-
             if(!teamA || !teamB) { alert("Dono teams ka naam likhein"); return; }
-
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = "Saving..."; btn.disabled = true;
-
-            db.collection('competitions').add({
-                teamA: teamA,
-                teamB: teamB,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
+            db.collection('competitions').add({ teamA: teamA, teamB: teamB, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => {
                 alert("✅ Match Saved to Dashboard!");
-                document.getElementById('teamA').value = "";
-                document.getElementById('teamB').value = "";
-            }).catch(err => alert("Error: " + err.message))
-            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+                document.getElementById('teamA').value = ""; document.getElementById('teamB').value = "";
+            }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
-        
-        // --- BAAQI PURANA ZIMMEDAR AUR ASATIZA CODE SAME RAKHA HAI ---
         
         let zimmedarDataMap = {};
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             const isEditing = document.getElementById('zimmedarDocId').value !== "";
-            
-            btn.innerHTML = isEditing ? "Updating..." : "Creating..."; 
-            btn.disabled = true;
-
+            btn.innerHTML = isEditing ? "Updating..." : "Creating..."; btn.disabled = true;
             const ustazName = document.getElementById('ustazName').value.trim();
             const assignedClass = document.getElementById('assignedClass').value;
             const username = document.getElementById('username').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
-            
             if (isEditing) {
                 const docId = document.getElementById('zimmedarDocId').value;
                 try {
-                    await db.collection('users').doc(docId).update({
-                        username: username, 
-                        ustazName: ustazName, 
-                        assignedClass: assignedClass
-                    });
-                    alert("✅ Zimmedar successfully update ho gaya!");
-                    resetZimmedarForm();
-                } catch (error) { 
-                    alert("❌ Error: " + error.message); 
-                } finally { 
-                    btn.innerHTML = "Account Banayein"; 
-                    btn.disabled = false; 
-                }
+                    await db.collection('users').doc(docId).update({ username: username, ustazName: ustazName, assignedClass: assignedClass });
+                    alert("✅ Zimmedar successfully update ho gaya!"); resetZimmedarForm();
+                } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
             } else {
-                if(!password) {
-                    alert("Kripya password darj karein.");
-                    btn.innerHTML = "Account Banayein"; 
-                    btn.disabled = false; 
-                    return;
-                }
+                if(!password) { alert("Kripya password darj karein."); btn.innerHTML = "Account Banayein"; btn.disabled = false; return; }
                 const fakeEmail = username + "@telethon.com";
                 try {
                     const userCredential = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, password);
                     await secondaryAuth.signOut();
-                    await db.collection('users').doc(userCredential.user.uid).set({
-                        username: username, 
-                        ustazName: ustazName, 
-                        assignedClass: assignedClass, 
-                        role: "zimmedar",
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    alert("✅ Zimmedar ka account successfully ban gaya!");
-                    resetZimmedarForm();
-                } catch (error) { 
-                    alert("❌ Error: " + error.message); 
-                } finally { 
-                    btn.innerHTML = "Account Banayein"; 
-                    btn.disabled = false; 
-                }
+                    await db.collection('users').doc(userCredential.user.uid).set({ username: username, ustazName: ustazName, assignedClass: assignedClass, role: "zimmedar", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    alert("✅ Zimmedar ka account successfully ban gaya!"); resetZimmedarForm();
+                } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
             }
         });
 
@@ -500,57 +336,28 @@
             tbody.innerHTML = snapshot.empty ? '<tr><td colspan="4" class="p-4 text-center text-slate-500">Koi zimmedar add nahi hua abhi.</td></tr>' : "";
             zimmedarDataMap = {};
             snapshot.forEach((doc) => {
-                const data = doc.data();
-                data.docId = doc.id;
-                zimmedarDataMap[doc.id] = data;
-                tbody.innerHTML += `<tr class="border-b hover:bg-slate-50">
-                    <td class="p-3 font-semibold text-indigo-600">${data.username}</td>
-                    <td class="p-3">${data.ustazName}</td>
-                    <td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">${data.assignedClass}</span></td>
-                    <td class="p-3 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <button onclick="editZimmedar('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            </button>
-                            <button onclick="deleteZimmedar('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                    </td>
-                </tr>`;
+                const data = doc.data(); data.docId = doc.id; zimmedarDataMap[doc.id] = data;
+                tbody.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-semibold text-indigo-600">${data.username}</td><td class="p-3">${data.ustazName}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">${data.assignedClass}</span></td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2"><button onclick="editZimmedar('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteZimmedar('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`;
             });
         });
 
         function editZimmedar(docId) {
-            const data = zimmedarDataMap[docId];
-            if (!data) return;
+            const data = zimmedarDataMap[docId]; if (!data) return;
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            document.getElementById('zimmedarDocId').value = docId;
-            document.getElementById('ustazName').value = data.ustazName;
-            document.getElementById('assignedClass').value = data.assignedClass;
-            document.getElementById('username').value = data.username;
-            document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein";
-            document.getElementById('submitBtn').innerText = "Update Record";
-            document.getElementById('passwordDiv').classList.add('hidden');
-            document.getElementById('password').removeAttribute('required');
-            document.getElementById('username').setAttribute('disabled', 'disabled');
-            document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('zimmedarDocId').value = docId; document.getElementById('ustazName').value = data.ustazName; document.getElementById('assignedClass').value = data.assignedClass; document.getElementById('username').value = data.username;
+            document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein"; document.getElementById('submitBtn').innerText = "Update Record";
+            document.getElementById('passwordDiv').classList.add('hidden'); document.getElementById('password').removeAttribute('required');
+            document.getElementById('username').setAttribute('disabled', 'disabled'); document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed');
             document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
         }
 
         async function deleteZimmedar(docId) {
             if (confirm("Kya aap waqai is zimmedar ko delete karna chahte hain?")) {
-                try {
-                    await db.collection('users').doc(docId).delete();
-                } catch (error) {
-                    alert("Error: " + error.message);
-                }
+                try { await db.collection('users').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); }
             }
         }
 
-        let allAsatizaData = []; 
-        let currentFilteredData = [];
-        let asatizaDataList = [];
+        let allAsatizaData = []; let currentFilteredData = []; let asatizaDataList = [];
         const zimmedarList = {
             "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
             "BALAGHAT": "Akmal Kamal Madani", "BHOPAL": "Akmal Kamal Madani", "DEWAS": "Akmal Kamal Madani", "INDORE": "Akmal Kamal Madani", "JABALPUR": "Akmal Kamal Madani", "JABALPUR BYPASS": "Akmal Kamal Madani", "KATNI": "Akmal Kamal Madani", "MANDSAUR": "Akmal Kamal Madani",
@@ -567,14 +374,10 @@
             "BILASPUR": "Sarfaraz Madani", "RAIPUR": "Sarfaraz Madani", "AKOLA": "Sarfaraz Madani", "BHANDARA": "Sarfaraz Madani", "JALGAON": "Sarfaraz Madani", "KAMPTEE": "Sarfaraz Madani", "KARANJA": "Sarfaraz Madani", "KORADI": "Sarfaraz Madani", "MODEL JAMIA": "Sarfaraz Madani", "NAGPUR": "Sarfaraz Madani", "RAVER": "Sarfaraz Madani",
             "AHMEDNAGAR": "Irfan Misbahi", "BHANDUP": "Irfan Misbahi", "KALYAN": "Irfan Misbahi", "KARBALA MASJID GOVANDI": "Irfan Misbahi", "KHULDABAD": "Irfan Misbahi", "LATUR": "Irfan Misbahi", "MAHIM": "Irfan Misbahi", "MALEGAON": "Irfan Misbahi", "MITTI MASJID GOVANDI": "Irfan Misbahi", "MUMBAI": "Irfan Misbahi", "PUNE": "Irfan Misbahi", "SHAHADA": "Irfan Misbahi"
         };
-        
         db.collection('asatiza_details').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
             allAsatizaData = []; 
             snapshot.forEach((doc) => {
-                const data = doc.data();
-                data.docId = doc.id;
-                data.jamiaName = data.jamiaName || "N/A";
-                data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
+                const data = doc.data(); data.docId = doc.id; data.jamiaName = data.jamiaName || "N/A"; data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
                 allAsatizaData.push(data);
             });
             renderTableAndFilter(); 
@@ -583,188 +386,60 @@
         function renderTableAndFilter() {
             const tbody = document.getElementById('asatizaTableBody');
             const searchInput = document.getElementById("searchInput").value.toLowerCase();
-            
             currentFilteredData = allAsatizaData.filter(data => {
                 const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase();
                 return searchString.includes(searchInput);
             });
-
             currentFilteredData.sort((a, b) => a.jamiaName.localeCompare(b.jamiaName));
-
             const uniqueJamias = new Set(currentFilteredData.map(d => d.jamiaName)).size;
             const uniqueClasses = new Set(currentFilteredData.map(d => d.className)).size;
-            
             document.getElementById('countEntries').innerText = currentFilteredData.length;
             document.getElementById('countJamia').innerText = uniqueJamias;
             document.getElementById('countClass').innerText = uniqueClasses;
-
             asatizaDataList = [];
-            if (currentFilteredData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila.</td></tr>';
-                return;
-            }
-
-            let tableHTML = ""; 
-            window.renderedDataMap = {}; 
-            let serialNumber = 1; 
-
+            if (currentFilteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila.</td></tr>'; return; }
+            let tableHTML = ""; window.renderedDataMap = {}; let serialNumber = 1; 
             currentFilteredData.forEach(data => {
                 window.renderedDataMap[data.docId] = data; 
-                
-                const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
-                const dateStr = dateObj.toLocaleDateString('en-IN');
-                
+                const dateObj = data.timestamp ? data.timestamp.toDate() : new Date(); const dateStr = dateObj.toLocaleDateString('en-IN');
                 const directUrl = getDirectImageUrl(data.photoUrl);
-                const photoHtml = data.photoUrl 
-                    ? `<img src="${directUrl}" referrerpolicy="no-referrer" onclick="openImageModal('${directUrl}')" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:ring-2 ring-indigo-300 transition" alt="Photo">`
-                    : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs">No Pic</div>`;
-
+                const photoHtml = data.photoUrl ? `<img src="${directUrl}" referrerpolicy="no-referrer" onclick="openImageModal('${directUrl}')" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:ring-2 ring-indigo-300 transition" alt="Photo">` : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs">No Pic</div>`;
                 const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
-
-                asatizaDataList.push({
-                    "Sr. No": serialNumber, 
-                    "Ustaz Name": data.ustazName || "N/A",
-                    "Jamia Name": data.jamiaName,
-                    "Zimmedar Name": data.zimmedarName,
-                    "Region": data.region || "N/A",
-                    "State": data.state || "N/A",
-                    "Mobile No": data.mobileNo || "N/A",
-                    "Class (Darja)": classWithSection || "N/A",
-                    "Photo Link": directUrl || "N/A",
-                    "Submission Date": dateStr
-                });
-
-                tableHTML += `<tr class="border-b hover:bg-slate-50 search-row" id="row-${data.docId}">
-                    <td class="p-3 font-bold text-slate-500 text-xs">${serialNumber}</td>
-                    <td class="p-2">${photoHtml}</td>
-                    <td class="p-3 font-semibold text-slate-800">${data.ustazName || "N/A"}</td>
-                    <td class="p-3 font-bold text-indigo-700">${data.jamiaName}</td>
-                    <td class="p-3 text-sm font-bold text-slate-700 bg-slate-100 rounded-lg border-x-4 border-white">${data.zimmedarName}</td>
-                    <td class="p-3">
-                        <div class="text-sm font-semibold">${data.region || "N/A"}</div>
-                        <div class="text-xs text-slate-500">${data.state || "N/A"}</div>
-                    </td>
-                    <td class="p-3 font-semibold text-emerald-600">${data.mobileNo || "N/A"}</td>
-                    <td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">${classWithSection || "N/A"}</span></td>
-                    <td class="p-3 text-xs text-slate-500">${dateStr}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex items-center justify-center gap-2" data-html2canvas-ignore>
-                            <button onclick="openEditModal('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            </button>
-                            <button onclick="deleteEntry('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                    </td>
-                </tr>`;
+                asatizaDataList.push({ "Sr. No": serialNumber, "Ustaz Name": data.ustazName || "N/A", "Jamia Name": data.jamiaName, "Zimmedar Name": data.zimmedarName, "Region": data.region || "N/A", "State": data.state || "N/A", "Mobile No": data.mobileNo || "N/A", "Class (Darja)": classWithSection || "N/A", "Photo Link": directUrl || "N/A", "Submission Date": dateStr });
+                tableHTML += `<tr class="border-b hover:bg-slate-50 search-row" id="row-${data.docId}"><td class="p-3 font-bold text-slate-500 text-xs">${serialNumber}</td><td class="p-2">${photoHtml}</td><td class="p-3 font-semibold text-slate-800">${data.ustazName || "N/A"}</td><td class="p-3 font-bold text-indigo-700">${data.jamiaName}</td><td class="p-3 text-sm font-bold text-slate-700 bg-slate-100 rounded-lg border-x-4 border-white">${data.zimmedarName}</td><td class="p-3"><div class="text-sm font-semibold">${data.region || "N/A"}</div><div class="text-xs text-slate-500">${data.state || "N/A"}</div></td><td class="p-3 font-semibold text-emerald-600">${data.mobileNo || "N/A"}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">${classWithSection || "N/A"}</span></td><td class="p-3 text-xs text-slate-500">${dateStr}</td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2" data-html2canvas-ignore><button onclick="openEditModal('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteEntry('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`;
                 serialNumber++; 
             });
             tbody.innerHTML = tableHTML;
         }
 
         function openEditModal(docId) {
-            const data = window.renderedDataMap[docId];
-            if(!data) return;
-            document.getElementById('editDocId').value = docId;
-            document.getElementById('editUstazName').value = data.ustazName || '';
-            document.getElementById('editJamiaName').value = data.jamiaName || '';
-            document.getElementById('editMobileNo').value = data.mobileNo || '';
-            document.getElementById('editRegion').value = data.region || '';
-            document.getElementById('editState').value = data.state || '';
-            document.getElementById('editClassName').value = data.className || '';
+            const data = window.renderedDataMap[docId]; if(!data) return;
+            document.getElementById('editDocId').value = docId; document.getElementById('editUstazName').value = data.ustazName || ''; document.getElementById('editJamiaName').value = data.jamiaName || ''; document.getElementById('editMobileNo').value = data.mobileNo || ''; document.getElementById('editRegion').value = data.region || ''; document.getElementById('editState').value = data.state || ''; document.getElementById('editClassName').value = data.className || '';
             document.getElementById('editModal').classList.remove('hidden');
         }
 
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-            document.getElementById('editRecordForm').reset();
-        }
+        function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); document.getElementById('editRecordForm').reset(); }
 
         document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const docId = document.getElementById('editDocId').value;
-            const btn = document.getElementById('saveEditBtn');
-            btn.innerHTML = "Updating..."; btn.disabled = true;
-            try {
-                await db.collection('asatiza_details').doc(docId).update({
-                    ustazName: document.getElementById('editUstazName').value.trim(),
-                    jamiaName: document.getElementById('editJamiaName').value.trim(),
-                    mobileNo: document.getElementById('editMobileNo').value.trim(),
-                    region: document.getElementById('editRegion').value.trim(),
-                    state: document.getElementById('editState').value.trim(),
-                    className: document.getElementById('editClassName').value
-                });
-                closeEditModal();
-            } catch (error) {
-                alert("Error: " + error.message);
-            } finally {
-                btn.innerHTML = "Update Record"; btn.disabled = false;
-            }
+            e.preventDefault(); const docId = document.getElementById('editDocId').value; const btn = document.getElementById('saveEditBtn'); btn.innerHTML = "Updating..."; btn.disabled = true;
+            try { await db.collection('asatiza_details').doc(docId).update({ ustazName: document.getElementById('editUstazName').value.trim(), jamiaName: document.getElementById('editJamiaName').value.trim(), mobileNo: document.getElementById('editMobileNo').value.trim(), region: document.getElementById('editRegion').value.trim(), state: document.getElementById('editState').value.trim(), className: document.getElementById('editClassName').value }); closeEditModal(); } catch (error) { alert("Error: " + error.message); } finally { btn.innerHTML = "Update Record"; btn.disabled = false; }
         });
 
-        let searchTimeout;
-        function filterTable() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                renderTableAndFilter();
-            }, 300); 
-        }
-
-        async function deleteEntry(docId) {
-            if (confirm("Kya aap waqai is entry ko delete karna chahte hain?")) {
-                try {
-                    await db.collection('asatiza_details').doc(docId).delete();
-                } catch (error) {
-                    alert("Error: " + error.message);
-                }
-            }
-        }
-
-        function exportToExcel() {
-            if (asatizaDataList.length === 0) { alert("Koi data mojood nahi hai."); return; }
-            const worksheet = XLSX.utils.json_to_sheet(asatizaDataList);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Asatiza Details");
-            XLSX.writeFile(workbook, "Asatiza_Telethon_2026.xlsx");
-        }
+        let searchTimeout; function filterTable() { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { renderTableAndFilter(); }, 300); }
+        async function deleteEntry(docId) { if (confirm("Kya aap waqai is entry ko delete karna chahte hain?")) { try { await db.collection('asatiza_details').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); } } }
+        function exportToExcel() { if (asatizaDataList.length === 0) { alert("Koi data mojood nahi hai."); return; } const worksheet = XLSX.utils.json_to_sheet(asatizaDataList); const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Asatiza Details"); XLSX.writeFile(workbook, "Asatiza_Telethon_2026.xlsx"); }
 
         function downloadTableAsImage(event) {
-            const tableElement = document.getElementById('asatizaMainTable');
-            const btn = event.currentTarget;
-            const btnText = btn.querySelector('span');
-            const originalText = btnText.innerText;
-            btnText.innerText = "Processing...";
-            btn.classList.add("opacity-70", "cursor-wait");
-
-            html2canvas(tableElement, {
-                scale: 2, 
-                backgroundColor: "#ffffff", 
-                useCORS: true 
-            }).then(canvas => {
-                const searchVal = document.getElementById("searchInput").value.trim();
-                const fileName = searchVal ? `Telethon_List_${searchVal}.png` : 'Telethon_List_All.png';
-                const link = document.createElement('a');
-                link.download = fileName;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                btnText.innerText = originalText;
-                btn.classList.remove("opacity-70", "cursor-wait");
-            }).catch(error => {
-                alert("Error image generate karne mein.");
-                btnText.innerText = originalText;
-                btn.classList.remove("opacity-70", "cursor-wait");
-            });
+            const tableElement = document.getElementById('asatizaMainTable'); const btn = event.currentTarget; const btnText = btn.querySelector('span'); const originalText = btnText.innerText;
+            btnText.innerText = "Processing..."; btn.classList.add("opacity-70", "cursor-wait");
+            html2canvas(tableElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
+                const searchVal = document.getElementById("searchInput").value.trim(); const fileName = searchVal ? `Telethon_List_${searchVal}.png` : 'Telethon_List_All.png';
+                const link = document.createElement('a'); link.download = fileName; link.href = canvas.toDataURL('image/png'); link.click();
+                btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait");
+            }).catch(error => { alert("Error image generate karne mein."); btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait"); });
         }
-
-        function openImageModal(imgSrc) {
-            document.getElementById('modalImage').src = imgSrc;
-            document.getElementById('imageModal').classList.remove('hidden');
-        }
-        function closeImageModal() {
-            document.getElementById('imageModal').classList.add('hidden');
-            document.getElementById('modalImage').src = "";
-        }
+        function openImageModal(imgSrc) { document.getElementById('modalImage').src = imgSrc; document.getElementById('imageModal').classList.remove('hidden'); }
+        function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); document.getElementById('modalImage').src = ""; }
     </script>
 </body>
-</html>
+</html
