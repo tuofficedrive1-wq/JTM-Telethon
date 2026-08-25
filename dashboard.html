@@ -4,104 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telethon 2026 Live Leaderboard</title>
-    
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bowlby+One+SC&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- html2canvas for poster download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #4f46e5;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .tab-btn { transition: all 0.2s ease-in-out; }
-        
-        /* Custom Animations */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-100">
-
     <div id="root"></div>
     <div id="poster-container" style="position: absolute; left: -9999px; top: 0;"></div>
-
-    <!-- React CDN -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
-        // ========================================================
-        // 🛑 APNA FIREBASE CONFIG YAHAN PASTE KAREIN 🛑
-        // ========================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg",
-            authDomain: "telethon-28c88.firebaseapp.com",
-            projectId: "telethon-28c88",
-            storageBucket: "telethon-28c88.firebasestorage.app",
-            messagingSenderId: "609452116316",
-            appId: "1:609452116316:web:e940fc5dc4537b34551999",
-            measurementId: "G-FYS0PJLQQB"
-        };
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        const firebaseConfig = { apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg", authDomain: "telethon-28c88.firebaseapp.com", projectId: "telethon-28c88", storageBucket: "telethon-28c88.firebasestorage.app", messagingSenderId: "609452116316", appId: "1:609452116316:web:e940fc5dc4537b34551999", measurementId: "G-FYS0PJLQQB" };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
-
         const { useState, useEffect, useRef } = React;
 
-        // --- POSTER COMPONENT (For HTML2Canvas) ---
         const ListPoster = ({ data }) => {
             if (!data) return null;
             const { className, items, isJamiaView, isClassView } = data;
             const dateStr = new Date().toLocaleDateString('en-IN');
-
             return (
-                <div id="poster-to-download" style={{
-                    width: '1200px',
-                    minHeight: '800px',
-                    padding: '40px',
-                    background: 'linear-gradient(135deg, #f0f9ff, #eef2ff)',
-                    fontFamily: "'Inter', sans-serif",
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
+                <div id="poster-to-download" style={{ width: '1200px', minHeight: '800px', padding: '40px', background: 'linear-gradient(135deg, #f0f9ff, #eef2ff)', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                         <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '72px', color: '#1e3a8a', letterSpacing: '2px', margin: 0 }}>TELETHON 2026 LEADERBOARD</h1>
                         <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
                             {isClassView ? "OVERALL CLASSES RANKING" : isJamiaView ? "OVERALL JAMIAAT RANKING" : `ASATIZA RECORD - ${className}`}
                         </p>
                     </div>
-                    
                     <div style={{ flexGrow: 1 }}>
                         {isClassView ? (
                             <div>
@@ -164,232 +110,125 @@
             );
         };
 
-        // --- MAIN DASHBOARD COMPONENT ---
         function TelethoneDashboard() {
-            // NAYE TABS ADD KIYE GAYE ("Result" aur "Muqabla")
-            const allClasses = ['Result', 'Muqabla', 'All Jamiaat', 'All Classes', 'Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis'];
+            // Result aur Muqabla tabs ko aakhir me rakha gaya hai
+            const allClasses = ['All Jamiaat', 'All Classes', 'Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis', 'Result', 'Muqabla'];
             
             const [activeTab, setActiveTab] = useState("All Jamiaat");
             const [allData, setAllData] = useState([]);
             const [isLoading, setIsLoading] = useState(true);
-            
-            // --- NAYI STATES (Dashboard Settings ke liye) ---
             const [headerConfig, setHeaderConfig] = useState(null);
             const [timerConfig, setTimerConfig] = useState(null);
             const [competitions, setCompetitions] = useState([]);
             const [countdownStr, setCountdownStr] = useState("");
             const [showTop3, setShowTop3] = useState(false);
-            
             const [posterData, setPosterData] = useState(null);
             const [isDownloading, setIsDownloading] = useState(false);
             const posterContainerRef = useRef(null);
 
-            const getBaseClass = (className) => {
-                if (!className) return "N/A";
-                return className.replace(/\s+[A-D]$/i, '').trim();
-            };
+            const getBaseClass = (className) => { if (!className) return "N/A"; return className.replace(/\s+[A-D]$/i, '').trim(); };
 
-            // --- FIREBASE LISTENERS ---
             useEffect(() => {
                 posterContainerRef.current = document.getElementById('poster-container');
-                
-                // 1. Asatiza Data
                 const unsubAsatiza = db.collection('asatiza_details').onSnapshot(snapshot => {
                     const parsedData = snapshot.docs.map(doc => {
-                        const data = doc.data();
-                        const amt = parseFloat(data.amount) || 0;
-                        const unt = (amt / 7000).toFixed(1);
-                        return {
-                            id: doc.id,
-                            ustazName: data.ustazName || "N/A",
-                            jamiaName: data.jamiaName || "N/A",
-                            className: data.className || "N/A",
-                            region: data.region || "N/A",
-                            state: data.state || "N/A",
-                            amount: amt,
-                            units: unt,
-                            timestamp: data.timestamp
-                        };
+                        const data = doc.data(); const amt = parseFloat(data.amount) || 0; const unt = (amt / 7000).toFixed(1);
+                        return { id: doc.id, ustazName: data.ustazName || "N/A", jamiaName: data.jamiaName || "N/A", className: data.className || "N/A", region: data.region || "N/A", state: data.state || "N/A", amount: amt, units: unt, timestamp: data.timestamp };
                     });
-                    setAllData(parsedData);
-                    setIsLoading(false);
+                    setAllData(parsedData); setIsLoading(false);
                 }, err => { console.error(err); setIsLoading(false); });
-
-                // 2. Dashboard Header Settings
-                const unsubHeader = db.collection('settings').doc('dashboard').onSnapshot(doc => {
-                    if(doc.exists) setHeaderConfig(doc.data());
-                });
-
-                // 3. Timer Settings
-                const unsubTimer = db.collection('settings').doc('timer').onSnapshot(doc => {
-                    if(doc.exists) setTimerConfig(doc.data());
-                });
-
-                // 4. Competitions
-                const unsubComp = db.collection('competitions').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-                    setCompetitions(snapshot.docs.map(d => d.data()));
-                });
-
+                const unsubHeader = db.collection('settings').doc('dashboard').onSnapshot(doc => { if(doc.exists) setHeaderConfig(doc.data()); });
+                const unsubTimer = db.collection('settings').doc('timer').onSnapshot(doc => { if(doc.exists) setTimerConfig(doc.data()); });
+                const unsubComp = db.collection('competitions').orderBy('timestamp', 'desc').onSnapshot(snapshot => { setCompetitions(snapshot.docs.map(d => d.data())); });
                 return () => { unsubAsatiza(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, []);
 
-            // --- COUNTDOWN TICKER LOGIC ---
             useEffect(() => {
                 if (!timerConfig || !timerConfig.endTime) return;
                 const interval = setInterval(() => {
-                    const now = new Date().getTime();
-                    const target = new Date(timerConfig.endTime).getTime();
-                    const diff = target - now;
-                    
+                    const now = new Date().getTime(); const target = new Date(timerConfig.endTime).getTime(); const diff = target - now;
                     if (diff <= 0) {
-                        setCountdownStr("Time Up!");
-                        const delayMs = (timerConfig.delayMinutes || 0) * 60 * 1000;
-                        if (now >= target + delayMs) {
-                            setShowTop3(true);
-                        } else {
-                            setShowTop3(false);
-                        }
+                        setCountdownStr("Time Up!"); const delayMs = (timerConfig.delayMinutes || 0) * 60 * 1000;
+                        if (now >= target + delayMs) setShowTop3(true); else setShowTop3(false);
                     } else {
                         setShowTop3(false);
-                        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                        const s = Math.floor((diff % (1000 * 60)) / 1000);
-                        
-                        let timeStr = "";
-                        if(d > 0) timeStr += `${d}d `;
-                        timeStr += `${h}h ${m}m ${s}s`;
-                        setCountdownStr(timeStr);
+                        const d = Math.floor(diff / (1000 * 60 * 60 * 24)); const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); const s = Math.floor((diff % (1000 * 60)) / 1000);
+                        let timeStr = ""; if(d > 0) timeStr += `${d}d `; timeStr += `${h}h ${m}m ${s}s`; setCountdownStr(timeStr);
                     }
                 }, 1000);
                 return () => clearInterval(interval);
             }, [timerConfig]);
 
-            // --- TOP 3 CLASS CALCULATION LOGIC ---
             const getTop3PerClass = () => {
                 const classMap = {};
-                allData.forEach(d => {
-                    const baseClass = getBaseClass(d.className);
-                    if (baseClass === "N/A") return;
-                    if (!classMap[baseClass]) classMap[baseClass] = [];
-                    classMap[baseClass].push(d);
-                });
-                
-                const top3Data = [];
-                // Sort classes in predefined order to look good
-                const classOrder = ['Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis'];
-                
-                classOrder.forEach(cls => {
-                    if(classMap[cls]) {
-                        const sorted = classMap[cls].sort((a, b) => b.amount - a.amount).slice(0, 3);
-                        if(sorted.length > 0) {
-                            top3Data.push({ className: cls, winners: sorted });
-                        }
-                    }
-                });
+                allData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
+                const top3Data = []; const classOrder = ['Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis'];
+                classOrder.forEach(cls => { if(classMap[cls]) { const sorted = classMap[cls].sort((a, b) => b.amount - a.amount).slice(0, 3); if(sorted.length > 0) top3Data.push({ className: cls, winners: sorted }); } });
                 return top3Data;
             };
 
-            // Poster Generator
             useEffect(() => {
                 if (!posterData) return;
                 const generateImage = async () => {
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    const element = document.getElementById('poster-to-download');
+                    await new Promise(resolve => setTimeout(resolve, 300)); const element = document.getElementById('poster-to-download');
                     if(element && window.html2canvas) {
                         try {
-                            const canvas = await html2canvas(element, { useCORS: true, scale: 2, backgroundColor: null });
-                            const dataUrl = canvas.toDataURL('image/png');
-                            const link = document.createElement('a');
-                            link.href = dataUrl;
-                            link.download = `Telethon_2026_${posterData.className.replace(/\s+/g, '_')}_Leaderboard.png`;
-                            link.click();
-                        } catch(err) {
-                            console.error(err); alert("Poster banne mein masla aaya hai.");
-                        } finally {
-                            setPosterData(null); setIsDownloading(false);
-                        }
+                            const canvas = await html2canvas(element, { useCORS: true, scale: 2, backgroundColor: null }); const dataUrl = canvas.toDataURL('image/png'); const link = document.createElement('a'); link.href = dataUrl; link.download = `Telethon_2026_${posterData.className.replace(/\s+/g, '_')}_Leaderboard.png`; link.click();
+                        } catch(err) { console.error(err); alert("Poster banne mein masla aaya hai."); } finally { setPosterData(null); setIsDownloading(false); }
                     }
                 };
                 generateImage();
             }, [posterData]);
 
-            // Data Processing for Normal Tables
-            let displayedData = [];
-            const isJamiaView = activeTab === "All Jamiaat";
-            const isClassView = activeTab === "All Classes";
-            const isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
-
+            let displayedData = []; const isJamiaView = activeTab === "All Jamiaat"; const isClassView = activeTab === "All Classes"; const isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
             if (!isSpecialTab) {
                 if (isJamiaView) {
-                    const jamiaMap = {};
-                    allData.forEach(d => {
-                        if (!jamiaMap[d.jamiaName]) jamiaMap[d.jamiaName] = { id: d.jamiaName, jamiaName: d.jamiaName, region: d.region, totalAmount: 0, teacherCount: 0 };
-                        jamiaMap[d.jamiaName].totalAmount += d.amount;
-                        jamiaMap[d.jamiaName].teacherCount += 1;
-                    });
+                    const jamiaMap = {}; allData.forEach(d => { if (!jamiaMap[d.jamiaName]) jamiaMap[d.jamiaName] = { id: d.jamiaName, jamiaName: d.jamiaName, region: d.region, totalAmount: 0, teacherCount: 0 }; jamiaMap[d.jamiaName].totalAmount += d.amount; jamiaMap[d.jamiaName].teacherCount += 1; });
                     displayedData = Object.values(jamiaMap).map(j => ({ ...j, units: (j.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
                 } else if (isClassView) {
-                    const classMap = {};
-                    allData.forEach(d => {
-                        const baseClass = getBaseClass(d.className);
-                        if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 };
-                        classMap[baseClass].totalAmount += d.amount;
-                        classMap[baseClass].teacherCount += 1;
-                    });
+                    const classMap = {}; allData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
                     displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
                 } else {
                     displayedData = allData.filter(d => getBaseClass(d.className) === activeTab).sort((a, b) => b.amount - a.amount);
                 }
             }
 
-            const handleDownloadPoster = () => {
-                if(displayedData.length === 0) return;
-                setIsDownloading(true);
-                setPosterData({ className: activeTab, items: displayedData, isJamiaView: isJamiaView, isClassView: isClassView });
-            };
-
-            const DownloadIcon = () => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                </svg>
-            );
+            const handleDownloadPoster = () => { if(displayedData.length === 0) return; setIsDownloading(true); setPosterData({ className: activeTab, items: displayedData, isJamiaView: isJamiaView, isClassView: isClassView }); };
+            const DownloadIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> );
 
             return (
                 <div className="min-h-screen bg-gray-50 pb-10">
                     {posterData && ReactDOM.createPortal(<ListPoster data={posterData} />, posterContainerRef.current)}
 
                     <div className="max-w-7xl mx-auto p-4 sm:p-6">
-                        
-                        <header className="mb-6 text-center">
-                             {/* LIVE HEADER UPDATE */}
-                             <h1 className="text-5xl sm:text-7xl tracking-wide uppercase drop-shadow-sm transition-all" 
-                                 style={{ 
-                                     fontFamily: headerConfig?.font ? `'${headerConfig.font}', sans-serif` : "'Bebas Neue', cursive", 
-                                     color: headerConfig?.color || '#4f46e5' 
-                                 }}>
-                                {headerConfig?.text || 'TELETHON 2026'}
+                        {/* UPDATE: Header layout changed according to the new reference image */}
+                        <header className="mb-8 text-center">
+                            <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] text-blue-500 tracking-wider uppercase drop-shadow-sm mb-1">
+                                TELETHON 2026
                             </h1>
-                            <p className="text-xl sm:text-2xl font-['Bebas_Neue'] text-slate-600 tracking-widest mt-2">LIVE LEADERBOARD</p>
-                            <p className="text-sm text-slate-500 mt-2">
-                                {isSpecialTab ? "" : isClassView ? "Overall Classes Ranking based on Total Units" : isJamiaView ? "Overall Jamiaat Ranking based on Total Units" : "Class-wise Live Registration & Amount Status"}
+                            <h2 className="text-2xl sm:text-3xl font-['Bebas_Neue'] text-slate-500 tracking-widest uppercase">
+                                {headerConfig?.line1Text || 'LIVE LEADERBOARD'}
+                            </h2>
+                            {headerConfig?.line2Text && (
+                                <h3 className="text-3xl sm:text-4xl font-['Bebas_Neue'] tracking-widest uppercase mt-1 drop-shadow-sm" style={{ color: headerConfig?.line2Color || '#f59e0b' }}>
+                                    {headerConfig.line2Text}
+                                </h3>
+                            )}
+                            <p className="text-sm text-slate-500 mt-3 font-medium">
+                                {isSpecialTab ? "" : isClassView ? "Overall Classes Ranking based on Total Units" : isJamiaView ? "Overall Jamiaat Ranking based on Total Units" : "Jamia-tul-Madina India Class/Jamia Wise Positions"}
                             </p>
                         </header>
 
                         <nav className="mb-6">
                             <div className="flex flex-wrap gap-2 justify-center">
+                                {/* UPDATE: Buttons are now styled similarly and Result/Muqabla are just normal items */}
                                 {allClasses.map((opt) => (
                                     <button
                                         key={opt}
                                         onClick={() => setActiveTab(opt)}
                                         className={`tab-btn px-4 py-2 rounded-full font-semibold text-sm shadow-sm focus:outline-none 
-                                            ${opt === "Result" && activeTab !== "Result" ? "bg-rose-100 text-rose-700 hover:bg-rose-200 border-rose-200 border" : ""}
-                                            ${opt === "Muqabla" && activeTab !== "Muqabla" ? "bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200 border" : ""}
-                                            ${activeTab === opt ? "bg-indigo-600 text-white shadow-md scale-105" : 
-                                            (opt !== "Result" && opt !== "Muqabla") ? "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100" : ""}`}
+                                            ${activeTab === opt ? "bg-indigo-600 text-white shadow-md scale-105" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
                                     >
-                                        {opt === "Result" || opt === "Muqabla" ? <span className="mr-1">🔥</span> : null}
                                         {opt}
                                     </button>
                                 ))}
@@ -399,62 +238,33 @@
                         <main className="bg-white border rounded-2xl p-4 sm:p-6 shadow-xl relative min-h-[400px]">
                             {isLoading && (
                                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex justify-center items-center rounded-2xl">
-                                    <div className="flex flex-col items-center p-6">
-                                        <div className="loader w-10 h-10 mb-4 border-t-indigo-500 border-4"></div>
-                                        <span className="text-slate-500 font-semibold animate-pulse">Loading Data...</span>
-                                    </div>
+                                    <div className="flex flex-col items-center p-6"><div className="loader w-10 h-10 mb-4 border-t-indigo-500 border-4"></div><span className="text-slate-500 font-semibold animate-pulse">Loading Data...</span></div>
                                 </div>
                             )}
 
-                            {/* ========================================== */}
-                            {/* TAB: RESULT VIEW */}
-                            {/* ========================================== */}
                             {activeTab === "Result" && (
                                 <div className="text-center p-6 md:p-10 bg-gradient-to-br from-slate-50 to-indigo-50/50 rounded-2xl border border-indigo-100/50">
                                     {!timerConfig ? (
                                         <div className="text-xl text-slate-500 font-bold py-10">Admin ne abhi result timer set nahi kiya hai.</div>
                                     ) : (
                                         <div className="animate-fade-in-up">
-                                            <h2 className="text-3xl sm:text-4xl font-['Bebas_Neue'] text-indigo-900 tracking-wider mb-4">
-                                                {countdownStr !== "Time Up!" ? "TIME REMAINING FOR RESULT" : "STATUS"}
-                                            </h2>
-                                            
-                                            <div className={`text-4xl sm:text-7xl font-mono font-black mb-8 drop-shadow-sm ${countdownStr !== "Time Up!" ? 'text-indigo-600' : 'text-rose-600'}`}>
-                                                {countdownStr}
-                                            </div>
-                                            
-                                            {!showTop3 && countdownStr === "Time Up!" && (
-                                                <div className="inline-block bg-white px-6 py-3 rounded-full border border-indigo-100 shadow-sm animate-pulse text-xl font-bold text-indigo-600">
-                                                    Result is being prepared... Please wait! ⏳
-                                                </div>
-                                            )}
-
+                                            <h2 className="text-3xl sm:text-4xl font-['Bebas_Neue'] text-indigo-900 tracking-wider mb-4">{countdownStr !== "Time Up!" ? "TIME REMAINING FOR RESULT" : "STATUS"}</h2>
+                                            <div className={`text-4xl sm:text-7xl font-mono font-black mb-8 drop-shadow-sm ${countdownStr !== "Time Up!" ? 'text-indigo-600' : 'text-rose-600'}`}>{countdownStr}</div>
+                                            {!showTop3 && countdownStr === "Time Up!" && ( <div className="inline-block bg-white px-6 py-3 rounded-full border border-indigo-100 shadow-sm animate-pulse text-xl font-bold text-indigo-600">Result is being prepared... Please wait! ⏳</div> )}
                                             {showTop3 && (
                                                 <div className="mt-12 animate-fade-in-up">
-                                                    <h3 className="text-3xl sm:text-5xl font-['Bebas_Neue'] text-emerald-600 mb-10 tracking-wide bg-emerald-50 py-4 px-8 rounded-2xl inline-block border border-emerald-100 shadow-sm">
-                                                        🎉 {timerConfig.message || "MUBARAK HO TOP 3 WINNERS KO!"} 🎉
-                                                    </h3>
-                                                    
+                                                    <h3 className="text-3xl sm:text-5xl font-['Bebas_Neue'] text-emerald-600 mb-10 tracking-wide bg-emerald-50 py-4 px-8 rounded-2xl inline-block border border-emerald-100 shadow-sm">🎉 {timerConfig.message || "MUBARAK HO TOP 3 WINNERS KO!"} 🎉</h3>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-left">
                                                         {getTop3PerClass().map((clsData, i) => (
                                                             <div key={i} className="bg-white p-5 rounded-2xl shadow-md border border-slate-200 relative overflow-hidden transition-transform hover:-translate-y-1">
                                                                 <div className="absolute top-0 right-0 bg-indigo-600 text-white px-4 py-1 rounded-bl-xl font-bold text-xs uppercase tracking-wider shadow-sm">Top 3</div>
                                                                 <h4 className="text-xl sm:text-2xl font-['Bowlby_One_SC'] text-indigo-900 mb-4 border-b border-slate-100 pb-3 mt-2">{clsData.className}</h4>
-                                                                
                                                                 <div className="space-y-3">
                                                                     {clsData.winners.map((winner, idx) => (
                                                                         <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border ${idx === 0 ? 'bg-amber-50 border-amber-200' : idx === 1 ? 'bg-slate-50 border-slate-200' : 'bg-orange-50/50 border-orange-200/50'}`}>
-                                                                            <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-black text-lg ${idx === 0 ? 'bg-amber-400 text-white shadow-md shadow-amber-200' : idx === 1 ? 'bg-slate-300 text-slate-700 shadow-sm' : 'bg-orange-300 text-orange-900 shadow-sm'}`}>
-                                                                                #{idx + 1}
-                                                                            </div>
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <div className="font-bold text-slate-800 uppercase truncate text-sm sm:text-base">{winner.ustazName}</div>
-                                                                                <div className="text-[11px] sm:text-xs font-semibold text-indigo-600 truncate">{winner.jamiaName}</div>
-                                                                            </div>
-                                                                            <div className="text-right shrink-0">
-                                                                                <div className="font-['Bowlby_One_SC'] text-emerald-600 text-base sm:text-lg">₹{winner.amount.toLocaleString('en-IN')}</div>
-                                                                                <div className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded inline-block mt-0.5">{winner.units} Units</div>
-                                                                            </div>
+                                                                            <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-black text-lg ${idx === 0 ? 'bg-amber-400 text-white shadow-md shadow-amber-200' : idx === 1 ? 'bg-slate-300 text-slate-700 shadow-sm' : 'bg-orange-300 text-orange-900 shadow-sm'}`}>#{idx + 1}</div>
+                                                                            <div className="flex-1 min-w-0"><div className="font-bold text-slate-800 uppercase truncate text-sm sm:text-base">{winner.ustazName}</div><div className="text-[11px] sm:text-xs font-semibold text-indigo-600 truncate">{winner.jamiaName}</div></div>
+                                                                            <div className="text-right shrink-0"><div className="font-['Bowlby_One_SC'] text-emerald-600 text-base sm:text-lg">₹{winner.amount.toLocaleString('en-IN')}</div><div className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded inline-block mt-0.5">{winner.units} Units</div></div>
                                                                         </div>
                                                                     ))}
                                                                 </div>
@@ -468,9 +278,6 @@
                                 </div>
                             )}
 
-                            {/* ========================================== */}
-                            {/* TAB: MUQABLA VIEW */}
-                            {/* ========================================== */}
                             {activeTab === "Muqabla" && (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     {competitions.length === 0 ? (
@@ -478,46 +285,24 @@
                                     ) : (
                                         competitions.map((comp, idx) => (
                                             <div key={idx} className="bg-gradient-to-r from-sky-500 to-indigo-600 p-8 rounded-3xl shadow-xl flex justify-between items-center text-white relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
-                                                {/* Decorative background light */}
                                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
-                                                
-                                                <div className="w-5/12 text-center z-10">
-                                                    <span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md font-['Inter'] tracking-tight leading-tight block">{comp.teamA}</span>
-                                                </div>
-                                                <div className="w-2/12 text-center z-10 relative">
-                                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[2px] h-20 bg-white/20"></div>
-                                                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-amber-400 text-indigo-900 rounded-full flex items-center justify-center font-black text-xl sm:text-2xl italic mx-auto shadow-xl border-4 border-white transform -rotate-12 group-hover:rotate-12 transition-transform duration-300 relative z-20">
-                                                        VS
-                                                    </div>
-                                                </div>
-                                                <div className="w-5/12 text-center z-10">
-                                                    <span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md font-['Inter'] tracking-tight leading-tight block">{comp.teamB}</span>
-                                                </div>
+                                                <div className="w-5/12 text-center z-10"><span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md font-['Inter'] tracking-tight leading-tight block">{comp.teamA}</span></div>
+                                                <div className="w-2/12 text-center z-10 relative"><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[2px] h-20 bg-white/20"></div><div className="w-14 h-14 sm:w-16 sm:h-16 bg-amber-400 text-indigo-900 rounded-full flex items-center justify-center font-black text-xl sm:text-2xl italic mx-auto shadow-xl border-4 border-white transform -rotate-12 group-hover:rotate-12 transition-transform duration-300 relative z-20">VS</div></div>
+                                                <div className="w-5/12 text-center z-10"><span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md font-['Inter'] tracking-tight leading-tight block">{comp.teamB}</span></div>
                                             </div>
                                         ))
                                     )}
                                 </div>
                             )}
 
-                            {/* ========================================== */}
-                            {/* TAB: NORMAL TABLE VIEWS */}
-                            {/* ========================================== */}
                             {!isSpecialTab && (
                                 <div>
                                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
                                         <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 uppercase flex items-center gap-3">
-                                            {activeTab} 
-                                            <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">
-                                                {displayedData.length} {isClassView ? 'Classes' : isJamiaView ? 'Jamiaat' : 'Teachers'}
-                                            </span>
+                                            {activeTab} <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">{displayedData.length} {isClassView ? 'Classes' : isJamiaView ? 'Jamiaat' : 'Teachers'}</span>
                                         </h2>
-                                        <button 
-                                            onClick={handleDownloadPoster} 
-                                            disabled={isDownloading || displayedData.length === 0} 
-                                            className="px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold transition"
-                                        >
-                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} 
-                                            Download Poster
+                                        <button onClick={handleDownloadPoster} disabled={isDownloading || displayedData.length === 0} className="px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold transition">
+                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} Download Poster
                                         </button>
                                     </div>
 
@@ -525,135 +310,61 @@
                                     <div className="hidden md:block">
                                         {isClassView ? (
                                             <div>
-                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider">
-                                                    <div className="col-span-2">Rank</div><div className="col-span-6">Class Name</div><div className="col-span-2 text-center">Teachers</div><div className="col-span-2 text-right text-sky-500">Total Units</div>
-                                                </div>
+                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-2">Rank</div><div className="col-span-6">Class Name</div><div className="col-span-2 text-center">Teachers</div><div className="col-span-2 text-right text-sky-500">Total Units</div></div>
                                                 <div className="space-y-2 mt-2">
-                                                    {displayedData.map((it, idx) => (
-                                                        <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                                            <div className="col-span-2 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
-                                                            <div className="col-span-6 font-bold text-indigo-600 text-lg uppercase">{it.className}</div>
-                                                            <div className="col-span-2 text-center font-semibold text-slate-500 bg-slate-50 py-1 rounded-md">{it.teacherCount}</div>
-                                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div>
-                                                        </div>
-                                                    ))}
+                                                    {displayedData.map((it, idx) => ( <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-2 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-6 font-bold text-indigo-600 text-lg uppercase">{it.className}</div><div className="col-span-2 text-center font-semibold text-slate-500 bg-slate-50 py-1 rounded-md">{it.teacherCount}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
                                                 </div>
                                             </div>
                                         ) : isJamiaView ? (
                                             <div>
-                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider">
-                                                    <div className="col-span-1">Rank</div><div className="col-span-5">Jamia Name</div><div className="col-span-3 text-center">Region</div><div className="col-span-1 text-center">Teachers</div><div className="col-span-2 text-right text-sky-500">Total Units</div>
-                                                </div>
+                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-1">Rank</div><div className="col-span-5">Jamia Name</div><div className="col-span-3 text-center">Region</div><div className="col-span-1 text-center">Teachers</div><div className="col-span-2 text-right text-sky-500">Total Units</div></div>
                                                 <div className="space-y-2 mt-2">
-                                                    {displayedData.map((it, idx) => (
-                                                        <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                                            <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
-                                                            <div className="col-span-5 font-bold text-indigo-600 text-lg">{it.jamiaName}</div>
-                                                            <div className="col-span-3 text-center font-bold text-slate-700">{it.region}</div>
-                                                            <div className="col-span-1 text-center font-semibold text-slate-500 bg-slate-50 py-1 rounded-md">{it.teacherCount}</div>
-                                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div>
-                                                        </div>
-                                                    ))}
+                                                    {displayedData.map((it, idx) => ( <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-5 font-bold text-indigo-600 text-lg">{it.jamiaName}</div><div className="col-span-3 text-center font-bold text-slate-700">{it.region}</div><div className="col-span-1 text-center font-semibold text-slate-500 bg-slate-50 py-1 rounded-md">{it.teacherCount}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
                                                 </div>
                                             </div>
                                         ) : (
                                             <div>
-                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider">
-                                                    <div className="col-span-1">Rank</div><div className="col-span-3">Ustaz Name</div><div className="col-span-4">Jamia Name</div><div className="col-span-1 text-center">Region</div><div className="col-span-2 text-right text-emerald-600">Total Amount</div><div className="col-span-1 text-right text-sky-500">Units</div>
-                                                </div>
+                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-1">Rank</div><div className="col-span-3">Ustaz Name</div><div className="col-span-4">Jamia Name</div><div className="col-span-1 text-center">Region</div><div className="col-span-2 text-right text-emerald-600">Total Amount</div><div className="col-span-1 text-right text-sky-500">Units</div></div>
                                                 <div className="space-y-2 mt-2">
                                                     {displayedData.map((it, idx) => (
                                                         <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                                             <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
-                                                            <div className="col-span-3 font-semibold text-slate-800 uppercase">
-                                                                {it.ustazName}
-                                                                {it.className !== activeTab && <div className="text-[11px] text-indigo-500 normal-case mt-0.5">Section: {it.className.slice(-1)}</div>}
-                                                            </div>
+                                                            <div className="col-span-3 font-semibold text-slate-800 uppercase">{it.ustazName}{it.className !== activeTab && <div className="text-[11px] text-indigo-500 normal-case mt-0.5">Section: {it.className.slice(-1)}</div>}</div>
                                                             <div className="col-span-4 font-bold text-indigo-600">{it.jamiaName}</div>
-                                                            <div className="col-span-1 text-center">
-                                                                <div className="text-sm font-bold text-slate-700">{it.region}</div>
-                                                                <div className="text-xs text-slate-500">{it.state}</div>
-                                                            </div>
-                                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-emerald-600 text-lg tracking-wide">
-                                                                ₹{it.amount.toLocaleString('en-IN')}
-                                                            </div>
-                                                            <div className="col-span-1 text-right font-bold text-sky-600 bg-sky-50 py-1 px-2 rounded-lg border border-sky-100 text-sm w-fit ml-auto">
-                                                                {it.units}
-                                                            </div>
+                                                            <div className="col-span-1 text-center"><div className="text-sm font-bold text-slate-700">{it.region}</div><div className="text-xs text-slate-500">{it.state}</div></div>
+                                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-emerald-600 text-lg tracking-wide">₹{it.amount.toLocaleString('en-IN')}</div>
+                                                            <div className="col-span-1 text-right font-bold text-sky-600 bg-sky-50 py-1 px-2 rounded-lg border border-sky-100 text-sm w-fit ml-auto">{it.units}</div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
                                         )}
-                                        {displayedData.length === 0 && !isLoading && (
-                                            <div className="text-slate-500 p-8 text-center font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div>
-                                        )}
+                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-8 text-center font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div> )}
                                     </div>
 
                                     {/* Mobile View */}
                                     <div className="md:hidden space-y-3 mt-4">
                                         {displayedData.map((it, idx) => (
                                             <div key={it.id} className="p-4 rounded-xl shadow-sm bg-white border border-slate-100 relative overflow-hidden">
-                                                <div className={`absolute top-0 right-0 bg-gradient-to-l ${isClassView ? 'from-indigo-100' : isJamiaView ? 'from-sky-100' : 'from-emerald-100'} to-transparent p-2 rounded-bl-xl ${isClassView ? 'text-indigo-700' : isJamiaView ? 'text-sky-700' : 'text-emerald-700'} font-bold text-sm`}>
-                                                    Rank #{idx + 1}
-                                                </div>
-                                                
+                                                <div className={`absolute top-0 right-0 bg-gradient-to-l ${isClassView ? 'from-indigo-100' : isJamiaView ? 'from-sky-100' : 'from-emerald-100'} to-transparent p-2 rounded-bl-xl ${isClassView ? 'text-indigo-700' : isJamiaView ? 'text-sky-700' : 'text-emerald-700'} font-bold text-sm`}>Rank #{idx + 1}</div>
                                                 <div className="border-b pb-3 mb-3 pr-20">
-                                                    {isClassView ? (
-                                                        <div>
-                                                            <div className="font-bold text-indigo-700 text-xl leading-tight mb-1 uppercase">{it.className}</div>
-                                                            <div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers Registered</div>
-                                                        </div>
-                                                    ) : isJamiaView ? (
-                                                        <div>
-                                                            <div className="font-bold text-indigo-700 text-xl leading-tight mb-1">{it.jamiaName}</div>
-                                                            <div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers Registered</div>
-                                                        </div>
-                                                    ) : (
-                                                        <div>
-                                                            <div className="font-bold text-slate-800 text-lg uppercase">
-                                                                {it.ustazName}
-                                                                {it.className !== activeTab && <span className="ml-2 text-[10px] text-white bg-indigo-500 px-1.5 py-0.5 rounded-full normal-case">Sec {it.className.slice(-1)}</span>}
-                                                            </div>
-                                                            <div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div>
-                                                        </div>
-                                                    )}
+                                                    {isClassView ? ( <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 uppercase">{it.className}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers Registered</div></div>
+                                                    ) : isJamiaView ? ( <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1">{it.jamiaName}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers Registered</div></div>
+                                                    ) : ( <div><div className="font-bold text-slate-800 text-lg uppercase">{it.ustazName}{it.className !== activeTab && <span className="ml-2 text-[10px] text-white bg-indigo-500 px-1.5 py-0.5 rounded-full normal-case">Sec {it.className.slice(-1)}</span>}</div><div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div></div> )}
                                                 </div>
-                                                
                                                 <div className="grid grid-cols-3 gap-2 text-sm items-center">
-                                                    {!isClassView && (
-                                                        <div className="col-span-1">
-                                                            <span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span>
-                                                            <span className="font-semibold text-slate-600">{it.region}</span>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {isClassView || isJamiaView ? (
-                                                        <div className={`${isClassView ? 'col-span-3' : 'col-span-2'} flex flex-col items-end`}>
-                                                            <span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span>
-                                                            <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="col-span-2 flex flex-col items-end">
-                                                            <span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span>
-                                                            <span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span>
-                                                        </div>
-                                                    )}
+                                                    {!isClassView && ( <div className="col-span-1"><span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span><span className="font-semibold text-slate-600">{it.region}</span></div> )}
+                                                    {isClassView || isJamiaView ? ( <div className={`${isClassView ? 'col-span-3' : 'col-span-2'} flex flex-col items-end`}><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div>
+                                                    ) : ( <div className="col-span-2 flex flex-col items-end"><span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span><span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span></div> )}
                                                 </div>
                                             </div>
                                         ))}
-                                        {displayedData.length === 0 && !isLoading && (
-                                            <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div>
-                                        )}
+                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div> )}
                                     </div>
                                 </div>
                             )}
-
                         </main>
-                        
-                        <footer className="mt-8 text-xs text-slate-400 text-center font-medium">
-                            Designed for Telethon 2026 — Majlis Talimi Umoor India
-                        </footer>
+                        <footer className="mt-8 text-xs text-slate-400 text-center font-medium">Designed for Telethon 2026 — Majlis Talimi Umoor India</footer>
                     </div>
                 </div>
             );
