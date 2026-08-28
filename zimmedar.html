@@ -504,15 +504,24 @@
             let confirmMsg = "";
             let updatePayload = {};
 
-            if (action === 'add') {
+           if (action === 'add') {
                 confirmMsg = `Kya aap ${ustazName} (${jamiaName}) ke account mein ₹${amountVal} PLUS (+) karna chahte hain?`;
-                updatePayload = { amount: firebase.firestore.FieldValue.increment(amountVal) };
+                updatePayload = { 
+                    amount: firebase.firestore.FieldValue.increment(amountVal),
+                    daily_amount: firebase.firestore.FieldValue.increment(amountVal)
+                };
             } else if (action === 'set') {
                 confirmMsg = `Kya aap ${ustazName} ka TOTAL amount ₹${amountVal} fix karna chahte hain?\n(Purana amount overwrite ho jayega)`;
-                updatePayload = { amount: amountVal };
+                updatePayload = { 
+                    amount: amountVal,
+                    daily_amount: amountVal
+                };
             } else if (action === 'minus') {
                 confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`;
-                updatePayload = { amount: firebase.firestore.FieldValue.increment(-amountVal) };
+                updatePayload = { 
+                    amount: firebase.firestore.FieldValue.increment(-amountVal),
+                    daily_amount: firebase.firestore.FieldValue.increment(-amountVal)
+                };
             }
 
             if (!confirm(confirmMsg)) return;
