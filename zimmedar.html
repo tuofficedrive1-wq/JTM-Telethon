@@ -362,8 +362,18 @@
         // ========================================================
         // 3. LOAD JAMIAS / TEACHERS (Mobile Optimized Design)
         // ========================================================
-        function loadJamias(assignedClass) {
-            db.collection('asatiza_details').where("className", "==", assignedClass).onSnapshot((snapshot) => {
+       function loadJamias(assignedClass) {
+            // Main class ke sath uske A, B, C, D sections bhi array me add karein
+            const classVariants = [
+                assignedClass,
+                assignedClass + " A",
+                assignedClass + " B",
+                assignedClass + " C",
+                assignedClass + " D"
+            ];
+
+            // "==" ki jagah "in" operator ka use karein taake sab variants fetch ho jayein
+            db.collection('asatiza_details').where("className", "in", classVariants).onSnapshot((snapshot) => {
                 const listDiv = document.getElementById('jamiaList');
                 listDiv.innerHTML = "";
 
