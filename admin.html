@@ -174,6 +174,25 @@
                 </div>
                 <button onclick="addCompetition(event)" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-amber-700 transition shadow-md">Save Match</button>
             </div>
+            <!-- 4. Dashboard Mode & Reset -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-700">4. Dashboard Mode (Daily vs Total)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Dashboard par kya dikhana hai?</label>
+                        <select id="dashboardModeSelect" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="total">Grand Total (Pehle din se ab tak)</option>
+                            <option value="daily">Daily Total (Sirf Aaj ka)</option>
+                        </select>
+                        <button onclick="updateDashboardMode(event)" class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-blue-700 transition shadow-md">Update Mode LIVE</button>
+                    </div>
+                    <div class="border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6">
+                        <label class="block text-sm font-semibold mb-1 text-rose-600">Raat 12 Baje Reset (Manual)</label>
+                        <p class="text-xs text-slate-500 mb-3">Is button ko dabane se sabhi Ustaz ka sirf "Daily Amount" 0 ho jayega. Main Grand Total bilkul safe rahega.</p>
+                        <button onclick="resetDailyAmounts(event)" class="bg-rose-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-rose-700 transition shadow-md">Reset Daily Amounts To 0</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -440,6 +459,40 @@
         }
         function openImageModal(imgSrc) { document.getElementById('modalImage').src = imgSrc; document.getElementById('imageModal').classList.remove('hidden'); }
         function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); document.getElementById('modalImage').src = ""; }
+        function updateDashboardMode(event) {
+            const mode = document.getElementById('dashboardModeSelect').value;
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Updating..."; btn.disabled = true;
+
+            db.collection('settings').doc('dashboard').set({
+                dashboardMode: mode
+            }, {merge: true}).then(() => {
+                alert("✅ Dashboard Mode Live Update Ho Gaya!");
+            }).catch(err => alert("Error: " + err.message))
+            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+        }
+
+        async function resetDailyAmounts(event) {
+            if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return;
+            
+            const btn = event.target;
+            const origText = btn.innerText;
+            btn.innerText = "Resetting..."; btn.disabled = true;
+            try {
+                const snapshot = await db.collection('asatiza_details').get();
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => {
+                    batch.update(doc.ref, { daily_amount: 0 }); // Sirf daily amount 0 hoga
+                });
+                await batch.commit();
+                alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!");
+            } catch(e) {
+                alert("Error: " + e.message);
+            } finally {
+                btn.innerText = origText; btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html
