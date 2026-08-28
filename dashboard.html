@@ -112,7 +112,7 @@
 
         function TelethoneDashboard() {
             // Result aur Muqabla tabs ko aakhir me rakha gaya hai
-            const allClasses = ['All Jamiaat', 'All Classes', 'Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis', 'Result', 'Muqabla'];
+            const allClasses = ['All Jamiaat', 'All Classes', 'Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis', 'Result', 'Muqabla'];
             
             const [activeTab, setActiveTab] = useState("All Jamiaat");
             const [allData, setAllData] = useState([]);
@@ -126,7 +126,15 @@
             const [isDownloading, setIsDownloading] = useState(false);
             const posterContainerRef = useRef(null);
 
-            const getBaseClass = (className) => { if (!className) return "N/A"; return className.replace(/\s+[A-D]$/i, '').trim(); };
+           const getBaseClass = (className) => { 
+                if (!className) return "N/A"; 
+                let base = className.replace(/\s+[A-D]$/i, '').trim(); 
+                
+                // NAYA CODE: Khususi ko Sale Duwam me convert karne ke liye
+                if (base === "Sale Duwam Khususi") return "Sale Duwam"; 
+                
+                return base; 
+            };
 
             useEffect(() => {
                 posterContainerRef.current = document.getElementById('poster-container');
