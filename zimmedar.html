@@ -362,9 +362,9 @@
         // ========================================================
         // 3. LOAD JAMIAS / TEACHERS (Mobile Optimized Design)
         // ========================================================
-       function loadJamias(assignedClass) {
-            // Main class ke sath uske A, B, C, D sections bhi array me add karein
-            const classVariants = [
+      function loadJamias(assignedClass) {
+            // Main class ke sath uske A, B, C, D sections array me add karein
+            let classVariants = [
                 assignedClass,
                 assignedClass + " A",
                 assignedClass + " B",
@@ -372,7 +372,15 @@
                 assignedClass + " D"
             ];
 
-            // "==" ki jagah "in" operator ka use karein taake sab variants fetch ho jayein
+            // NAYA CODE: Sale Duwam aur Sale Duwam Khususi ko merge karne ke liye
+            if (assignedClass === "Sale Duwam" || assignedClass === "Sale Duwam Khususi") {
+                classVariants = [
+                    "Sale Duwam", "Sale Duwam A", "Sale Duwam B", "Sale Duwam C", "Sale Duwam D",
+                    "Sale Duwam Khususi", "Sale Duwam Khususi A", "Sale Duwam Khususi B", "Sale Duwam Khususi C", "Sale Duwam Khususi D"
+                ];
+            }
+
+            // in operator use kiya gaya hai taki sab variants aur khususi ek sath fetch ho jayein
             db.collection('asatiza_details').where("className", "in", classVariants).onSnapshot((snapshot) => {
                 const listDiv = document.getElementById('jamiaList');
                 listDiv.innerHTML = "";
