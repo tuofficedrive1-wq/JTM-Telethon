@@ -132,8 +132,18 @@
                 posterContainerRef.current = document.getElementById('poster-container');
                 const unsubAsatiza = db.collection('asatiza_details').onSnapshot(snapshot => {
                     const parsedData = snapshot.docs.map(doc => {
-                        const data = doc.data(); const amt = parseFloat(data.amount) || 0; const unt = (amt / 7000).toFixed(1);
-                        return { id: doc.id, ustazName: data.ustazName || "N/A", jamiaName: data.jamiaName || "N/A", className: data.className || "N/A", region: data.region || "N/A", state: data.state || "N/A", amount: amt, units: unt, timestamp: data.timestamp };
+                        const data = doc.data(); 
+                        return { 
+                            id: doc.id, 
+                            ustazName: data.ustazName || "N/A", 
+                            jamiaName: data.jamiaName || "N/A", 
+                            className: data.className || "N/A", 
+                            region: data.region || "N/A", 
+                            state: data.state || "N/A", 
+                            total_amount: parseFloat(data.amount) || 0, 
+                            daily_amount: parseFloat(data.daily_amount) || 0,
+                            timestamp: data.timestamp 
+                        };
                     });
                     setAllData(parsedData); setIsLoading(false);
                 }, err => { console.error(err); setIsLoading(false); });
@@ -159,9 +169,18 @@
                 return () => clearInterval(interval);
             }, [timerConfig]);
 
+           // --- NAYA DASHBOARD MODE LOGIC SHURU ---
+            const currentMode = headerConfig?.dashboardMode || 'total';
+
+            // Active mode (daily ya total) ke hisab se data set karein
+            const processedData = allData.map(d => {
+                const activeAmt = currentMode === 'daily' ? d.daily_amount : d.total_amount;
+                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+            });
+
             const getTop3PerClass = () => {
                 const classMap = {};
-                allData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
+                processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
                 const top3Data = []; const classOrder = ['Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis'];
                 classOrder.forEach(cls => { if(classMap[cls]) { const sorted = classMap[cls].sort((a, b) => b.amount - a.amount).slice(0, 3); if(sorted.length > 0) top3Data.push({ className: cls, winners: sorted }); } });
                 return top3Data;
@@ -181,17 +200,19 @@
             }, [posterData]);
 
             let displayedData = []; const isJamiaView = activeTab === "All Jamiaat"; const isClassView = activeTab === "All Classes"; const isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
+            
             if (!isSpecialTab) {
                 if (isJamiaView) {
-                    const jamiaMap = {}; allData.forEach(d => { if (!jamiaMap[d.jamiaName]) jamiaMap[d.jamiaName] = { id: d.jamiaName, jamiaName: d.jamiaName, region: d.region, totalAmount: 0, teacherCount: 0 }; jamiaMap[d.jamiaName].totalAmount += d.amount; jamiaMap[d.jamiaName].teacherCount += 1; });
+                    const jamiaMap = {}; processedData.forEach(d => { if (!jamiaMap[d.jamiaName]) jamiaMap[d.jamiaName] = { id: d.jamiaName, jamiaName: d.jamiaName, region: d.region, totalAmount: 0, teacherCount: 0 }; jamiaMap[d.jamiaName].totalAmount += d.amount; jamiaMap[d.jamiaName].teacherCount += 1; });
                     displayedData = Object.values(jamiaMap).map(j => ({ ...j, units: (j.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
                 } else if (isClassView) {
-                    const classMap = {}; allData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
+                    const classMap = {}; processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
                     displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
                 } else {
-                    displayedData = allData.filter(d => getBaseClass(d.className) === activeTab).sort((a, b) => b.amount - a.amount);
+                    displayedData = processedData.filter(d => getBaseClass(d.className) === activeTab).sort((a, b) => b.amount - a.amount);
                 }
             }
+            // --- NAYA DASHBOARD MODE LOGIC KHATAM ---
 
             const handleDownloadPoster = () => { if(displayedData.length === 0) return; setIsDownloading(true); setPosterData({ className: activeTab, items: displayedData, isJamiaView: isJamiaView, isClassView: isClassView }); };
             const DownloadIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> );
