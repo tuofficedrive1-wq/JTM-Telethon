@@ -402,7 +402,13 @@
                 snapshot.forEach(doc => { records.push({ id: doc.id, ...doc.data() }); });
 
                 // Ustaz ke naam se A-Z sort karna
-                records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
+               // Highest amount wale ko sabse upar dikhana (Descending order)
+records.sort((a, b) => {
+    // Agar aap daily amount show kar rahe hain to 'amount' ki jagah 'daily_amount' likhein
+    const amtA = parseFloat(a.amount) || 0; 
+    const amtB = parseFloat(b.amount) || 0;
+    return amtB - amtA; 
+});
 
                 // Quick overview stats (derived only, no extra Firestore reads)
                 const totalCollected = records.reduce((sum, r) => sum + (parseFloat(r.daily_amount) || 0), 0);
@@ -494,17 +500,30 @@
             });
         }
 
-        // Live Search Filter
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const cards = document.querySelectorAll('.jamia-card');
-            let anyVisible = false;
-            cards.forEach(card => {
-                if (card.getAttribute('data-search').includes(searchTerm)) { card.classList.remove('hidden'); anyVisible = true; }
-                else card.classList.add('hidden');
-            });
-            document.getElementById('noResultsState').classList.toggle('hidden', anyVisible || cards.length === 0);
-        });
+        // Live Smart Search Filter
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    // User ke type kiye gaye words ko space se alag karna
+    const searchTerms = e.target.value.toLowerCase().trim().split(/\s+/);
+    const cards = document.querySelectorAll('.jamia-card');
+    let anyVisible = false;
+
+    cards.forEach(card => {
+        const cardText = card.getAttribute('data-search');
+        
+        // Check karega ki type kiya gaya har lafz (word) card mein maujood hai ya nahi
+        const isMatch = searchTerms.every(term => cardText.includes(term));
+
+        if (isMatch) { 
+            card.classList.remove('hidden'); 
+            anyVisible = true; 
+        } else { 
+            card.classList.add('hidden'); 
+        }
+    });
+
+    // Agar koi result na mile to 'No Results' ka message dikhana
+    document.getElementById('noResultsState').classList.toggle('hidden', anyVisible || cards.length === 0);
+});
 
         // ========================================================
         // 4. SUBMIT AMOUNT (Auto-Plus, Set Total, Minus)
