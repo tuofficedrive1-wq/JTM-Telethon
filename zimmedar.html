@@ -405,13 +405,13 @@
                 records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
 
                 // Quick overview stats (derived only, no extra Firestore reads)
-                const totalCollected = records.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+                const totalCollected = records.reduce((sum, r) => sum + (parseFloat(r.daily_amount) || 0), 0);
                 document.getElementById('statTeacherCount').innerText = records.length;
                 document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
 
                 records.forEach((data, idx) => {
                     const docId = data.id;
-                    const totalSoFar = parseFloat(data.amount) || 0;
+                    const totalSoFar = parseFloat(data.daily_amount) || 0;
                     const totalUnit = (totalSoFar / 7000).toFixed(1);
                     const progressPct = Math.min(100, ((totalSoFar % 7000) / 7000) * 100).toFixed(1);
 
@@ -447,7 +447,7 @@
                             <div class="rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100/70 px-4 py-3.5">
                                 <div class="flex items-end justify-between gap-2">
                                     <div>
-                                        <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Total Jama Raqam</div>
+                                       <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Aaj Ki Jama Raqam (Daily)</div>
                                         <div class="text-[26px] sm:text-3xl font-display font-extrabold text-emerald-600 mt-0.5 leading-none tabular-nums">₹${totalSoFar.toLocaleString('en-IN')}</div>
                                     </div>
                                     <span class="text-[11px] font-bold text-sky-600 bg-white px-2 py-1 rounded-lg border border-sky-100 shrink-0 whitespace-nowrap">${totalUnit} Units</span>
