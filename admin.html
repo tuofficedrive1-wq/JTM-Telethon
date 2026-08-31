@@ -49,7 +49,7 @@
                     <div>
                         <label class="block text-sm font-semibold">Assign Class</label>
                         <select id="assignedClass" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option value="">Class Select Karein (Pehle Settings me add karein)...</option>
+                            <option value="">Class Select Karein...</option>
                         </select>
                     </div>
                     <div class="pt-2 border-t">
@@ -123,7 +123,7 @@
         <div id="customDataTab" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
                 <h2 class="text-xl font-bold text-purple-800 mb-4 border-b pb-2">Naya Record Banayen</h2>
-                <p class="text-xs text-slate-500 mb-4">Class select karein to uski headings ka form yahan auto-generate ho jayega.</p>
+                <p class="text-xs text-slate-500 mb-4">Class select karein. Note: Rank aur Units dashboard par auto-calculate hote hain isliye yahan unko bharne ka option nahi aayega.</p>
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-slate-700 mb-1">Class Select Karein</label>
                     <select id="customDataClassSelect" onchange="generateCustomForm()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 bg-purple-50 outline-none font-semibold">
@@ -248,7 +248,6 @@
         <button class="absolute top-4 right-4 text-white hover:text-gray-300" onclick="closeImageModal()"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
     </div>
     
-    <!-- Edit Form Modal same as before... -->
     <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
             <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center"><h3 class="text-white font-bold text-lg">Edit Record</h3><button onclick="closeEditModal()" class="text-white/80 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div>
@@ -283,27 +282,25 @@
         });
 
         // ---------------- 1. DYNAMIC CLASSES, TABS & HEADINGS ----------------
-        // Default classes list jo dashboard me hamesha hoti hain (is se dropdown wali problem fix ho jayegi)
         const defaultClasses = ["Prep Class", "Hifz Class", "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Sale Duwam Khususi", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis"];
         let availableClasses = [];
         let classHeadingsMap = {};
+        
+        // Ye array auto keywords detect karne ke liye hai
+        const autoKeywords = ['rank', 'unit', 'units', 'amount', 'score', 'total'];
 
         db.collection('settings').doc('classes').onSnapshot((doc) => {
             if(doc.exists && doc.data().list && doc.data().list.length > 0) {
                 availableClasses = doc.data().list;
                 classHeadingsMap = doc.data().headings || {};
             } else {
-                // Agar database khali hai to default classes set karden
-                availableClasses = [...defaultClasses];
-                classHeadingsMap = {};
+                availableClasses = [...defaultClasses]; classHeadingsMap = {};
             }
             updateClassUI();
         });
 
         function updateClassUI() {
-            // Update Settings Tab List
-            const container = document.getElementById('classesListContainer');
-            container.innerHTML = "";
+            const container = document.getElementById('classesListContainer'); container.innerHTML = "";
             availableClasses.forEach((cls) => {
                 const headings = classHeadingsMap[cls] ? classHeadingsMap[cls].join(', ') : "Rank, Name, Unit (Default)";
                 container.innerHTML += `
@@ -316,7 +313,6 @@
                     </div>`;
             });
 
-            // Reusable function for updating all dropdowns
             const updateDropdown = (elementId) => {
                 const select = document.getElementById(elementId); if(!select) return;
                 const val = select.value; let html = '<option value="">Class Select Karein...</option>';
@@ -326,20 +322,18 @@
 
             updateDropdown('assignedClass'); updateDropdown('editClassName'); updateDropdown('customDataClassSelect');
             
-            // Update Competition Dropdowns
             document.querySelectorAll('.team-input').forEach(select => {
                 const currentVal = select.value; let optsHtml = '<option value="">Class Select Karein...</option>';
                 availableClasses.forEach(cls => optsHtml += `<option value="${cls}">${cls}</option>`);
                 select.innerHTML = optsHtml; if(availableClasses.includes(currentVal)) select.value = currentVal;
             });
 
-            generateCustomForm(); // Refresh dynamic form if a class is already selected
+            generateCustomForm(); 
         }
 
         function addClass(e) {
             const nameInput = document.getElementById('newClassInput'); const headsInput = document.getElementById('newClassHeadings');
             const className = nameInput.value.trim(); const headingsString = headsInput.value.trim();
-            
             if(!className) return alert("Class ka naam likhein");
             if(!headingsString) return alert("Table ki headings likhein (eg: Rank, Jamia Name, Unit)");
 
@@ -362,7 +356,7 @@
             }).catch(err => alert(err.message));
         }
 
-        // ---------------- 2. CUSTOM DATA ENTRY SYSTEM ----------------
+        // ---------------- 2. CUSTOM DATA ENTRY SYSTEM (AUTO FIELDS FILTERED) ----------------
         let currentCustomClass = "";
         let customDataUnsubscribe = null;
 
@@ -385,16 +379,20 @@
             form.classList.remove('hidden');
             labelBadge.classList.remove('hidden'); labelBadge.innerText = currentCustomClass;
             
-            let headings = classHeadingsMap[currentCustomClass] || ["Rank", "Name", "Details"]; // Fallback
+            let headings = classHeadingsMap[currentCustomClass] || ["Rank", "Name", "Details"]; 
             
-            // Build Form Inputs
+            // Build Form Inputs (Excluding Auto Keywords)
             container.innerHTML = "";
             headings.forEach(heading => {
-                container.innerHTML += `
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">${heading}</label>
-                        <input type="text" data-heading="${heading}" required placeholder="Enter ${heading}" class="custom-field w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-                    </div>`;
+                const isAuto = autoKeywords.some(kw => heading.toLowerCase().includes(kw));
+                
+                if(!isAuto) {
+                    container.innerHTML += `
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">${heading}</label>
+                            <input type="text" data-heading="${heading}" required placeholder="Enter ${heading}" class="custom-field w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>`;
+                }
             });
 
             // Build Table Headings
@@ -403,7 +401,6 @@
             thHtml += `<th class="p-3 border-b text-center font-bold">Action</th>`;
             thead.innerHTML = `<tr class="bg-slate-100 text-slate-600 text-xs uppercase">${thHtml}</tr>`;
 
-            // Load Saved Records
             loadCustomData(currentCustomClass, headings);
         }
 
@@ -419,9 +416,9 @@
             db.collection('custom_records').add({
                 className: currentCustomClass,
                 recordData: recordData,
-                timestamp: Date.now() // Simple timestamp for JS sorting
+                timestamp: Date.now() 
             }).then(() => {
-                e.target.reset(); // clear fields
+                e.target.reset(); 
             }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = "Record Save Karein"; btn.disabled = false; });
         }
 
@@ -436,7 +433,6 @@
                     tbody.innerHTML = `<tr><td colspan="${headings.length + 1}" class="p-4 text-center text-slate-500">Is class me abhi koi record nahi hai.</td></tr>`; return;
                 }
 
-                // Sorting manually to avoid requiring composite indexes
                 let records = [];
                 snapshot.forEach(doc => records.push({id: doc.id, ...doc.data()}));
                 records.sort((a, b) => b.timestamp - a.timestamp); 
@@ -445,7 +441,16 @@
                     const data = item.recordData;
                     let tr = document.createElement('tr'); tr.className = "border-b hover:bg-slate-50";
                     let tdHtml = "";
-                    headings.forEach(h => { tdHtml += `<td class="p-3 text-sm font-medium text-slate-700">${data[h] || "-"}</td>`; });
+                    
+                    headings.forEach(h => { 
+                        const isAuto = autoKeywords.some(kw => h.toLowerCase().includes(kw));
+                        if(isAuto) {
+                            tdHtml += `<td class="p-3 text-sm font-bold text-purple-400 italic">Auto Setup</td>`;
+                        } else {
+                            tdHtml += `<td class="p-3 text-sm font-medium text-slate-700">${data[h] || "-"}</td>`; 
+                        }
+                    });
+                    
                     tdHtml += `<td class="p-3 text-center"><button onclick="deleteCustomRecord('${item.id}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></td>`;
                     tr.innerHTML = tdHtml; tbody.appendChild(tr);
                 });
@@ -566,9 +571,7 @@
         };
         
         function getDirectImageUrl(url) { if (!url) return ""; const match = url.match(/[-\w]{25,}/); if (match && match[0]) return `https://lh3.googleusercontent.com/d/${match[0]}`; return url; }
-        
         function updateHeader(event) { const line1 = document.getElementById('line1Text').value.trim(); const line2 = document.getElementById('line2Text').value.trim(); const color2 = document.getElementById('line2Color').value; const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true; db.collection('settings').doc('dashboard').set({ line1Text: line1, line2Text: line2, line2Color: color2 }, {merge: true}).then(() => alert("✅ Sub-Headings Updated LIVE!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; }); }
-        
         function updateCountdown(event) { const endTime = document.getElementById('endTime').value; const delayMinutes = document.getElementById('resultDelay').value; const message = document.getElementById('resultMessage').value; if(!endTime || !delayMinutes) { alert("Waqt aur delay dono set karein"); return; } const btn = event.target; const originalText = btn.innerText; btn.innerText = "Starting..."; btn.disabled = true; db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message }).then(() => alert("✅ Countdown Started!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; }); }
 
         let zimmedarDataMap = {};
