@@ -112,11 +112,14 @@
                                     {items.map((it, idx) => (
                                         <div key={idx} style={{ display: 'grid', gridTemplateColumns: `repeat(${headings.length}, 1fr)`, alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', fontSize: '20px', color: '#1e293b', fontWeight: 600, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                                             {headings.map((h, i) => {
-                                                const isAuto = autoKeywords.some(kw => h.toLowerCase().includes(kw));
-                                                const isRank = h.toLowerCase().includes('rank');
+                                                const hLower = h.toLowerCase();
+                                                const isRank = hLower.includes('rank');
+                                                const isUnit = hLower.includes('unit');
+                                                const isAmount = hLower.includes('amount') || hLower.includes('total');
                                                 if(isRank) return <span key={i} style={{color: '#64748b', fontSize:'24px', fontWeight:'bold', textAlign:'center'}}>#{idx + 1}</span>;
-                                                if(isAuto) return <span key={i} style={{textAlign:'center', color: '#0ea5e9'}}>-</span>;
-                                                return <span key={i}>{it.recordData[h] || "-"}</span>;
+                                                if(isUnit) return <span key={i} style={{textAlign:'center', color: '#0ea5e9', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>{it.units}</span>;
+                                                if(isAmount) return <span key={i} style={{textAlign:'center', color: '#059669', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>₹{it.amount.toLocaleString('en-IN')}</span>;
+                                                return <span key={i} style={{textTransform: i===1?'uppercase':'none', fontWeight: i===1?700:600}}>{it.recordData[h] || "-"}</span>;
                                             })}
                                         </div>
                                     ))}
@@ -184,7 +187,6 @@
         };
 
         function TelethoneDashboard() {
-            // Is list se "Sale Duwam Khususi" hata diya gaya hai taake photo se 100% match kare
             const defaultClassesList = ["Prep Class", "Hifz Class", "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis"];
             const [availableClasses, setAvailableClasses] = useState([]);
             const [classHeadingsMap, setClassHeadingsMap] = useState({});
@@ -281,6 +283,12 @@
                 return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
             });
 
+            // CUSTOM RECORDS AUTO FIELDS CALCULATION
+            const processedCustomData = customRecords.map(d => {
+                const activeAmt = currentMode === 'daily' ? (d.daily_amount || 0) : (d.amount || 0);
+                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+            });
+
             const getTopWinners = () => {
                 const classMap = {};
                 processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
@@ -294,6 +302,7 @@
             const getTeamScore = (teamName) => {
                 let total = 0;
                 processedData.forEach(d => { if (d.className === teamName) total += d.amount; });
+                processedCustomData.forEach(d => { if (d.className === teamName) total += d.amount; }); // Custom Team score inclusion
                 return total;
             };
 
@@ -315,11 +324,14 @@
             let isClassView = activeTab === "All Classes"; 
             let isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
             
-            const customDataForTab = customRecords.filter(d => d.className === activeTab).sort((a,b) => a.timestamp - b.timestamp);
+            const customDataForTab = processedCustomData.filter(d => d.className === activeTab).sort((a,b) => b.amount - a.amount);
             const standardDataForTab = processedData.filter(d => getBaseClass(d.className) === activeTab).sort((a, b) => b.amount - a.amount);
             
             let isCustomView = false;
             let currentHeadings = [];
+
+            // AGAR TAB CUSTOM CLASSES KI LIST MEIN HAI TO CUSTOM VIEW ENABLE KARO
+            const isCustomTab = !defaultClassesList.includes(activeTab) && availableClasses.includes(activeTab);
 
             if (!isSpecialTab) {
                 if (isJamiaView) {
@@ -328,7 +340,7 @@
                 } else if (isClassView) {
                     const classMap = {}; processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
                     displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
-                } else if (customDataForTab.length > 0) {
+                } else if (isCustomTab) {
                     isCustomView = true;
                     displayedData = customDataForTab;
                     currentHeadings = classHeadingsMap[activeTab] || ["Rank", "Name", "Details"];
@@ -488,10 +500,16 @@
                                                     {displayedData.map((it, idx) => (
                                                         <div key={idx} className="grid items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow" style={{ gridTemplateColumns: `repeat(${currentHeadings.length}, 1fr)` }}>
                                                             {currentHeadings.map((h, i) => {
-                                                                const isAuto = autoKeywords.some(kw => h.toLowerCase().includes(kw));
-                                                                const isRank = h.toLowerCase().includes('rank');
+                                                                const hLower = h.toLowerCase();
+                                                                const isAuto = autoKeywords.some(kw => hLower.includes(kw));
+                                                                const isRank = hLower.includes('rank');
+                                                                const isUnit = hLower.includes('unit');
+                                                                const isAmount = hLower.includes('amount') || hLower.includes('total') || hLower.includes('score');
+                                                                
                                                                 if(isRank) return <div key={i} className="font-bold text-slate-400 text-lg pl-2 text-center">#{idx + 1}</div>;
-                                                                if(isAuto) return <div key={i} className="text-center text-slate-300">-</div>;
+                                                                if(isUnit) return <div key={i} className="text-center font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div>;
+                                                                if(isAmount) return <div key={i} className="text-center font-['Bowlby_One_SC'] text-emerald-600 text-2xl tracking-wide">₹{it.amount.toLocaleString('en-IN')}</div>;
+                                                                
                                                                 return <div key={i} className="font-semibold text-slate-700 text-lg">{it.recordData[h] || "-"}</div>;
                                                             })}
                                                         </div>
@@ -540,12 +558,22 @@
                                                 {isCustomView ? (
                                                     <div className="flex flex-col gap-2 mt-4">
                                                         {currentHeadings.map((h, i) => {
-                                                            const isAuto = autoKeywords.some(kw => h.toLowerCase().includes(kw));
-                                                            if(isAuto) return null;
+                                                            const hLower = h.toLowerCase();
+                                                            const isAuto = autoKeywords.some(kw => hLower.includes(kw));
+                                                            const isRank = hLower.includes('rank');
+                                                            const isUnit = hLower.includes('unit');
+                                                            const isAmount = hLower.includes('amount') || hLower.includes('total') || hLower.includes('score');
+
+                                                            if(isRank) return null;
+                                                            
+                                                            let val = it.recordData[h] || "-";
+                                                            if(isUnit) val = <span className="font-['Bowlby_One_SC'] text-sky-500 text-lg">{it.units}</span>;
+                                                            if(isAmount) val = <span className="font-['Bowlby_One_SC'] text-emerald-600 text-lg">₹{it.amount.toLocaleString('en-IN')}</span>;
+
                                                             return (
-                                                                <div key={i} className="flex justify-between border-b border-slate-50 pb-1">
+                                                                <div key={i} className="flex justify-between border-b border-slate-50 pb-1 items-center">
                                                                     <span className="text-xs font-bold text-slate-400 uppercase">{h}</span>
-                                                                    <span className="font-semibold text-slate-700">{it.recordData[h] || "-"}</span>
+                                                                    <span className="font-semibold text-slate-700">{val}</span>
                                                                 </div>
                                                             )
                                                         })}
