@@ -31,11 +31,12 @@
             <div class="flex gap-2 bg-indigo-800 p-1 rounded-lg flex-wrap justify-center">
                 <button onclick="switchTab('zimmedarTab')" id="btnZimmedar" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition">Zimmedar Manage</button>
                 <button onclick="switchTab('asatizaTab')" id="btnAsatiza" class="px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition">Asatiza Detail</button>
+                <button onclick="switchTab('customDataTab')" id="btnCustomData" class="px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition">Custom Lists Entry</button>
                 <button onclick="switchTab('settingsTab')" id="btnSettings" class="px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition">Dashboard Settings</button>
             </div>
         </header>
 
-        <!-- ZIMMEDAR MANAGE TAB -->
+        <!-- 1. ZIMMEDAR MANAGE TAB -->
         <div id="zimmedarTab" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2" id="zimmedarFormTitle">Naya Zimmedar Add Karein</h2>
@@ -78,15 +79,13 @@
             </div>
         </div>
 
-        <!-- ASATIZA REPORT TAB -->
+        <!-- 2. ASATIZA REPORT TAB -->
         <div id="asatizaTab" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200">
             <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 border-b pb-4">
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">Asatiza Records
-                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Live Updates (Optimized)</span>
+                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Live Updates</span>
                 </h2>
                 <div class="flex flex-wrap justify-end gap-3 w-full md:w-auto">
-                    
-                    <!-- Full Database Search UI -->
                     <div class="relative w-full sm:w-[350px] flex gap-2">
                         <div class="relative w-full">
                             <input type="text" id="searchInput" onkeypress="handleSearch(event)" placeholder="Search Full DB (Press Enter)..." class="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-indigo-500 bg-slate-50">
@@ -94,25 +93,15 @@
                         </div>
                         <button onclick="doFullSearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">Find</button>
                     </div>
-
                     <button onclick="downloadTableAsImage(event)" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition shadow-sm whitespace-nowrap"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span>List Image</span></button>
                     <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Export Excel</button>
                 </div>
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                    <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Loaded Asatiza</span>
-                    <span id="countEntries" class="text-xl font-bold text-indigo-700">0</span>
-                </div>
-                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                    <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Loaded Jamia</span>
-                    <span id="countJamia" class="text-xl font-bold text-emerald-700">0</span>
-                </div>
-                <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                    <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Loaded Classes</span>
-                    <span id="countClass" class="text-xl font-bold text-amber-700">0</span>
-                </div>
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex justify-between items-center shadow-sm"><span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Loaded Asatiza</span><span id="countEntries" class="text-xl font-bold text-indigo-700">0</span></div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex justify-between items-center shadow-sm"><span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Loaded Jamia</span><span id="countJamia" class="text-xl font-bold text-emerald-700">0</span></div>
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 flex justify-between items-center shadow-sm"><span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Loaded Classes</span><span id="countClass" class="text-xl font-bold text-amber-700">0</span></div>
             </div>
 
             <div class="overflow-x-auto">
@@ -125,114 +114,130 @@
                     <tbody id="asatizaTableBody" class="text-sm"><tr><td colspan="10" class="p-4 text-center text-slate-500">Loading records...</td></tr></tbody>
                 </table>
             </div>
-            
             <div class="mt-4 flex justify-center">
-                <button id="loadMoreBtn" onclick="loadMoreAsatiza()" class="bg-slate-100 text-slate-700 font-bold px-6 py-2 rounded-lg hover:bg-slate-200 transition shadow-sm border border-slate-300">
-                    Load More Records
-                </button>
+                <button id="loadMoreBtn" onclick="loadMoreAsatiza()" class="bg-slate-100 text-slate-700 font-bold px-6 py-2 rounded-lg hover:bg-slate-200 transition shadow-sm border border-slate-300">Load More Records</button>
             </div>
         </div>
 
-        <!-- DASHBOARD SETTINGS TAB -->
+        <!-- 3. NEW: CUSTOM LIST DATA ENTRY TAB -->
+        <div id="customDataTab" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
+                <h2 class="text-xl font-bold text-purple-800 mb-4 border-b pb-2">Naya Record Banayen</h2>
+                <p class="text-xs text-slate-500 mb-4">Class select karein to uski headings ka form yahan auto-generate ho jayega.</p>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Class Select Karein</label>
+                    <select id="customDataClassSelect" onchange="generateCustomForm()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 bg-purple-50 outline-none font-semibold">
+                        <option value="">Select Class...</option>
+                    </select>
+                </div>
+                
+                <form id="customDataForm" class="space-y-4 hidden" onsubmit="saveCustomData(event)">
+                    <!-- DYNAMIC FIELDS YAHAN AAYENGE -->
+                    <div id="dynamicFormFields" class="space-y-3 p-4 bg-slate-50 border rounded-lg"></div>
+                    <button type="submit" id="btnSaveCustomData" class="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 shadow-md">Record Save Karein</button>
+                </form>
+            </div>
+
+            <div class="col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex justify-between">
+                    <span>Saved Dashboard List</span>
+                    <span id="currentListName" class="text-sm bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-bold hidden"></span>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead id="customTableHead" class="bg-slate-100 text-slate-600 text-sm">
+                            <tr><th class="p-4 border-b text-center text-slate-400">Class select karein records dekhne ke liye...</th></tr>
+                        </thead>
+                        <tbody id="customTableBody" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. DASHBOARD SETTINGS TAB -->
         <div id="settingsTab" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- Manage Classes (Darja) & Headings -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-purple-700">Manage Classes & Dashboard Headings</h2>
+            <!-- Manage Classes & Headings -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2 border-l-4 border-l-purple-500">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-purple-700">Class & Table Headings Manager</h2>
                 <div class="flex flex-col md:flex-row gap-2 mb-4">
-                    <input type="text" id="newClassInput" placeholder="Class ka naam (eg. Takhassusat)" class="w-full md:w-1/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-                    <input type="text" id="newClassHeadings" placeholder="Headings likhein (eg. Rank, Jamia Name, Unit)" class="w-full md:w-2/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
-                    <button onclick="addClass(event)" class="bg-purple-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-purple-700 transition shadow-md whitespace-nowrap">Add Class</button>
+                    <div class="w-full md:w-1/3">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Class Name</label>
+                        <input type="text" id="newClassInput" placeholder="eg. Takhassusat" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div class="w-full md:w-2/3">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Dashboard Table Headings (Comma Lagayen)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="newClassHeadings" placeholder="eg. Rank, Jamia Name, Unit" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                            <button onclick="addClass(event)" class="bg-purple-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-purple-700 transition shadow-md whitespace-nowrap">Save Class</button>
+                        </div>
+                    </div>
                 </div>
                 <div id="classesListContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
 
-            <!-- 1. Live Header Change -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-indigo-900">1. Sub-Heading Live Change</h2>
-                <label class="block text-sm font-semibold mb-1 text-slate-600">Line 1 Text</label>
-                <input type="text" id="line1Text" placeholder="Eg. FINAL BIG TELETHON DAY" class="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 outline-none">
-                <div class="flex gap-4 mb-4">
-                    <div class="w-2/3">
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Line 2 Text</label>
-                        <input type="text" id="line2Text" placeholder="Eg. GREAT GRAND FINAL" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-                    <div class="w-1/3">
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Line 2 Color</label>
-                        <input type="color" id="line2Color" value="#f59e0b" class="w-full h-10 border rounded-lg cursor-pointer p-1">
-                    </div>
-                </div>
-                <button onclick="updateHeader(event)" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-indigo-700 transition shadow-md">Update Sub-Headings</button>
-            </div>
-
-            <!-- 2. Competition Matchmaking (Multi-Team Dropdown + Live Score) -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-amber-700">2. Set Competition (Muqabla)</h2>
-                <p class="text-xs text-slate-500 mb-3">Class select karein. Unke current units samne show honge.</p>
-                
+            <!-- Competition Matchmaking -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 border-l-4 border-l-amber-500">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-amber-700">Set Competition (Muqabla)</h2>
+                <p class="text-xs text-slate-500 mb-3">Dashboard tab ki koi bhi class select karein. Live units samne show honge.</p>
                 <div id="teamInputsContainer" class="flex flex-col gap-3 mb-3">
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-slate-400">1.</span>
-                        <select class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateTeamScore(this)">
-                            <option value="">Class Select Karein...</option>
-                        </select>
-                        <span class="team-score font-bold text-lg text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg min-w-[80px] text-center border border-indigo-200 shadow-inner" title="Total Units">0</span>
+                        <select class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateTeamScore(this)"></select>
+                        <span class="team-score font-bold text-lg text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg min-w-[80px] text-center border border-indigo-200 shadow-inner">0</span>
                     </div>
                     <div class="flex items-center gap-2 mt-2">
                         <span class="font-bold text-slate-400">2.</span>
-                        <select class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateTeamScore(this)">
-                            <option value="">Class Select Karein...</option>
-                        </select>
-                        <span class="team-score font-bold text-lg text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg min-w-[80px] text-center border border-indigo-200 shadow-inner" title="Total Units">0</span>
+                        <select class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateTeamScore(this)"></select>
+                        <span class="team-score font-bold text-lg text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg min-w-[80px] text-center border border-indigo-200 shadow-inner">0</span>
                     </div>
                 </div>
-                
                 <div class="flex justify-between items-center mb-4">
                     <button onclick="addTeamInputRow()" class="text-amber-600 font-bold text-sm hover:underline">+ Aur Team Add Karein</button>
                     <button onclick="clearTeamInputs()" class="text-rose-500 font-bold text-sm hover:underline">Clear List</button>
                 </div>
-
                 <button onclick="addCompetition(event)" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-amber-700 transition shadow-md">Save Match Dashboard Par</button>
             </div>
 
-            <!-- 3. Dashboard Mode & Reset -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-700">3. Dashboard Mode & Reset Tools</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Dashboard par kya dikhana hai?</label>
-                        <select id="dashboardModeSelect" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="total">Grand Total (Pehle din se ab tak)</option>
-                            <option value="daily">Daily Total (Sirf Aaj ka)</option>
-                        </select>
-                        <button onclick="updateDashboardMode(event)" class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-blue-700 transition shadow-md">Update Mode LIVE</button>
-                    </div>
-                    <div class="border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6">
-                        <label class="block text-sm font-semibold mb-1 text-rose-600">Raat 12 Baje Reset (Manual)</label>
-                        <p class="text-xs text-slate-500 mb-3">Is button ko dabane se sabhi Ustaz ka sirf "Daily Amount" 0 ho jayega. Main Grand Total bilkul safe rahega.</p>
-                        <button onclick="resetDailyAmounts(event)" class="bg-rose-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-rose-700 transition shadow-md">Reset Daily Amounts To 0</button>
-                    </div>
+            <!-- Dashboard Mode & Reset -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 border-l-4 border-l-blue-500">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-700">Dashboard Mode & Reset Tools</h2>
+                <label class="block text-sm font-semibold mb-1 text-slate-600">Dashboard par kya dikhana hai?</label>
+                <select id="dashboardModeSelect" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="total">Grand Total (Pehle din se ab tak)</option>
+                    <option value="daily">Daily Total (Sirf Aaj ka)</option>
+                </select>
+                <button onclick="updateDashboardMode(event)" class="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-blue-700 transition shadow-md mb-4">Update Mode LIVE</button>
+                
+                <div class="border-t pt-4">
+                    <label class="block text-sm font-semibold mb-1 text-rose-600">Raat 12 Baje Reset (Manual)</label>
+                    <p class="text-xs text-slate-500 mb-3">Sirf "Daily Amount" 0 hoga. Main Grand Total safe rahega.</p>
+                    <button onclick="resetDailyAmounts(event)" class="bg-rose-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-rose-700 transition shadow-md">Reset Daily Amounts To 0</button>
                 </div>
             </div>
-            
-            <!-- 4. Countdown Setting -->
+
+            <!-- Header & Countdown -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-emerald-700">4. Result Countdown Settings</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Time Kab Khatam Hoga?</label>
-                        <input type="datetime-local" id="endTime" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-indigo-900">Sub-Heading Live Change</h2>
+                        <input type="text" id="line1Text" placeholder="Line 1 (Eg. FINAL BIG TELETHON DAY)" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="line2Text" placeholder="Line 2 (Eg. GREAT GRAND FINAL)" class="w-full w-2/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+                            <input type="color" id="line2Color" value="#f59e0b" class="w-1/3 h-10 border rounded-lg cursor-pointer p-1">
+                        </div>
+                        <button onclick="updateHeader(event)" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-indigo-700 transition shadow-md">Update Sub-Headings</button>
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Delay (Minutes)</label>
-                        <input type="number" id="resultDelay" placeholder="Eg. 5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Top 3 Message</label>
-                        <input type="text" id="resultMessage" placeholder="Eg. Mubarak Ho!" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    <div class="border-t md:border-t-0 md:border-l md:pl-6 pt-4 md:pt-0">
+                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-emerald-700">Result Countdown Settings</h2>
+                        <input type="datetime-local" id="endTime" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                        <div class="flex gap-2 mb-3">
+                            <input type="number" id="resultDelay" placeholder="Delay (Min)" class="w-1/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                            <input type="text" id="resultMessage" placeholder="Top 3 Message" class="w-2/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                        </div>
+                        <button onclick="updateCountdown(event)" class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-emerald-700 transition shadow-md">Start Countdown</button>
                     </div>
                 </div>
-                <button onclick="updateCountdown(event)" class="mt-4 bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-emerald-700 transition shadow-md">Start Countdown</button>
             </div>
         </div>
     </div>
@@ -243,37 +248,18 @@
         <button class="absolute top-4 right-4 text-white hover:text-gray-300" onclick="closeImageModal()"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
     </div>
     
+    <!-- Edit Form Modal same as before... -->
     <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
-                <h3 class="text-white font-bold text-lg">Edit Record</h3>
-                <button onclick="closeEditModal()" class="text-white/80 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            </div>
+            <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center"><h3 class="text-white font-bold text-lg">Edit Record</h3><button onclick="closeEditModal()" class="text-white/80 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div>
             <form id="editRecordForm" class="p-6 space-y-4">
                 <input type="hidden" id="editDocId">
                 <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Ustaz Name</label><input type="text" id="editUstazName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Jamia Name</label><input type="text" id="editJamiaName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
-                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Mobile No</label><input type="tel" id="editMobileNo" required maxlength="10" pattern="[0-9]{10}" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Region</label><input type="text" id="editRegion" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
-                    <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">State</label><input type="text" id="editState" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div>
-                </div>
-                <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Class (Darja)</label>
-                    <select id="editClassName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                        <option value="">Class Select Karein...</option>
-                    </select>
-                </div>
-                <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Section</label>
-                    <select id="editSection" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                        <option value="">Koi Nahi</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
-                    </select>
-                </div>
-                <div class="pt-4 border-t border-slate-100 flex gap-3 justify-end">
-                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
-                    <button type="submit" id="saveEditBtn" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-md">Update Record</button>
-                </div>
+                <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Jamia Name</label><input type="text" id="editJamiaName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div><div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Mobile No</label><input type="tel" id="editMobileNo" required maxlength="10" pattern="[0-9]{10}" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div></div>
+                <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Region</label><input type="text" id="editRegion" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div><div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">State</label><input type="text" id="editState" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"></div></div>
+                <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Class (Darja)</label><select id="editClassName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"><option value="">Class Select Karein...</option></select></div>
+                <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Section</label><select id="editSection" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none"><option value="">Koi Nahi</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+                <div class="pt-4 border-t border-slate-100 flex gap-3 justify-end"><button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button><button type="submit" id="saveEditBtn" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-md">Update Record</button></div>
             </form>
         </div>
     </div>
@@ -285,52 +271,52 @@
         const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
         const secondaryAuth = secondaryApp.auth();
 
-        let currentDashboardMode = "total"; // Global Mode Tracker
+        let currentDashboardMode = "total"; 
 
         db.collection('settings').doc('dashboard').onSnapshot((doc) => {
             if(doc.exists && doc.data().dashboardMode) {
                 currentDashboardMode = doc.data().dashboardMode;
                 const selectEl = document.getElementById('dashboardModeSelect');
                 if(selectEl) selectEl.value = currentDashboardMode;
-                
-                document.querySelectorAll('.team-input').forEach(select => {
-                    if(select.value) updateTeamScore(select);
-                });
+                document.querySelectorAll('.team-input').forEach(select => { if(select.value) updateTeamScore(select); });
             }
         });
 
-        // ---------------- DYNAMIC CLASSES & HEADINGS LOGIC ----------------
+        // ---------------- 1. DYNAMIC CLASSES, TABS & HEADINGS ----------------
+        // Default classes list jo dashboard me hamesha hoti hain (is se dropdown wali problem fix ho jayegi)
+        const defaultClasses = ["Prep Class", "Hifz Class", "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Sale Duwam Khususi", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis"];
         let availableClasses = [];
         let classHeadingsMap = {};
 
         db.collection('settings').doc('classes').onSnapshot((doc) => {
-            if(doc.exists) {
-                availableClasses = doc.data().list || [];
+            if(doc.exists && doc.data().list && doc.data().list.length > 0) {
+                availableClasses = doc.data().list;
                 classHeadingsMap = doc.data().headings || {};
             } else {
-                availableClasses = ["Prep Class", "Hifz Class", "Ibtidaiya", "Ula", "Saniya", "Salisa"]; 
+                // Agar database khali hai to default classes set karden
+                availableClasses = [...defaultClasses];
                 classHeadingsMap = {};
             }
             updateClassUI();
         });
 
         function updateClassUI() {
+            // Update Settings Tab List
             const container = document.getElementById('classesListContainer');
             container.innerHTML = "";
             availableClasses.forEach((cls) => {
                 const headings = classHeadingsMap[cls] ? classHeadingsMap[cls].join(', ') : "Rank, Name, Unit (Default)";
                 container.innerHTML += `
-                    <div class="bg-purple-50 border border-purple-200 text-purple-800 px-4 py-3 rounded-xl text-sm flex flex-col gap-1 w-full shadow-sm">
+                    <div class="bg-purple-50 border border-purple-200 text-purple-800 px-4 py-3 rounded-xl text-sm flex flex-col w-full shadow-sm">
                         <div class="font-bold flex justify-between items-center text-base">
                             ${cls}
-                            <button onclick="removeClass('${cls}')" class="text-rose-400 hover:text-rose-600 transition p-1 bg-rose-50 rounded-md">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
+                            <button onclick="removeClass('${cls}')" class="text-rose-400 hover:text-rose-600 p-1 bg-rose-50 rounded-md"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </div>
-                        <div class="text-xs text-purple-600 font-medium">Headings: ${headings}</div>
+                        <div class="text-[11px] text-purple-500 font-medium mt-1">Fields: ${headings}</div>
                     </div>`;
             });
 
+            // Reusable function for updating all dropdowns
             const updateDropdown = (elementId) => {
                 const select = document.getElementById(elementId); if(!select) return;
                 const val = select.value; let html = '<option value="">Class Select Karein...</option>';
@@ -338,51 +324,139 @@
                 select.innerHTML = html; if(availableClasses.includes(val)) select.value = val;
             };
 
-            updateDropdown('assignedClass'); updateDropdown('editClassName');
+            updateDropdown('assignedClass'); updateDropdown('editClassName'); updateDropdown('customDataClassSelect');
+            
+            // Update Competition Dropdowns
             document.querySelectorAll('.team-input').forEach(select => {
                 const currentVal = select.value; let optsHtml = '<option value="">Class Select Karein...</option>';
                 availableClasses.forEach(cls => optsHtml += `<option value="${cls}">${cls}</option>`);
                 select.innerHTML = optsHtml; if(availableClasses.includes(currentVal)) select.value = currentVal;
             });
+
+            generateCustomForm(); // Refresh dynamic form if a class is already selected
         }
 
         function addClass(e) {
-            const nameInput = document.getElementById('newClassInput'); 
-            const headsInput = document.getElementById('newClassHeadings');
-            
-            const className = nameInput.value.trim();
-            const headingsString = headsInput.value.trim();
+            const nameInput = document.getElementById('newClassInput'); const headsInput = document.getElementById('newClassHeadings');
+            const className = nameInput.value.trim(); const headingsString = headsInput.value.trim();
             
             if(!className) return alert("Class ka naam likhein");
             if(!headingsString) return alert("Table ki headings likhein (eg: Rank, Jamia Name, Unit)");
 
-            // Comma separated string ko array me convert karein
             const headingsArray = headingsString.split(',').map(item => item.trim()).filter(item => item !== "");
-
             const btn = e.target; btn.disabled = true; btn.innerText = "...";
             
             db.collection('settings').doc('classes').set({ 
                 list: firebase.firestore.FieldValue.arrayUnion(className),
-                headings: {
-                    [className]: headingsArray // Object ke andar class ke naam ki key banegi
-                }
+                headings: { [className]: headingsArray }
             }, {merge: true})
-            .then(() => {
-                nameInput.value = ""; headsInput.value = "";
-            }).catch(err => alert(err.message)).finally(() => { btn.disabled = false; btn.innerText = "Add Class"; });
+            .then(() => { nameInput.value = ""; headsInput.value = ""; })
+            .catch(err => alert(err.message)).finally(() => { btn.disabled = false; btn.innerText = "Save Class"; });
         }
 
         function removeClass(className) {
             if(!confirm(`Kya aap waqai '${className}' ko delete karna chahte hain?`)) return;
-            
-            // Delete from list and remove its headings
             db.collection('settings').doc('classes').update({ 
                 list: firebase.firestore.FieldValue.arrayRemove(className),
                 [`headings.${className}`]: firebase.firestore.FieldValue.delete()
             }).catch(err => alert(err.message));
         }
 
-        // ---------------- MULTI-TEAM COMPETITION (WITH LIVE SCORES) ----------------
+        // ---------------- 2. CUSTOM DATA ENTRY SYSTEM ----------------
+        let currentCustomClass = "";
+        let customDataUnsubscribe = null;
+
+        function generateCustomForm() {
+            currentCustomClass = document.getElementById('customDataClassSelect').value;
+            const form = document.getElementById('customDataForm');
+            const container = document.getElementById('dynamicFormFields');
+            const thead = document.getElementById('customTableHead');
+            const tbody = document.getElementById('customTableBody');
+            const labelBadge = document.getElementById('currentListName');
+
+            if(!currentCustomClass) {
+                form.classList.add('hidden'); labelBadge.classList.add('hidden');
+                thead.innerHTML = '<tr><th class="p-4 border-b text-center text-slate-400">Class select karein records dekhne ke liye...</th></tr>';
+                tbody.innerHTML = '';
+                if(customDataUnsubscribe) { customDataUnsubscribe(); customDataUnsubscribe = null; }
+                return;
+            }
+
+            form.classList.remove('hidden');
+            labelBadge.classList.remove('hidden'); labelBadge.innerText = currentCustomClass;
+            
+            let headings = classHeadingsMap[currentCustomClass] || ["Rank", "Name", "Details"]; // Fallback
+            
+            // Build Form Inputs
+            container.innerHTML = "";
+            headings.forEach(heading => {
+                container.innerHTML += `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">${heading}</label>
+                        <input type="text" data-heading="${heading}" required placeholder="Enter ${heading}" class="custom-field w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>`;
+            });
+
+            // Build Table Headings
+            let thHtml = "";
+            headings.forEach(h => thHtml += `<th class="p-3 border-b font-bold">${h}</th>`);
+            thHtml += `<th class="p-3 border-b text-center font-bold">Action</th>`;
+            thead.innerHTML = `<tr class="bg-slate-100 text-slate-600 text-xs uppercase">${thHtml}</tr>`;
+
+            // Load Saved Records
+            loadCustomData(currentCustomClass, headings);
+        }
+
+        function saveCustomData(e) {
+            e.preventDefault();
+            if(!currentCustomClass) return;
+            const btn = document.getElementById('btnSaveCustomData'); btn.innerText = "Saving..."; btn.disabled = true;
+
+            const inputs = document.querySelectorAll('.custom-field');
+            let recordData = {};
+            inputs.forEach(input => { recordData[input.getAttribute('data-heading')] = input.value.trim(); });
+
+            db.collection('custom_records').add({
+                className: currentCustomClass,
+                recordData: recordData,
+                timestamp: Date.now() // Simple timestamp for JS sorting
+            }).then(() => {
+                e.target.reset(); // clear fields
+            }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = "Record Save Karein"; btn.disabled = false; });
+        }
+
+        function loadCustomData(className, headings) {
+            if(customDataUnsubscribe) customDataUnsubscribe();
+            const tbody = document.getElementById('customTableBody');
+            tbody.innerHTML = `<tr><td colspan="${headings.length + 1}" class="p-4 text-center">Loading...</td></tr>`;
+
+            customDataUnsubscribe = db.collection('custom_records').where('className', '==', className).onSnapshot(snapshot => {
+                tbody.innerHTML = "";
+                if(snapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="${headings.length + 1}" class="p-4 text-center text-slate-500">Is class me abhi koi record nahi hai.</td></tr>`; return;
+                }
+
+                // Sorting manually to avoid requiring composite indexes
+                let records = [];
+                snapshot.forEach(doc => records.push({id: doc.id, ...doc.data()}));
+                records.sort((a, b) => b.timestamp - a.timestamp); 
+
+                records.forEach(item => {
+                    const data = item.recordData;
+                    let tr = document.createElement('tr'); tr.className = "border-b hover:bg-slate-50";
+                    let tdHtml = "";
+                    headings.forEach(h => { tdHtml += `<td class="p-3 text-sm font-medium text-slate-700">${data[h] || "-"}</td>`; });
+                    tdHtml += `<td class="p-3 text-center"><button onclick="deleteCustomRecord('${item.id}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></td>`;
+                    tr.innerHTML = tdHtml; tbody.appendChild(tr);
+                });
+            });
+        }
+
+        async function deleteCustomRecord(docId) {
+            if(confirm("Delete this record?")) { await db.collection('custom_records').doc(docId).delete(); }
+        }
+
+        // ---------------- MULTI-TEAM COMPETITION ----------------
         async function updateTeamScore(selectElement) {
             const scoreSpan = selectElement.nextElementSibling; const className = selectElement.value;
             if(!className) { scoreSpan.innerText = "0"; return; }
@@ -400,8 +474,7 @@
         }
 
         function addTeamInputRow() {
-            const container = document.getElementById('teamInputsContainer');
-            const count = container.children.length + 1;
+            const container = document.getElementById('teamInputsContainer'); const count = container.children.length + 1;
             let optionsHtml = '<option value="">Class Select Karein...</option>';
             availableClasses.forEach(cls => { optionsHtml += `<option value="${cls}">${cls}</option>`; });
             const div = document.createElement('div'); div.className = "flex items-center gap-2 mt-2";
@@ -424,80 +497,57 @@
             .then(() => { alert("✅ Muqabla (Match) Dashboard par Save ho gaya!"); clearTeamInputs(); }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
+        // ---------------- TAB SWITCHING & OTHER UI LOGIC ----------------
+        function switchTab(tabId) {
+            const tabs = ['zimmedarTab', 'asatizaTab', 'customDataTab', 'settingsTab'];
+            const btns = ['btnZimmedar', 'btnAsatiza', 'btnCustomData', 'btnSettings'];
+            
+            tabs.forEach(t => document.getElementById(t).classList.add('hidden'));
+            btns.forEach(b => document.getElementById(b).className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition");
+            
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById(btns[tabs.indexOf(tabId)]);
+            activeBtn.className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
+        }
+
         // ---------------- ASATIZA FULL DATABASE SEARCH & PAGINATION ----------------
-        let asatizaUnsubscribe = null;
-        let currentRecordLimit = 50; 
-        let allAsatizaData = []; 
-        let currentFilteredData = []; 
-        let asatizaDataList = [];
+        let asatizaUnsubscribe = null; let currentRecordLimit = 50; let allAsatizaData = []; let currentFilteredData = []; let asatizaDataList = [];
 
         function startAsatizaListener() {
             if(asatizaUnsubscribe) asatizaUnsubscribe();
-            asatizaUnsubscribe = db.collection('asatiza_details')
-                .orderBy('timestamp', 'desc').limit(currentRecordLimit).onSnapshot((snapshot) => {
-                    allAsatizaData = []; 
-                    snapshot.forEach((doc) => {
-                        const data = doc.data(); data.docId = doc.id; 
-                        data.jamiaName = data.jamiaName || "N/A"; data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
-                        allAsatizaData.push(data);
-                    });
-                    renderTableAndFilter(); 
-                });
+            asatizaUnsubscribe = db.collection('asatiza_details').orderBy('timestamp', 'desc').limit(currentRecordLimit).onSnapshot((snapshot) => {
+                allAsatizaData = []; snapshot.forEach((doc) => {
+                    const data = doc.data(); data.docId = doc.id; data.jamiaName = data.jamiaName || "N/A"; data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
+                    allAsatizaData.push(data);
+                }); renderTableAndFilter(); 
+            });
         }
 
         function loadMoreAsatiza() {
-            currentRecordLimit += 50; 
-            document.getElementById('loadMoreBtn').innerText = "Loading...";
-            startAsatizaListener();
+            currentRecordLimit += 50; document.getElementById('loadMoreBtn').innerText = "Loading..."; startAsatizaListener();
             setTimeout(() => { document.getElementById('loadMoreBtn').innerText = "Load More Records"; }, 1000);
         }
 
-        function handleSearch(e) {
-            if (e.key === 'Enter') {
-                doFullSearch();
-            }
-        }
+        function handleSearch(e) { if (e.key === 'Enter') doFullSearch(); }
 
         async function doFullSearch() {
             const searchVal = document.getElementById("searchInput").value.trim().toLowerCase();
             const tbody = document.getElementById('asatizaTableBody');
-
-            if(!searchVal) {
-                document.getElementById('loadMoreBtn').classList.remove('hidden');
-                startAsatizaListener(); // Agar empty hai to normally load karo
-                return;
-            }
-
-            if(asatizaUnsubscribe) asatizaUnsubscribe(); // Stop live listener to save reads
-            document.getElementById('loadMoreBtn').classList.add('hidden'); // Hide load more during search
+            if(!searchVal) { document.getElementById('loadMoreBtn').classList.remove('hidden'); startAsatizaListener(); return; }
+            if(asatizaUnsubscribe) asatizaUnsubscribe(); 
+            document.getElementById('loadMoreBtn').classList.add('hidden'); 
             tbody.innerHTML = '<tr><td colspan="10" class="p-6 text-center text-indigo-600 font-bold">Poore database me talash kiya ja raha hai, kripya intezar karein...</td></tr>';
-            
             try {
-                // Poore database se aik hi bar get karega jisse reads kam lagen
-                const snapshot = await db.collection('asatiza_details').get();
-                allAsatizaData = [];
-                
+                const snapshot = await db.collection('asatiza_details').get(); allAsatizaData = [];
                 snapshot.forEach(doc => {
-                    const data = doc.data(); data.docId = doc.id;
-                    data.jamiaName = data.jamiaName || "N/A"; 
-                    data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
-                    
+                    const data = doc.data(); data.docId = doc.id; data.jamiaName = data.jamiaName || "N/A"; data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
                     const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase();
-                    if(searchString.includes(searchVal)) {
-                        allAsatizaData.push(data);
-                    }
-                });
-                
-                renderTableAndFilter(); // Sirf matched data show hoga
-            } catch(e) {
-                alert("Search Error: " + e.message);
-                startAsatizaListener();
-            }
+                    if(searchString.includes(searchVal)) { allAsatizaData.push(data); }
+                }); renderTableAndFilter(); 
+            } catch(e) { alert("Search Error: " + e.message); startAsatizaListener(); }
         }
+        startAsatizaListener(); 
 
-        startAsatizaListener(); // Initial Load
-
-        // ---------------- ZIMMEDAR LIST (MAPPING) ----------------
         const zimmedarList = {
             "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
             "BALAGHAT": "Akmal Kamal Madani", "BHOPAL": "Akmal Kamal Madani", "DEWAS": "Akmal Kamal Madani", "INDORE": "Akmal Kamal Madani", "JABALPUR": "Akmal Kamal Madani", "JABALPUR BYPASS": "Akmal Kamal Madani", "KATNI": "Akmal Kamal Madani", "MANDSAUR": "Akmal Kamal Madani",
@@ -514,100 +564,48 @@
             "BILASPUR": "Sarfaraz Madani", "RAIPUR": "Sarfaraz Madani", "AKOLA": "Sarfaraz Madani", "BHANDARA": "Sarfaraz Madani", "JALGAON": "Sarfaraz Madani", "KAMPTEE": "Sarfaraz Madani", "KARANJA": "Sarfaraz Madani", "KORADI": "Sarfaraz Madani", "MODEL JAMIA": "Sarfaraz Madani", "NAGPUR": "Sarfaraz Madani", "RAVER": "Sarfaraz Madani",
             "AHMEDNAGAR": "Irfan Misbahi", "BHANDUP": "Irfan Misbahi", "KALYAN": "Irfan Misbahi", "KARBALA MASJID GOVANDI": "Irfan Misbahi", "KHULDABAD": "Irfan Misbahi", "LATUR": "Irfan Misbahi", "MAHIM": "Irfan Misbahi", "MALEGAON": "Irfan Misbahi", "MITTI MASJID GOVANDI": "Irfan Misbahi", "MUMBAI": "Irfan Misbahi", "PUNE": "Irfan Misbahi", "SHAHADA": "Irfan Misbahi"
         };
-
-        // ---------------- REST OF THE FUNCTIONS ----------------
-        function getDirectImageUrl(url) {
-            if (!url) return "";
-            const match = url.match(/[-\w]{25,}/); 
-            if (match && match[0]) return `https://lh3.googleusercontent.com/d/${match[0]}`;
-            return url;
-        }
-
-        function switchTab(tabId) {
-            document.getElementById('zimmedarTab').classList.add('hidden'); document.getElementById('asatizaTab').classList.add('hidden'); document.getElementById('settingsTab').classList.add('hidden');
-            document.getElementById('btnZimmedar').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition"; document.getElementById('btnAsatiza').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition"; document.getElementById('btnSettings').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
-            document.getElementById(tabId).classList.remove('hidden');
-            if(tabId === 'zimmedarTab') document.getElementById('btnZimmedar').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition"; else if(tabId === 'asatizaTab') document.getElementById('btnAsatiza').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition"; else document.getElementById('btnSettings').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
-        }
-
-        function updateHeader(event) {
-            const line1 = document.getElementById('line1Text').value.trim(); const line2 = document.getElementById('line2Text').value.trim(); const color2 = document.getElementById('line2Color').value;
-            const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true;
-            db.collection('settings').doc('dashboard').set({ line1Text: line1, line2Text: line2, line2Color: color2 }, {merge: true}).then(() => alert("✅ Sub-Headings Updated LIVE!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
-        }
-
-        function updateCountdown(event) {
-            const endTime = document.getElementById('endTime').value; const delayMinutes = document.getElementById('resultDelay').value; const message = document.getElementById('resultMessage').value;
-            if(!endTime || !delayMinutes) { alert("Waqt aur delay dono set karein"); return; }
-            const btn = event.target; const originalText = btn.innerText; btn.innerText = "Starting..."; btn.disabled = true;
-            db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message }).then(() => alert("✅ Countdown Started!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
-        }
+        
+        function getDirectImageUrl(url) { if (!url) return ""; const match = url.match(/[-\w]{25,}/); if (match && match[0]) return `https://lh3.googleusercontent.com/d/${match[0]}`; return url; }
+        
+        function updateHeader(event) { const line1 = document.getElementById('line1Text').value.trim(); const line2 = document.getElementById('line2Text').value.trim(); const color2 = document.getElementById('line2Color').value; const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true; db.collection('settings').doc('dashboard').set({ line1Text: line1, line2Text: line2, line2Color: color2 }, {merge: true}).then(() => alert("✅ Sub-Headings Updated LIVE!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; }); }
+        
+        function updateCountdown(event) { const endTime = document.getElementById('endTime').value; const delayMinutes = document.getElementById('resultDelay').value; const message = document.getElementById('resultMessage').value; if(!endTime || !delayMinutes) { alert("Waqt aur delay dono set karein"); return; } const btn = event.target; const originalText = btn.innerText; btn.innerText = "Starting..."; btn.disabled = true; db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message }).then(() => alert("✅ Countdown Started!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; }); }
 
         let zimmedarDataMap = {};
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn'); const isEditing = document.getElementById('zimmedarDocId').value !== ""; btn.innerHTML = isEditing ? "Updating..." : "Creating..."; btn.disabled = true;
+            e.preventDefault(); const btn = document.getElementById('submitBtn'); const isEditing = document.getElementById('zimmedarDocId').value !== ""; btn.innerHTML = isEditing ? "Updating..." : "Creating..."; btn.disabled = true;
             const ustazName = document.getElementById('ustazName').value.trim(); const assignedClass = document.getElementById('assignedClass').value; const username = document.getElementById('username').value.trim().toLowerCase(); const password = document.getElementById('password').value;
-            if (isEditing) {
-                const docId = document.getElementById('zimmedarDocId').value;
-                try { await db.collection('users').doc(docId).update({ username: username, ustazName: ustazName, assignedClass: assignedClass }); alert("✅ Zimmedar successfully update ho gaya!"); resetZimmedarForm(); } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
+            if (isEditing) { const docId = document.getElementById('zimmedarDocId').value; try { await db.collection('users').doc(docId).update({ username: username, ustazName: ustazName, assignedClass: assignedClass }); alert("✅ Zimmedar successfully update ho gaya!"); resetZimmedarForm(); } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
             } else {
                 if(!password) { alert("Kripya password darj karein."); btn.innerHTML = "Account Banayein"; btn.disabled = false; return; }
-                const fakeEmail = username + "@telethon.com";
-                try { const userCredential = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, password); await secondaryAuth.signOut(); await db.collection('users').doc(userCredential.user.uid).set({ username: username, ustazName: ustazName, assignedClass: assignedClass, role: "zimmedar", createdAt: firebase.firestore.FieldValue.serverTimestamp() }); alert("✅ Zimmedar ka account successfully ban gaya!"); resetZimmedarForm(); } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
+                const fakeEmail = username + "@telethon.com"; try { const userCredential = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, password); await secondaryAuth.signOut(); await db.collection('users').doc(userCredential.user.uid).set({ username: username, ustazName: ustazName, assignedClass: assignedClass, role: "zimmedar", createdAt: firebase.firestore.FieldValue.serverTimestamp() }); alert("✅ Zimmedar ka account successfully ban gaya!"); resetZimmedarForm(); } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
             }
         });
 
-        function resetZimmedarForm() {
-            document.getElementById('createUserForm').reset(); document.getElementById('zimmedarDocId').value = ""; document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein"; document.getElementById('submitBtn').innerText = "Account Banayein"; document.getElementById('passwordDiv').classList.remove('hidden'); document.getElementById('password').setAttribute('required', 'required'); document.getElementById('username').removeAttribute('disabled'); document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.add('hidden');
-        }
+        function resetZimmedarForm() { document.getElementById('createUserForm').reset(); document.getElementById('zimmedarDocId').value = ""; document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein"; document.getElementById('submitBtn').innerText = "Account Banayein"; document.getElementById('passwordDiv').classList.remove('hidden'); document.getElementById('password').setAttribute('required', 'required'); document.getElementById('username').removeAttribute('disabled'); document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.add('hidden'); }
 
         db.collection('users').where("role", "==", "zimmedar").onSnapshot((snapshot) => {
             const tbody = document.getElementById('userTableBody'); tbody.innerHTML = snapshot.empty ? '<tr><td colspan="4" class="p-4 text-center text-slate-500">Koi zimmedar add nahi hua abhi.</td></tr>' : "";
-            zimmedarDataMap = {};
-            snapshot.forEach((doc) => {
-                const data = doc.data(); data.docId = doc.id; zimmedarDataMap[doc.id] = data;
-                tbody.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-semibold text-indigo-600">${data.username}</td><td class="p-3">${data.ustazName}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">${data.assignedClass}</span></td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2"><button onclick="editZimmedar('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteZimmedar('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`;
-            });
+            zimmedarDataMap = {}; snapshot.forEach((doc) => { const data = doc.data(); data.docId = doc.id; zimmedarDataMap[doc.id] = data; tbody.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-semibold text-indigo-600">${data.username}</td><td class="p-3">${data.ustazName}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">${data.assignedClass}</span></td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2"><button onclick="editZimmedar('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteZimmedar('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`; });
         });
 
         function editZimmedar(docId) {
-            const data = zimmedarDataMap[docId]; if (!data) return;
-            window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('zimmedarDocId').value = docId; document.getElementById('ustazName').value = data.ustazName; document.getElementById('assignedClass').value = data.assignedClass; document.getElementById('username').value = data.username; document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein"; document.getElementById('submitBtn').innerText = "Update Record"; document.getElementById('passwordDiv').classList.add('hidden'); document.getElementById('password').removeAttribute('required'); document.getElementById('username').setAttribute('disabled', 'disabled'); document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
+            const data = zimmedarDataMap[docId]; if (!data) return; window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('zimmedarDocId').value = docId; document.getElementById('ustazName').value = data.ustazName; document.getElementById('assignedClass').value = data.assignedClass; document.getElementById('username').value = data.username; document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein"; document.getElementById('submitBtn').innerText = "Update Record"; document.getElementById('passwordDiv').classList.add('hidden'); document.getElementById('password').removeAttribute('required'); document.getElementById('username').setAttribute('disabled', 'disabled'); document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
         }
 
         async function deleteZimmedar(docId) { if (confirm("Kya aap waqai is zimmedar ko delete karna chahte hain?")) { try { await db.collection('users').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); } } }
 
         function renderTableAndFilter() {
-            const tbody = document.getElementById('asatizaTableBody');
-            const searchInput = document.getElementById("searchInput").value.toLowerCase();
-            
-            // Re-filter client side incase they typed while live limit was running
-            currentFilteredData = allAsatizaData.filter(data => {
-                const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase();
-                return searchString.includes(searchInput);
-            });
-            
+            const tbody = document.getElementById('asatizaTableBody'); const searchInput = document.getElementById("searchInput").value.toLowerCase();
+            currentFilteredData = allAsatizaData.filter(data => { const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase(); return searchString.includes(searchInput); });
             currentFilteredData.sort((a, b) => a.jamiaName.localeCompare(b.jamiaName));
-            
-            const uniqueJamias = new Set(currentFilteredData.map(d => d.jamiaName)).size;
-            const uniqueClasses = new Set(currentFilteredData.map(d => d.className)).size;
-            document.getElementById('countEntries').innerText = currentFilteredData.length;
-            document.getElementById('countJamia').innerText = uniqueJamias;
-            document.getElementById('countClass').innerText = uniqueClasses;
-            
-            asatizaDataList = [];
-            if (currentFilteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila.</td></tr>'; return; }
-            
+            const uniqueJamias = new Set(currentFilteredData.map(d => d.jamiaName)).size; const uniqueClasses = new Set(currentFilteredData.map(d => d.className)).size;
+            document.getElementById('countEntries').innerText = currentFilteredData.length; document.getElementById('countJamia').innerText = uniqueJamias; document.getElementById('countClass').innerText = uniqueClasses;
+            asatizaDataList = []; if (currentFilteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila.</td></tr>'; return; }
             let tableHTML = ""; window.renderedDataMap = {}; let serialNumber = 1; 
             currentFilteredData.forEach(data => {
-                window.renderedDataMap[data.docId] = data; 
-                const dateObj = data.timestamp ? data.timestamp.toDate() : new Date(); const dateStr = dateObj.toLocaleDateString('en-IN');
-                const directUrl = getDirectImageUrl(data.photoUrl);
-                const photoHtml = data.photoUrl ? `<img src="${directUrl}" referrerpolicy="no-referrer" onclick="openImageModal('${directUrl}')" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:ring-2 ring-indigo-300 transition" alt="Photo">` : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs">No Pic</div>`;
-                const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
+                window.renderedDataMap[data.docId] = data; const dateObj = data.timestamp ? data.timestamp.toDate() : new Date(); const dateStr = dateObj.toLocaleDateString('en-IN'); const directUrl = getDirectImageUrl(data.photoUrl); const photoHtml = data.photoUrl ? `<img src="${directUrl}" referrerpolicy="no-referrer" onclick="openImageModal('${directUrl}')" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:ring-2 ring-indigo-300 transition" alt="Photo">` : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs">No Pic</div>`; const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
                 asatizaDataList.push({ "Sr. No": serialNumber, "Ustaz Name": data.ustazName || "N/A", "Jamia Name": data.jamiaName, "Zimmedar Name": data.zimmedarName, "Region": data.region || "N/A", "State": data.state || "N/A", "Mobile No": data.mobileNo || "N/A", "Class (Darja)": classWithSection || "N/A", "Photo Link": directUrl || "N/A", "Submission Date": dateStr });
-                
                 tableHTML += `<tr class="border-b hover:bg-slate-50 search-row" id="row-${data.docId}"><td class="p-3 font-bold text-slate-500 text-xs">${serialNumber}</td><td class="p-2">${photoHtml}</td><td class="p-3 font-semibold text-slate-800">${data.ustazName || "N/A"}</td><td class="p-3 font-bold text-indigo-700">${data.jamiaName}</td><td class="p-3 text-sm font-bold text-slate-700 bg-slate-100 rounded-lg border-x-4 border-white">${data.zimmedarName}</td><td class="p-3"><div class="text-sm font-semibold">${data.region || "N/A"}</div><div class="text-xs text-slate-500">${data.state || "N/A"}</div></td><td class="p-3 font-semibold text-emerald-600">${data.mobileNo || "N/A"}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">${classWithSection || "N/A"}</span></td><td class="p-3 text-xs text-slate-500">${dateStr}</td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2" data-html2canvas-ignore><button onclick="openEditModal('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteEntry('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`;
                 serialNumber++; 
             });
@@ -616,31 +614,14 @@
 
         function openEditModal(docId) { const data = window.renderedDataMap[docId]; if(!data) return; document.getElementById('editDocId').value = docId; document.getElementById('editUstazName').value = data.ustazName || ''; document.getElementById('editJamiaName').value = data.jamiaName || ''; document.getElementById('editMobileNo').value = data.mobileNo || ''; document.getElementById('editRegion').value = data.region || ''; document.getElementById('editState').value = data.state || ''; document.getElementById('editClassName').value = data.className || ''; document.getElementById('editModal').classList.remove('hidden'); }
         function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); document.getElementById('editRecordForm').reset(); }
-
-        document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
-            e.preventDefault(); const docId = document.getElementById('editDocId').value; const btn = document.getElementById('saveEditBtn'); btn.innerHTML = "Updating..."; btn.disabled = true;
-            try { await db.collection('asatiza_details').doc(docId).update({ ustazName: document.getElementById('editUstazName').value.trim(), jamiaName: document.getElementById('editJamiaName').value.trim(), mobileNo: document.getElementById('editMobileNo').value.trim(), region: document.getElementById('editRegion').value.trim(), state: document.getElementById('editState').value.trim(), className: document.getElementById('editClassName').value }); closeEditModal(); } catch (error) { alert("Error: " + error.message); } finally { btn.innerHTML = "Update Record"; btn.disabled = false; }
-        });
-
+        document.getElementById('editRecordForm').addEventListener('submit', async (e) => { e.preventDefault(); const docId = document.getElementById('editDocId').value; const btn = document.getElementById('saveEditBtn'); btn.innerHTML = "Updating..."; btn.disabled = true; try { await db.collection('asatiza_details').doc(docId).update({ ustazName: document.getElementById('editUstazName').value.trim(), jamiaName: document.getElementById('editJamiaName').value.trim(), mobileNo: document.getElementById('editMobileNo').value.trim(), region: document.getElementById('editRegion').value.trim(), state: document.getElementById('editState').value.trim(), className: document.getElementById('editClassName').value }); closeEditModal(); } catch (error) { alert("Error: " + error.message); } finally { btn.innerHTML = "Update Record"; btn.disabled = false; } });
         async function deleteEntry(docId) { if (confirm("Kya aap waqai is entry ko delete karna chahte hain?")) { try { await db.collection('asatiza_details').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); } } }
         function exportToExcel() { if (asatizaDataList.length === 0) { alert("Koi data mojood nahi hai."); return; } const worksheet = XLSX.utils.json_to_sheet(asatizaDataList); const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Asatiza Details"); XLSX.writeFile(workbook, "Asatiza_Telethon_2026.xlsx"); }
-        function downloadTableAsImage(event) {
-            const tableElement = document.getElementById('asatizaMainTable'); const btn = event.currentTarget; const btnText = btn.querySelector('span'); const originalText = btnText.innerText; btnText.innerText = "Processing..."; btn.classList.add("opacity-70", "cursor-wait");
-            html2canvas(tableElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
-                const searchVal = document.getElementById("searchInput").value.trim(); const fileName = searchVal ? `Telethon_List_${searchVal}.png` : 'Telethon_List_All.png'; const link = document.createElement('a'); link.download = fileName; link.href = canvas.toDataURL('image/png'); link.click(); btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait");
-            }).catch(error => { alert("Error image generate karne mein."); btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait"); });
-        }
+        function downloadTableAsImage(event) { const tableElement = document.getElementById('asatizaMainTable'); const btn = event.currentTarget; const btnText = btn.querySelector('span'); const originalText = btnText.innerText; btnText.innerText = "Processing..."; btn.classList.add("opacity-70", "cursor-wait"); html2canvas(tableElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => { const searchVal = document.getElementById("searchInput").value.trim(); const fileName = searchVal ? `Telethon_List_${searchVal}.png` : 'Telethon_List_All.png'; const link = document.createElement('a'); link.download = fileName; link.href = canvas.toDataURL('image/png'); link.click(); btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait"); }).catch(error => { alert("Error image generate karne mein."); btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait"); }); }
         function openImageModal(imgSrc) { document.getElementById('modalImage').src = imgSrc; document.getElementById('imageModal').classList.remove('hidden'); }
         function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); document.getElementById('modalImage').src = ""; }
-        function updateDashboardMode(event) {
-            const mode = document.getElementById('dashboardModeSelect').value; const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true;
-            db.collection('settings').doc('dashboard').set({ dashboardMode: mode }, {merge: true}).then(() => alert("✅ Dashboard Mode Live Update Ho Gaya!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
-        }
-        async function resetDailyAmounts(event) {
-            if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return;
-            const btn = event.target; const origText = btn.innerText; btn.innerText = "Resetting..."; btn.disabled = true;
-            try { const snapshot = await db.collection('asatiza_details').get(); const batch = db.batch(); snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); }); await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!"); } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; }
-        }
+        function updateDashboardMode(event) { const mode = document.getElementById('dashboardModeSelect').value; const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true; db.collection('settings').doc('dashboard').set({ dashboardMode: mode }, {merge: true}).then(() => alert("✅ Dashboard Mode Live Update Ho Gaya!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; }); }
+        async function resetDailyAmounts(event) { if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return; const btn = event.target; const origText = btn.innerText; btn.innerText = "Resetting..."; btn.disabled = true; try { const snapshot = await db.collection('asatiza_details').get(); const batch = db.batch(); snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); }); await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!"); } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; } }
     </script>
 </body>
 </html>
