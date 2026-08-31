@@ -11,7 +11,15 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; } .hidden { display: none !important; }</style>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; } 
+        .hidden { display: none !important; }
+        /* Custom Scrollbar for better UI */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+    </style>
 </head>
 <body class="p-6">
     <div class="max-w-7xl mx-auto">
@@ -36,56 +44,29 @@
                     <input type="hidden" id="zimmedarDocId">
                     <div>
                         <label class="block text-sm font-semibold">Zimmedar Ka Naam</label>
-                        <input type="text" id="ustazName" required class="w-full px-3 py-2 border rounded-lg">
+                        <input type="text" id="ustazName" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold">Assign Class</label>
-                        <select id="assignedClass" required class="w-full px-3 py-2 border rounded-lg">
-                            <option value="">Class Select Karein...</option>
-                            <option value="Prep Class">Prep Class</option>
-                            <option value="Hifz Class">Hifz Class</option>
-                            <option value="Ibtidaiya">Ibtidaiya</option>
-                            <option value="Sale Awwal">Sale Awwal</option>
-                            <option value="Sale Duwam">Sale Duwam</option>
-                            <option value="Sale Duwam Khususi">Sale Duwam Khususi</option>
-                            <option value="Ula">Ula</option>
-                            <option value="Saniya">Saniya</option>
-                            <option value="Salisa">Salisa</option>
-                            <option value="Rabia">Rabia</option>
-                            <option value="Khamisa">Khamisa</option>
-                            <option value="Sadisa">Sadisa</option>
-                            <option value="Sabia">Sabia</option>
-                            <option value="Doratul Hadis">Doratul Hadis</option>
+                        <select id="assignedClass" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="">Class Select Karein (Pehle Settings me add karein)...</option>
+                            <!-- Options Firebase se aayengi -->
                         </select>
                     </div>
                     <div class="pt-2 border-t">
                         <label class="block text-sm font-semibold text-indigo-600">Username (Login ke liye)</label>
-                        <input type="text" id="username" required placeholder="Jaise: zaid_ula" class="w-full px-3 py-2 border rounded-lg bg-indigo-50">
+                        <input type="text" id="username" required placeholder="Jaise: zaid_ula" class="w-full px-3 py-2 border rounded-lg bg-indigo-50 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
                     <div id="passwordDiv">
                         <label class="block text-sm font-semibold text-indigo-600">Password</label>
-                        <input type="text" id="password" placeholder="Kam se kam 6 huroof" class="w-full px-3 py-2 border rounded-lg bg-indigo-50">
+                        <input type="text" id="password" placeholder="Kam se kam 6 huroof" class="w-full px-3 py-2 border rounded-lg bg-indigo-50 focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-lg hover:bg-indigo-700">Account Banayein</button>
+                    <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white font-bold py-2 rounded-lg hover:bg-indigo-700 shadow-md">Account Banayein</button>
                     <button type="button" id="cancelEditZimmedarBtn" onclick="resetZimmedarForm()" class="hidden w-full bg-slate-200 text-slate-700 font-bold py-2 rounded-lg hover:bg-slate-300 mt-2">Cancel Edit</button>
                 </form>
             </div>
             <div class="col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-200">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Registered Zimmedars</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Total Asatiza</span>
-                        <span id="countEntries" class="text-xl font-bold text-indigo-700">0</span>
-                    </div>
-                    <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                        <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Total Jamia</span>
-                        <span id="countJamia" class="text-xl font-bold text-emerald-700">0</span>
-                    </div>
-                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                        <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Total Classes</span>
-                        <span id="countClass" class="text-xl font-bold text-amber-700">0</span>
-                    </div>
-                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -102,16 +83,34 @@
         <!-- ASATIZA REPORT TAB -->
         <div id="asatizaTab" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200">
             <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 border-b pb-4">
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">Asatiza Records<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Live Updates</span></h2>
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">Asatiza Records
+                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Live Updates (Optimized)</span>
+                </h2>
                 <div class="flex flex-wrap justify-end gap-3 w-full md:w-auto">
                     <div class="relative w-full sm:w-64">
-                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Jamia, Naam, Zimmedar ya Class..." class="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search from loaded records..." class="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-indigo-500 bg-slate-50">
                         <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <button onclick="downloadTableAsImage(event)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap shadow-sm"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span>Download List Image</span></button>
+                    <button onclick="downloadTableAsImage(event)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition shadow-sm whitespace-nowrap"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span>List Image</span></button>
                     <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Export Excel</button>
                 </div>
             </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
+                    <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Loaded Asatiza</span>
+                    <span id="countEntries" class="text-xl font-bold text-indigo-700">0</span>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
+                    <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Loaded Jamia</span>
+                    <span id="countJamia" class="text-xl font-bold text-emerald-700">0</span>
+                </div>
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 flex justify-between items-center shadow-sm">
+                    <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Loaded Classes</span>
+                    <span id="countClass" class="text-xl font-bold text-amber-700">0</span>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse" id="asatizaMainTable">
                     <thead>
@@ -122,61 +121,75 @@
                     <tbody id="asatizaTableBody" class="text-sm"><tr><td colspan="10" class="p-4 text-center text-slate-500">Loading records...</td></tr></tbody>
                 </table>
             </div>
+            
+            <!-- Optimized Load More Button -->
+            <div class="mt-4 flex justify-center">
+                <button id="loadMoreBtn" onclick="loadMoreAsatiza()" class="bg-slate-100 text-slate-700 font-bold px-6 py-2 rounded-lg hover:bg-slate-200 transition shadow-sm border border-slate-300">
+                    Load More Records
+                </button>
+            </div>
         </div>
 
         <!-- DASHBOARD SETTINGS TAB -->
         <div id="settingsTab" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- NEW: Dynamic Classes Manager -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-purple-700">Manage Classes (Darja)</h2>
+                <div class="flex gap-2 mb-4 max-w-md">
+                    <input type="text" id="newClassInput" placeholder="Nayi Class ka naam likhein..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    <button onclick="addClass(event)" class="bg-purple-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-purple-700 transition shadow-md whitespace-nowrap">Add Class</button>
+                </div>
+                <div id="classesListContainer" class="flex flex-wrap gap-2">
+                    <!-- Classes will be loaded here dynamically -->
+                </div>
+            </div>
+
             <!-- 1. Live Header Change -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
                 <h2 class="text-lg font-bold mb-4 border-b pb-2 text-indigo-900">1. Sub-Heading Live Change</h2>
-                <label class="block text-sm font-semibold mb-1 text-slate-600">Line 1 Text (Eg. FINAL BIG TELETHON DAY)</label>
-                <input type="text" id="line1Text" placeholder="Pehli Line yahan likhein" class="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-sm font-semibold mb-1 text-slate-600">Line 1 Text</label>
+                <input type="text" id="line1Text" placeholder="Eg. FINAL BIG TELETHON DAY" class="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500 outline-none">
                 <div class="flex gap-4 mb-4">
                     <div class="w-2/3">
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Line 2 Text (Eg. GREAT GRAND FINAL)</label>
-                        <input type="text" id="line2Text" placeholder="Dusri Line yahan likhein" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Line 2 Text</label>
+                        <input type="text" id="line2Text" placeholder="Eg. GREAT GRAND FINAL" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
                     <div class="w-1/3">
                         <label class="block text-sm font-semibold mb-1 text-slate-600">Line 2 Color</label>
                         <input type="color" id="line2Color" value="#f59e0b" class="w-full h-10 border rounded-lg cursor-pointer p-1">
                     </div>
                 </div>
-                <button onclick="updateHeader(event)" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-indigo-700 transition shadow-md">Update Sub-Headings LIVE</button>
+                <button onclick="updateHeader(event)" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-indigo-700 transition shadow-md">Update Sub-Headings</button>
             </div>
 
-            <!-- 2. Countdown Setting -->
+            <!-- 2. Competition Matchmaking (Multi-Team) -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-emerald-700">2. Result Countdown Settings</h2>
-                <label class="block text-sm font-semibold mb-1 text-slate-600">Time Kab Khatam Hoga?</label>
-                <input type="datetime-local" id="endTime" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-emerald-500 outline-none">
-                <label class="block text-sm font-semibold mb-1 text-slate-600">Result Kitni Der Baad Dikhana Hai? (Minutes)</label>
-                <input type="number" id="resultDelay" placeholder="Eg. 5 (5 min baad result aayega)" class="w-full px-3 py-2 border rounded-lg mb-3 focus:ring-2 focus:ring-emerald-500 outline-none">
-                <label class="block text-sm font-semibold mb-1 text-slate-600">Top 3 Ke Sath Message</label>
-                <input type="text" id="resultMessage" placeholder="Eg. Mubarak Ho Top 3 Winners Ko!" class="w-full px-3 py-2 border rounded-lg mb-4 focus:ring-2 focus:ring-emerald-500 outline-none">
-                <button onclick="updateCountdown(event)" class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-emerald-700 transition shadow-md">Start Countdown</button>
-            </div>
-
-            <!-- 3. Competition Matchmaking -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-amber-700">3. Set Competition (Muqabla)</h2>
-                <div class="flex flex-col md:flex-row gap-4 items-center mb-4">
-                    <div class="w-full md:w-2/5">
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Team / Class A</label>
-                        <input type="text" id="teamA" placeholder="Eg. Ula A" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-amber-700">2. Set Competition (Muqabla)</h2>
+                <p class="text-xs text-slate-500 mb-3">Aap 2 se zyada teams ka muqabla bhi ek sath karwa sakte hain.</p>
+                
+                <div id="teamInputsContainer" class="flex flex-col gap-3 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-400">1.</span>
+                        <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
                     </div>
-                    <div class="w-full md:w-1/5 text-center flex justify-center">
-                        <span class="font-black text-3xl text-slate-300 italic bg-slate-50 px-4 py-2 rounded-full border border-slate-200">VS</span>
-                    </div>
-                    <div class="w-full md:w-2/5">
-                        <label class="block text-sm font-semibold mb-1 text-slate-600">Team / Class B</label>
-                        <input type="text" id="teamB" placeholder="Eg. Ula B" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-400">2.</span>
+                        <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
                     </div>
                 </div>
+                
+                <div class="flex justify-between items-center mb-4">
+                    <button onclick="addTeamInputRow()" class="text-amber-600 font-bold text-sm hover:underline">+ Aur Team Add Karein</button>
+                    <button onclick="clearTeamInputs()" class="text-rose-500 font-bold text-sm hover:underline">Clear</button>
+                </div>
+
                 <button onclick="addCompetition(event)" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-amber-700 transition shadow-md">Save Match</button>
             </div>
-            <!-- 4. Dashboard Mode & Reset -->
+
+            <!-- 3. Dashboard Mode & Reset -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-700">4. Dashboard Mode (Daily vs Total)</h2>
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-700">3. Dashboard Mode & Reset Tools</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-semibold mb-1 text-slate-600">Dashboard par kya dikhana hai?</label>
@@ -192,6 +205,26 @@
                         <button onclick="resetDailyAmounts(event)" class="bg-rose-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-rose-700 transition shadow-md">Reset Daily Amounts To 0</button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 4. Countdown Setting -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-emerald-700">4. Result Countdown Settings</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Time Kab Khatam Hoga?</label>
+                        <input type="datetime-local" id="endTime" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Delay (Minutes)</label>
+                        <input type="number" id="resultDelay" placeholder="Eg. 5" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Top 3 Message</label>
+                        <input type="text" id="resultMessage" placeholder="Eg. Mubarak Ho!" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                </div>
+                <button onclick="updateCountdown(event)" class="mt-4 bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-emerald-700 transition shadow-md">Start Countdown</button>
             </div>
         </div>
     </div>
@@ -221,7 +254,8 @@
                 </div>
                 <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Class (Darja)</label>
                     <select id="editClassName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
-                        <option value="Prep Class">Prep Class</option><option value="Hifz Class">Hifz Class</option><option value="Ibtidaiya">Ibtidaiya</option><option value="Sale Awwal">Sale Awwal</option><option value="Sale Duwam">Sale Duwam</option><option value="Sale Duwam Khususi">Sale Duwam Khususi</option><option value="Ula">Ula</option><option value="Saniya">Saniya</option><option value="Salisa">Salisa</option><option value="Rabia">Rabia</option><option value="Khamisa">Khamisa</option><option value="Sadisa">Sadisa</option><option value="Sabia">Sabia</option><option value="Doratul Hadis">Doratul Hadis</option>
+                        <option value="">Class Select Karein...</option>
+                        <!-- Dynamic Classes aayengi -->
                     </select>
                 </div>
                 <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Section</label>
@@ -244,6 +278,183 @@
         const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
         const secondaryAuth = secondaryApp.auth();
 
+        // ---------------- DYNAMIC CLASSES LOGIC ----------------
+        let availableClasses = [];
+
+        db.collection('settings').doc('classes').onSnapshot((doc) => {
+            if(doc.exists) {
+                availableClasses = doc.data().list || [];
+            } else {
+                availableClasses = ["Prep Class", "Hifz Class", "Ibtidaiya", "Ula", "Saniya", "Salisa"]; // Default fallback
+            }
+            updateClassUI();
+        });
+
+        function updateClassUI() {
+            // Update the settings tab list
+            const container = document.getElementById('classesListContainer');
+            container.innerHTML = "";
+            availableClasses.forEach((cls) => {
+                container.innerHTML += `
+                    <div class="bg-purple-50 border border-purple-200 text-purple-800 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2">
+                        ${cls}
+                        <button onclick="removeClass('${cls}')" class="text-purple-400 hover:text-red-500 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>`;
+            });
+
+            // Update dropdowns
+            const d1 = document.getElementById('assignedClass');
+            const d2 = document.getElementById('editClassName');
+            
+            // Save currently selected values if any
+            const val1 = d1.value; const val2 = d2.value;
+
+            let optionsHtml = '<option value="">Class Select Karein...</option>';
+            availableClasses.forEach(cls => {
+                optionsHtml += `<option value="${cls}">${cls}</option>`;
+            });
+
+            d1.innerHTML = optionsHtml; d2.innerHTML = optionsHtml;
+            
+            if(availableClasses.includes(val1)) d1.value = val1;
+            if(availableClasses.includes(val2)) d2.value = val2;
+        }
+
+        function addClass(e) {
+            const input = document.getElementById('newClassInput');
+            const val = input.value.trim();
+            if(!val) return alert("Class ka naam likhein");
+            
+            const btn = e.target; btn.disabled = true; btn.innerText = "...";
+            db.collection('settings').doc('classes').set({
+                list: firebase.firestore.FieldValue.arrayUnion(val)
+            }, {merge: true}).then(() => {
+                input.value = "";
+            }).catch(err => alert(err.message)).finally(() => {
+                btn.disabled = false; btn.innerText = "Add Class";
+            });
+        }
+
+        function removeClass(className) {
+            if(!confirm(`Kya aap waqai '${className}' ko delete karna chahte hain?`)) return;
+            db.collection('settings').doc('classes').set({
+                list: firebase.firestore.FieldValue.arrayRemove(className)
+            }, {merge: true}).catch(err => alert(err.message));
+        }
+
+        // ---------------- MULTI-TEAM COMPETITION LOGIC ----------------
+        function addTeamInputRow() {
+            const container = document.getElementById('teamInputsContainer');
+            const count = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-2 mt-2";
+            div.innerHTML = `
+                <span class="font-bold text-slate-400">${count}.</span>
+                <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
+            `;
+            container.appendChild(div);
+        }
+
+        function clearTeamInputs() {
+            const container = document.getElementById('teamInputsContainer');
+            container.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-400">1.</span>
+                    <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="font-bold text-slate-400">2.</span>
+                    <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
+                </div>
+            `;
+        }
+
+        function addCompetition(event) {
+            const inputs = document.querySelectorAll('.team-input');
+            let teams = [];
+            inputs.forEach(inp => {
+                let val = inp.value.trim();
+                if(val) teams.push(val);
+            });
+
+            if(teams.length < 2) { 
+                alert("Muqabla ke liye kam se kam 2 teams zaruri hain."); return; 
+            }
+            
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Saving..."; btn.disabled = true;
+            
+            db.collection('competitions').add({ 
+                teams: teams, 
+                timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+            }).then(() => {
+                alert("✅ Muqabla (Match) Dashboard par Save ho gaya!");
+                clearTeamInputs();
+            }).catch(err => alert("Error: " + err.message))
+            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+        }
+
+
+        // ---------------- ASATIZA PAGINATION (READ OPTIMIZATION) ----------------
+        let asatizaUnsubscribe = null;
+        let currentRecordLimit = 50; // Pehli baar sirf 50 record
+        let allAsatizaData = []; 
+        let currentFilteredData = []; 
+        let asatizaDataList = [];
+
+        function startAsatizaListener() {
+            if(asatizaUnsubscribe) asatizaUnsubscribe();
+            
+            asatizaUnsubscribe = db.collection('asatiza_details')
+                .orderBy('timestamp', 'desc')
+                .limit(currentRecordLimit)
+                .onSnapshot((snapshot) => {
+                    allAsatizaData = []; 
+                    snapshot.forEach((doc) => {
+                        const data = doc.data(); 
+                        data.docId = doc.id; 
+                        data.jamiaName = data.jamiaName || "N/A"; 
+                        data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
+                        allAsatizaData.push(data);
+                    });
+                    renderTableAndFilter(); 
+                });
+        }
+
+        function loadMoreAsatiza() {
+            currentRecordLimit += 50; // Agli baar 50 aur jodd den
+            document.getElementById('loadMoreBtn').innerText = "Loading...";
+            startAsatizaListener();
+            setTimeout(() => {
+                document.getElementById('loadMoreBtn').innerText = "Load More Records";
+            }, 1000);
+        }
+
+        // Initialize first load
+        startAsatizaListener();
+
+        // ---------------- ZIMMEDAR LIST (MAPPING) ----------------
+        const zimmedarList = {
+            "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
+            "BALAGHAT": "Akmal Kamal Madani", "BHOPAL": "Akmal Kamal Madani", "DEWAS": "Akmal Kamal Madani", "INDORE": "Akmal Kamal Madani", "JABALPUR": "Akmal Kamal Madani", "JABALPUR BYPASS": "Akmal Kamal Madani", "KATNI": "Akmal Kamal Madani", "MANDSAUR": "Akmal Kamal Madani",
+            "LUDHIANA": "Junaid Madani", "BIKANER": "Junaid Madani", "DAMOLAI": "Junaid Madani", "FATAHPUR": "Junaid Madani", "JAIPUR": "Junaid Madani", "KOTA CITY": "Junaid Madani", "KOTA STATION": "Junaid Madani", "NIMBAHERA": "Junaid Madani", "RAJNAGAR": "Junaid Madani", "UDAIPUR": "Junaid Madani",
+            "BADMER": "Said Madani", "BANDHEWA": "Said Madani", "BHILWADA": "Said Madani", "JODHPUR": "Said Madani", "KUCHAMAN": "Said Madani", "KUCHEEL": "Said Madani", "MAKRANA": "Said Madani", "NAGAUR": "Said Madani", "PALI": "Said Madani", "SHERANIABAD": "Said Madani",
+            "ANNIGERI": "Sohail Madani", "BANGALORE": "Sohail Madani", "BELGAUM": "Sohail Madani", "DHARWAD": "Sohail Madani", "MYSORE": "Sohail Madani", "SIRSI": "Sohail Madani", "TABIB LAND HUBLI": "Sohail Madani",
+            "ARRAH": "Azad Misbahi", "AURANGABAD": "Azad Misbahi", "BHAGALPUR": "Azad Misbahi", "PATNA": "Azad Misbahi", "PURNIA": "Azad Misbahi", "SALMARI": "Azad Misbahi", "SASARAM": "Azad Misbahi", "SIWAN CITY": "Azad Misbahi",
+            "BADGAM": "Nisar Madani", "JAMMU": "Nisar Madani", "KULGAM": "Nisar Madani", "MONGHAMA": "Nisar Madani", "PUNCHH": "Nisar Madani", "RAJORI": "Nisar Madani", "RIYASI": "Nisar Madani", "SANGAM": "Nisar Madani", "SOPORE": "Nisar Madani", "UCCHAD": "Nisar Madani",
+            "BANARAS": "Nasim Misbahi", "FAIZABAD": "Nasim Misbahi", "FARRUKHABAD": "Nasim Misbahi", "JHANSI": "Nasim Misbahi", "KANPUR": "Nasim Misbahi", "LUCKNOW": "Nasim Misbahi", "MAHOBA": "Nasim Misbahi", "UNNAO": "Nasim Misbahi", "AGRA": "Nasim Misbahi", "SHAHJAHANPUR": "Nasim Misbahi",
+            "ALLAHABAD": "Dilkash Madani", "COLONELGANJ": "Dilkash Madani", "GOPIGANJ": "Dilkash Madani", "GORAKHPUR": "Dilkash Madani", "JAGDISHPUR": "Dilkash Madani", "JONPUR": "Dilkash Madani", "MIRZAPUR": "Dilkash Madani", "NANPARA": "Dilkash Madani", "PADAW": "Dilkash Madani", "TANDA": "Dilkash Madani", "UTRAULA": "Dilkash Madani",
+            "ALIGARH": "Owais Madani", "BAREILLY SHARIF": "Owais Madani", "BILARI": "Owais Madani", "DELHI": "Owais Madani", "GAZIYABAD": "Owais Madani", "MAHUAKHEDA": "Owais Madani", "RAMPUR": "Owais Madani", "SHISHGADH": "Owais Madani", "THAKURDWARA": "Owais Madani", "TIGRI DEOBAND": "Owais Madani", "HALDWANI": "Owais Madani",
+            "ADONI": "Abu Sufiyan Misbahi", "MACHILIPATNAM": "Abu Sufiyan Misbahi", "BALLARI": "Abu Sufiyan Misbahi", "GULBARGA SHARIF": "Abu Sufiyan Misbahi", "CHENNAI": "Abu Sufiyan Misbahi", "FALAKNUMA": "Abu Sufiyan Misbahi", "HYDERABAD": "Abu Sufiyan Misbahi", "JANGAON": "Abu Sufiyan Misbahi",
+            "MANGALDOI ASSAM": "Shabbir Madani", "SILCHAR": "Shabbir Madani", "DHANBAD": "Shabbir Madani", "JAMSHEDPUR": "Shabbir Madani", "RANCHI": "Shabbir Madani", "RANCHI ILAHI NAGAR": "Shabbir Madani", "BHADRAK": "Shabbir Madani", "SORO": "Shabbir Madani", "ASANSOL": "Shabbir Madani", "KHIDIRPUR": "Shabbir Madani", "METIABRUZ": "Shabbir Madani",
+            "BILASPUR": "Sarfaraz Madani", "RAIPUR": "Sarfaraz Madani", "AKOLA": "Sarfaraz Madani", "BHANDARA": "Sarfaraz Madani", "JALGAON": "Sarfaraz Madani", "KAMPTEE": "Sarfaraz Madani", "KARANJA": "Sarfaraz Madani", "KORADI": "Sarfaraz Madani", "MODEL JAMIA": "Sarfaraz Madani", "NAGPUR": "Sarfaraz Madani", "RAVER": "Sarfaraz Madani",
+            "AHMEDNAGAR": "Irfan Misbahi", "BHANDUP": "Irfan Misbahi", "KALYAN": "Irfan Misbahi", "KARBALA MASJID GOVANDI": "Irfan Misbahi", "KHULDABAD": "Irfan Misbahi", "LATUR": "Irfan Misbahi", "MAHIM": "Irfan Misbahi", "MALEGAON": "Irfan Misbahi", "MITTI MASJID GOVANDI": "Irfan Misbahi", "MUMBAI": "Irfan Misbahi", "PUNE": "Irfan Misbahi", "SHAHADA": "Irfan Misbahi"
+        };
+
+        // ---------------- REST OF THE FUNCTIONS ----------------
         function getDirectImageUrl(url) {
             if (!url) return "";
             const match = url.match(/[-\w]{25,}/); 
@@ -264,24 +475,17 @@
             else document.getElementById('btnSettings').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
         }
 
-        // --- UPDATED DASHBOARD SETTINGS LOGIC ---
         function updateHeader(event) {
             const line1 = document.getElementById('line1Text').value.trim();
             const line2 = document.getElementById('line2Text').value.trim();
             const color2 = document.getElementById('line2Color').value;
-            
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = "Updating..."; btn.disabled = true;
-
             db.collection('settings').doc('dashboard').set({
-                line1Text: line1,
-                line2Text: line2,
-                line2Color: color2
-            }, {merge: true}).then(() => {
-                alert("✅ Sub-Headings Updated LIVE on Dashboard!");
-            }).catch(err => alert("Error: " + err.message))
-            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+                line1Text: line1, line2Text: line2, line2Color: color2
+            }, {merge: true}).then(() => alert("✅ Sub-Headings Updated LIVE!"))
+            .catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
         function updateCountdown(event) {
@@ -289,27 +493,11 @@
             const delayMinutes = document.getElementById('resultDelay').value;
             const message = document.getElementById('resultMessage').value;
             if(!endTime || !delayMinutes) { alert("Waqt aur delay dono set karein"); return; }
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "Starting..."; btn.disabled = true;
-            db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message }).then(() => {
-                alert("✅ Countdown Started on Dashboard!");
-            }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
+            const btn = event.target; const originalText = btn.innerText; btn.innerText = "Starting..."; btn.disabled = true;
+            db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message })
+            .then(() => alert("✅ Countdown Started!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
-        function addCompetition(event) {
-            const teamA = document.getElementById('teamA').value.trim();
-            const teamB = document.getElementById('teamB').value.trim();
-            if(!teamA || !teamB) { alert("Dono teams ka naam likhein"); return; }
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "Saving..."; btn.disabled = true;
-            db.collection('competitions').add({ teamA: teamA, teamB: teamB, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => {
-                alert("✅ Match Saved to Dashboard!");
-                document.getElementById('teamA').value = ""; document.getElementById('teamB').value = "";
-            }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
-        }
-        
         let zimmedarDataMap = {};
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -339,14 +527,10 @@
         });
 
         function resetZimmedarForm() {
-            document.getElementById('createUserForm').reset();
-            document.getElementById('zimmedarDocId').value = "";
-            document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein";
-            document.getElementById('submitBtn').innerText = "Account Banayein";
-            document.getElementById('passwordDiv').classList.remove('hidden');
-            document.getElementById('password').setAttribute('required', 'required');
-            document.getElementById('username').removeAttribute('disabled');
-            document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed');
+            document.getElementById('createUserForm').reset(); document.getElementById('zimmedarDocId').value = "";
+            document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein"; document.getElementById('submitBtn').innerText = "Account Banayein";
+            document.getElementById('passwordDiv').classList.remove('hidden'); document.getElementById('password').setAttribute('required', 'required');
+            document.getElementById('username').removeAttribute('disabled'); document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed');
             document.getElementById('cancelEditZimmedarBtn').classList.add('hidden');
         }
 
@@ -370,37 +554,7 @@
             document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
         }
 
-        async function deleteZimmedar(docId) {
-            if (confirm("Kya aap waqai is zimmedar ko delete karna chahte hain?")) {
-                try { await db.collection('users').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); }
-            }
-        }
-
-        let allAsatizaData = []; let currentFilteredData = []; let asatizaDataList = [];
-        const zimmedarList = {
-            "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
-            "BALAGHAT": "Akmal Kamal Madani", "BHOPAL": "Akmal Kamal Madani", "DEWAS": "Akmal Kamal Madani", "INDORE": "Akmal Kamal Madani", "JABALPUR": "Akmal Kamal Madani", "JABALPUR BYPASS": "Akmal Kamal Madani", "KATNI": "Akmal Kamal Madani", "MANDSAUR": "Akmal Kamal Madani",
-            "LUDHIANA": "Junaid Madani", "BIKANER": "Junaid Madani", "DAMOLAI": "Junaid Madani", "FATAHPUR": "Junaid Madani", "JAIPUR": "Junaid Madani", "KOTA CITY": "Junaid Madani", "KOTA STATION": "Junaid Madani", "NIMBAHERA": "Junaid Madani", "RAJNAGAR": "Junaid Madani", "UDAIPUR": "Junaid Madani",
-            "BADMER": "Said Madani", "BANDHEWA": "Said Madani", "BHILWADA": "Said Madani", "JODHPUR": "Said Madani", "KUCHAMAN": "Said Madani", "KUCHEEL": "Said Madani", "MAKRANA": "Said Madani", "NAGAUR": "Said Madani", "PALI": "Said Madani", "SHERANIABAD": "Said Madani",
-            "ANNIGERI": "Sohail Madani", "BANGALORE": "Sohail Madani", "BELGAUM": "Sohail Madani", "DHARWAD": "Sohail Madani", "MYSORE": "Sohail Madani", "SIRSI": "Sohail Madani", "TABIB LAND HUBLI": "Sohail Madani",
-            "ARRAH": "Azad Misbahi", "AURANGABAD": "Azad Misbahi", "BHAGALPUR": "Azad Misbahi", "PATNA": "Azad Misbahi", "PURNIA": "Azad Misbahi", "SALMARI": "Azad Misbahi", "SASARAM": "Azad Misbahi", "SIWAN CITY": "Azad Misbahi",
-            "BADGAM": "Nisar Madani", "JAMMU": "Nisar Madani", "KULGAM": "Nisar Madani", "MONGHAMA": "Nisar Madani", "PUNCHH": "Nisar Madani", "RAJORI": "Nisar Madani", "RIYASI": "Nisar Madani", "SANGAM": "Nisar Madani", "SOPORE": "Nisar Madani", "UCCHAD": "Nisar Madani",
-            "BANARAS": "Nasim Misbahi", "FAIZABAD": "Nasim Misbahi", "FARRUKHABAD": "Nasim Misbahi", "JHANSI": "Nasim Misbahi", "KANPUR": "Nasim Misbahi", "LUCKNOW": "Nasim Misbahi", "MAHOBA": "Nasim Misbahi", "UNNAO": "Nasim Misbahi", "AGRA": "Nasim Misbahi", "SHAHJAHANPUR": "Nasim Misbahi",
-            "ALLAHABAD": "Dilkash Madani", "COLONELGANJ": "Dilkash Madani", "GOPIGANJ": "Dilkash Madani", "GORAKHPUR": "Dilkash Madani", "JAGDISHPUR": "Dilkash Madani", "JONPUR": "Dilkash Madani", "MIRZAPUR": "Dilkash Madani", "NANPARA": "Dilkash Madani", "PADAW": "Dilkash Madani", "TANDA": "Dilkash Madani", "UTRAULA": "Dilkash Madani",
-            "ALIGARH": "Owais Madani", "BAREILLY SHARIF": "Owais Madani", "BILARI": "Owais Madani", "DELHI": "Owais Madani", "GAZIYABAD": "Owais Madani", "MAHUAKHEDA": "Owais Madani", "RAMPUR": "Owais Madani", "SHISHGADH": "Owais Madani", "THAKURDWARA": "Owais Madani", "TIGRI DEOBAND": "Owais Madani", "HALDWANI": "Owais Madani",
-            "ADONI": "Abu Sufiyan Misbahi", "MACHILIPATNAM": "Abu Sufiyan Misbahi", "BALLARI": "Abu Sufiyan Misbahi", "GULBARGA SHARIF": "Abu Sufiyan Misbahi", "CHENNAI": "Abu Sufiyan Misbahi", "FALAKNUMA": "Abu Sufiyan Misbahi", "HYDERABAD": "Abu Sufiyan Misbahi", "JANGAON": "Abu Sufiyan Misbahi",
-            "MANGALDOI ASSAM": "Shabbir Madani", "SILCHAR": "Shabbir Madani", "DHANBAD": "Shabbir Madani", "JAMSHEDPUR": "Shabbir Madani", "RANCHI": "Shabbir Madani", "RANCHI ILAHI NAGAR": "Shabbir Madani", "BHADRAK": "Shabbir Madani", "SORO": "Shabbir Madani", "ASANSOL": "Shabbir Madani", "KHIDIRPUR": "Shabbir Madani", "METIABRUZ": "Shabbir Madani",
-            "BILASPUR": "Sarfaraz Madani", "RAIPUR": "Sarfaraz Madani", "AKOLA": "Sarfaraz Madani", "BHANDARA": "Sarfaraz Madani", "JALGAON": "Sarfaraz Madani", "KAMPTEE": "Sarfaraz Madani", "KARANJA": "Sarfaraz Madani", "KORADI": "Sarfaraz Madani", "MODEL JAMIA": "Sarfaraz Madani", "NAGPUR": "Sarfaraz Madani", "RAVER": "Sarfaraz Madani",
-            "AHMEDNAGAR": "Irfan Misbahi", "BHANDUP": "Irfan Misbahi", "KALYAN": "Irfan Misbahi", "KARBALA MASJID GOVANDI": "Irfan Misbahi", "KHULDABAD": "Irfan Misbahi", "LATUR": "Irfan Misbahi", "MAHIM": "Irfan Misbahi", "MALEGAON": "Irfan Misbahi", "MITTI MASJID GOVANDI": "Irfan Misbahi", "MUMBAI": "Irfan Misbahi", "PUNE": "Irfan Misbahi", "SHAHADA": "Irfan Misbahi"
-        };
-        db.collection('asatiza_details').orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
-            allAsatizaData = []; 
-            snapshot.forEach((doc) => {
-                const data = doc.data(); data.docId = doc.id; data.jamiaName = data.jamiaName || "N/A"; data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
-                allAsatizaData.push(data);
-            });
-            renderTableAndFilter(); 
-        });
+        async function deleteZimmedar(docId) { if (confirm("Kya aap waqai is zimmedar ko delete karna chahte hain?")) { try { await db.collection('users').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); } } }
 
         function renderTableAndFilter() {
             const tbody = document.getElementById('asatizaTableBody');
@@ -412,11 +566,14 @@
             currentFilteredData.sort((a, b) => a.jamiaName.localeCompare(b.jamiaName));
             const uniqueJamias = new Set(currentFilteredData.map(d => d.jamiaName)).size;
             const uniqueClasses = new Set(currentFilteredData.map(d => d.className)).size;
+            
             document.getElementById('countEntries').innerText = currentFilteredData.length;
             document.getElementById('countJamia').innerText = uniqueJamias;
             document.getElementById('countClass').innerText = uniqueClasses;
+            
             asatizaDataList = [];
-            if (currentFilteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila.</td></tr>'; return; }
+            if (currentFilteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila. (Ya agla Load More karein)</td></tr>'; return; }
+            
             let tableHTML = ""; window.renderedDataMap = {}; let serialNumber = 1; 
             currentFilteredData.forEach(data => {
                 window.renderedDataMap[data.docId] = data; 
@@ -424,7 +581,9 @@
                 const directUrl = getDirectImageUrl(data.photoUrl);
                 const photoHtml = data.photoUrl ? `<img src="${directUrl}" referrerpolicy="no-referrer" onclick="openImageModal('${directUrl}')" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:ring-2 ring-indigo-300 transition" alt="Photo">` : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs">No Pic</div>`;
                 const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
+                
                 asatizaDataList.push({ "Sr. No": serialNumber, "Ustaz Name": data.ustazName || "N/A", "Jamia Name": data.jamiaName, "Zimmedar Name": data.zimmedarName, "Region": data.region || "N/A", "State": data.state || "N/A", "Mobile No": data.mobileNo || "N/A", "Class (Darja)": classWithSection || "N/A", "Photo Link": directUrl || "N/A", "Submission Date": dateStr });
+                
                 tableHTML += `<tr class="border-b hover:bg-slate-50 search-row" id="row-${data.docId}"><td class="p-3 font-bold text-slate-500 text-xs">${serialNumber}</td><td class="p-2">${photoHtml}</td><td class="p-3 font-semibold text-slate-800">${data.ustazName || "N/A"}</td><td class="p-3 font-bold text-indigo-700">${data.jamiaName}</td><td class="p-3 text-sm font-bold text-slate-700 bg-slate-100 rounded-lg border-x-4 border-white">${data.zimmedarName}</td><td class="p-3"><div class="text-sm font-semibold">${data.region || "N/A"}</div><div class="text-xs text-slate-500">${data.state || "N/A"}</div></td><td class="p-3 font-semibold text-emerald-600">${data.mobileNo || "N/A"}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">${classWithSection || "N/A"}</span></td><td class="p-3 text-xs text-slate-500">${dateStr}</td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2" data-html2canvas-ignore><button onclick="openEditModal('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteEntry('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`;
                 serialNumber++; 
             });
@@ -459,40 +618,23 @@
         }
         function openImageModal(imgSrc) { document.getElementById('modalImage').src = imgSrc; document.getElementById('imageModal').classList.remove('hidden'); }
         function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); document.getElementById('modalImage').src = ""; }
+        
         function updateDashboardMode(event) {
             const mode = document.getElementById('dashboardModeSelect').value;
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "Updating..."; btn.disabled = true;
-
-            db.collection('settings').doc('dashboard').set({
-                dashboardMode: mode
-            }, {merge: true}).then(() => {
-                alert("✅ Dashboard Mode Live Update Ho Gaya!");
-            }).catch(err => alert("Error: " + err.message))
-            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+            const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true;
+            db.collection('settings').doc('dashboard').set({ dashboardMode: mode }, {merge: true}).then(() => alert("✅ Dashboard Mode Live Update Ho Gaya!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
         async function resetDailyAmounts(event) {
             if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return;
-            
-            const btn = event.target;
-            const origText = btn.innerText;
-            btn.innerText = "Resetting..."; btn.disabled = true;
+            const btn = event.target; const origText = btn.innerText; btn.innerText = "Resetting..."; btn.disabled = true;
             try {
                 const snapshot = await db.collection('asatiza_details').get();
                 const batch = db.batch();
-                snapshot.docs.forEach(doc => {
-                    batch.update(doc.ref, { daily_amount: 0 }); // Sirf daily amount 0 hoga
-                });
-                await batch.commit();
-                alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!");
-            } catch(e) {
-                alert("Error: " + e.message);
-            } finally {
-                btn.innerText = origText; btn.disabled = false;
-            }
+                snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); });
+                await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!");
+            } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; }
         }
     </script>
 </body>
-</html
+</html>
