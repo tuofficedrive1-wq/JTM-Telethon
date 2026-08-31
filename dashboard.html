@@ -36,29 +36,24 @@
         const db = firebase.firestore();
         const { useState, useEffect, useRef } = React;
 
-const ListPoster = ({ data }) => {
+        const autoKeywords = ['rank', 'unit', 'units', 'amount', 'score', 'total'];
+
+        const ListPoster = ({ data }) => {
             if (!data) return null;
-            
-            const { className, items, isJamiaView, isClassView, isResult, type } = data;
+            const { className, items, isJamiaView, isClassView, isResult, isCustomView, headings, type } = data;
             const dateStr = new Date().toLocaleDateString('en-IN');
 
-            // 1. RESULT POSTERS KA NAYA DESIGN (TOP 3, 5, 10)
             if (isResult) {
                 const topN = items.slice(0, type);
                 const isTableOnly = type === 10;
-
                 return (
                     <div id="poster-to-download" style={{ width: '1200px', minHeight: '800px', padding: '40px', background: 'linear-gradient(135deg, #f0f9ff, #eef2ff)', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
                         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                            <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '80px', color: '#059669', letterSpacing: '3px', margin: 0, textShadow: '2px 2px 4px rgba(0,0,0,0.1)' }}>CONGRATULATIONS!</h1>
-                            <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '42px', color: '#1e3a8a', letterSpacing: '2px', margin: '5px 0' }}>
-                                TOP {type} WINNERS - {className}
-                            </p>
+                            <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '80px', color: '#059669', letterSpacing: '3px', margin: 0 }}>CONGRATULATIONS!</h1>
+                            <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '42px', color: '#1e3a8a', letterSpacing: '2px', margin: '5px 0' }}>TOP {type} WINNERS - {className}</p>
                         </div>
-
                         <div style={{ flexGrow: 1 }}>
                             {isTableOnly ? (
-                                /* Top 10 - Table Format (Sirf Naam aur Unit) */
                                 <div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '80px 2fr 2fr 1fr', alignItems: 'center', gap: '16px', padding: '16px', background: '#1e3a8a', color: 'white', borderRadius: '12px', fontWeight: 'bold', fontSize: '20px', textTransform: 'uppercase' }}>
                                         <span>Rank</span><span>Ustaz Name</span><span>Jamia Name</span><span style={{textAlign: 'right'}}>Units</span>
@@ -66,31 +61,22 @@ const ListPoster = ({ data }) => {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
                                         {topN.map((it, idx) => (
                                             <div key={idx} style={{ display: 'grid', gridTemplateColumns: '80px 2fr 2fr 1fr', alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.9)', borderRadius: '12px', fontSize: '22px', fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                                <span style={{color: '#64748b'}}>#{idx + 1}</span>
-                                                <span style={{color: '#1e293b', textTransform: 'uppercase'}}>{it.ustazName}</span>
-                                                <span style={{color: '#4338ca'}}>{it.jamiaName}</span>
-                                                <span style={{textAlign: 'right', color: '#0ea5e9'}}>{it.units}</span>
+                                                <span style={{color: '#64748b'}}>#{idx + 1}</span><span style={{color: '#1e293b', textTransform: 'uppercase'}}>{it.ustazName}</span><span style={{color: '#4338ca'}}>{it.jamiaName}</span><span style={{textAlign: 'right', color: '#0ea5e9'}}>{it.units}</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             ) : (
-                                /* Top 3 & Top 5 - Grid Format (Photo aur Frame ke sath) */
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
                                     {topN.map((it, idx) => {
-                                        // Image URL ko sahi format me convert karna
                                         const photoSrc = typeof getDirectImageUrl === 'function' ? getDirectImageUrl(it.photoUrl) : it.photoUrl;
-                                        // Rank ke hisab se colors (1st: Gold, 2nd: Silver, 3rd: Bronze, Others: Indigo)
                                         const rankColors = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#d97706' : '#6366f1';
-                                        
                                         return (
                                         <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '24px', background: 'white', borderRadius: '24px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', position: 'relative', borderLeft: `8px solid ${rankColors}` }}>
                                             <div style={{ position: 'absolute', top: '-15px', left: '-15px', width: '50px', height: '50px', background: rankColors, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold', fontFamily: "'Bowlby One SC', sans-serif" }}>{idx + 1}</div>
-                                            
                                             <div style={{ width: '120px', height: '120px', borderRadius: '50%', border: `4px solid ${rankColors}`, overflow: 'hidden', flexShrink: 0, backgroundColor: '#f1f5f9' }}>
                                                 {photoSrc ? <img src={photoSrc} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Ustaz" /> : null}
                                             </div>
-                                            
                                             <div style={{ flex: 1 }}>
                                                 <h3 style={{ margin: 0, fontSize: '28px', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2' }}>{it.ustazName}</h3>
                                                 <p style={{ margin: '8px 0', fontSize: '20px', color: '#4338ca', fontWeight: '600' }}>{it.jamiaName}</p>
@@ -102,14 +88,12 @@ const ListPoster = ({ data }) => {
                             )}
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #dbeafe' }}>
-                            <p style={{ color: '#475569', fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Majlis Talimi Umoor India</p>
-                            <p style={{ color: '#475569', fontSize: '18px', fontWeight: '600', margin: 0 }}>Date: {dateStr}</p>
+                            <p style={{ color: '#475569', fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Majlis Talimi Umoor India</p><p style={{ color: '#475569', fontSize: '18px', fontWeight: '600', margin: 0 }}>Date: {dateStr}</p>
                         </div>
                     </div>
                 );
             }
 
-            // 2. AAPKA PURANA DESIGN (REGULAR LIST POSTERS KE LIYE)
             return (
                 <div id="poster-to-download" style={{ width: '1200px', minHeight: '800px', padding: '40px', background: 'linear-gradient(135deg, #f0f9ff, #eef2ff)', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
@@ -119,7 +103,26 @@ const ListPoster = ({ data }) => {
                         </p>
                     </div>
                     <div style={{ flexGrow: 1 }}>
-                        {isClassView ? (
+                        {isCustomView ? (
+                            <div>
+                                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${headings.length}, 1fr)`, alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#dbeafe', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', color: '#1e3a8a', marginBottom: '12px', textTransform: 'uppercase' }}>
+                                    {headings.map((h, i) => <span key={i} style={{textAlign: autoKeywords.some(kw => h.toLowerCase().includes(kw)) ? 'center' : 'left'}}>{h}</span>)}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {items.map((it, idx) => (
+                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: `repeat(${headings.length}, 1fr)`, alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', fontSize: '20px', color: '#1e293b', fontWeight: 600, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                            {headings.map((h, i) => {
+                                                const isAuto = autoKeywords.some(kw => h.toLowerCase().includes(kw));
+                                                const isRank = h.toLowerCase().includes('rank');
+                                                if(isRank) return <span key={i} style={{color: '#64748b', fontSize:'24px', fontWeight:'bold', textAlign:'center'}}>#{idx + 1}</span>;
+                                                if(isAuto) return <span key={i} style={{textAlign:'center', color: '#0ea5e9'}}>-</span>;
+                                                return <span key={i}>{it.recordData[h] || "-"}</span>;
+                                            })}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : isClassView ? (
                             <div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '100px 3fr 1fr 1.5fr', alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#dbeafe', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', color: '#1e3a8a', marginBottom: '12px', textTransform: 'uppercase' }}>
                                     <span>Rank</span><span>Class Name</span><span style={{textAlign: 'center'}}>Teachers</span><span style={{textAlign: 'right'}}>Total Units</span>
@@ -181,11 +184,15 @@ const ListPoster = ({ data }) => {
         };
 
         function TelethoneDashboard() {
-            // Result aur Muqabla tabs ko aakhir me rakha gaya hai
-            const allClasses = ['All Jamiaat', 'All Classes', 'Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis', 'Result', 'Muqabla'];
-            
+            // Is list se "Sale Duwam Khususi" hata diya gaya hai taake photo se 100% match kare
+            const defaultClassesList = ["Prep Class", "Hifz Class", "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis"];
+            const [availableClasses, setAvailableClasses] = useState([]);
+            const [classHeadingsMap, setClassHeadingsMap] = useState({});
             const [activeTab, setActiveTab] = useState("All Jamiaat");
+            
             const [allData, setAllData] = useState([]);
+            const [customRecords, setCustomRecords] = useState([]);
+            
             const [isLoading, setIsLoading] = useState(true);
             const [headerConfig, setHeaderConfig] = useState(null);
             const [timerConfig, setTimerConfig] = useState(null);
@@ -197,48 +204,55 @@ const ListPoster = ({ data }) => {
             const posterContainerRef = useRef(null);
 
             const getDirectImageUrl = (url) => {
-    if (!url) return "";
-    const match = url.match(/[-\w]{25,}/); 
-    if (match && match[0]) {
-        return `https://lh3.googleusercontent.com/d/${match[0]}`;
-    }
-    return url;
-};
+                if (!url) return "";
+                const match = url.match(/[-\w]{25,}/); 
+                if (match && match[0]) return `https://lh3.googleusercontent.com/d/${match[0]}`;
+                return url;
+            };
 
-           const getBaseClass = (className) => { 
+            const getBaseClass = (className) => { 
                 if (!className) return "N/A"; 
                 let base = className.replace(/\s+[A-D]$/i, '').trim(); 
-                
-                // NAYA CODE: Khususi ko Sale Duwam me convert karne ke liye
                 if (base === "Sale Duwam Khususi") return "Sale Duwam"; 
-                
                 return base; 
             };
 
             useEffect(() => {
                 posterContainerRef.current = document.getElementById('poster-container');
+                
+                // Fetch Settings & Auto-Recover default classes
+                const unsubSettings = db.collection('settings').doc('classes').onSnapshot(doc => {
+                    if(doc.exists && doc.data().list) {
+                        let dbList = doc.data().list;
+                        if (!dbList.includes("Ula") && !dbList.includes("Saniya")) {
+                            setAvailableClasses(Array.from(new Set([...defaultClassesList, ...dbList])));
+                        } else {
+                            setAvailableClasses(dbList);
+                        }
+                        setClassHeadingsMap(doc.data().headings || {});
+                    } else {
+                        setAvailableClasses([...defaultClassesList]);
+                    }
+                });
+
                 const unsubAsatiza = db.collection('asatiza_details').onSnapshot(snapshot => {
                     const parsedData = snapshot.docs.map(doc => {
                         const data = doc.data(); 
-                        return { 
-                            id: doc.id, 
-                            ustazName: data.ustazName || "N/A", 
-                            jamiaName: data.jamiaName || "N/A", 
-                            className: data.className || "N/A", 
-                            region: data.region || "N/A", 
-                            state: data.state || "N/A", 
-                            total_amount: parseFloat(data.amount) || 0, 
-                            daily_amount: parseFloat(data.daily_amount) || 0,
-                            photoUrl: data.photoUrl || null,
-                            timestamp: data.timestamp 
-                        };
+                        return { id: doc.id, ustazName: data.ustazName || "N/A", jamiaName: data.jamiaName || "N/A", className: data.className || "N/A", region: data.region || "N/A", state: data.state || "N/A", total_amount: parseFloat(data.amount) || 0, daily_amount: parseFloat(data.daily_amount) || 0, photoUrl: data.photoUrl || null, timestamp: data.timestamp };
                     });
                     setAllData(parsedData); setIsLoading(false);
-                }, err => { console.error(err); setIsLoading(false); });
+                });
+
+                const unsubCustom = db.collection('custom_records').onSnapshot(snapshot => {
+                    const records = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+                    setCustomRecords(records);
+                });
+
                 const unsubHeader = db.collection('settings').doc('dashboard').onSnapshot(doc => { if(doc.exists) setHeaderConfig(doc.data()); });
                 const unsubTimer = db.collection('settings').doc('timer').onSnapshot(doc => { if(doc.exists) setTimerConfig(doc.data()); });
                 const unsubComp = db.collection('competitions').orderBy('timestamp', 'desc').onSnapshot(snapshot => { setCompetitions(snapshot.docs.map(d => d.data())); });
-                return () => { unsubAsatiza(); unsubHeader(); unsubTimer(); unsubComp(); };
+                
+                return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, []);
 
             useEffect(() => {
@@ -257,27 +271,31 @@ const ListPoster = ({ data }) => {
                 return () => clearInterval(interval);
             }, [timerConfig]);
 
-           // --- NAYA DASHBOARD MODE LOGIC SHURU ---
-            const currentMode = headerConfig?.dashboardMode || 'total';
+            const topTabs = ['All Jamiaat', 'All Classes'];
+            const endTabs = ['Result', 'Muqabla'];
+            const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
-            // Active mode (daily ya total) ke hisab se data set karein
+            const currentMode = headerConfig?.dashboardMode || 'total';
             const processedData = allData.map(d => {
                 const activeAmt = currentMode === 'daily' ? d.daily_amount : d.total_amount;
                 return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
             });
 
-           const getTopWinners = () => {
-    const classMap = {};
-    processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
-    const topData = []; const classOrder = ['Prep Class', 'Hifz Class', 'Ibtidaiya', 'Sale Awwal', 'Sale Duwam', 'Sale Duwam Khususi', 'Ula', 'Saniya', 'Salisa', 'Rabia', 'Khamisa', 'Sadisa', 'Sabia', 'Doratul Hadis'];
-    classOrder.forEach(cls => { 
-        if(classMap[cls]) { 
-            const sorted = classMap[cls].sort((a, b) => b.amount - a.amount).slice(0, 10); // 10 ki limit
-            if(sorted.length > 0) topData.push({ className: cls, winners: sorted }); 
-        } 
-    });
-    return topData;
-};
+            const getTopWinners = () => {
+                const classMap = {};
+                processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
+                const topData = []; 
+                availableClasses.forEach(cls => { 
+                    if(classMap[cls]) { const sorted = classMap[cls].sort((a, b) => b.amount - a.amount).slice(0, 10); if(sorted.length > 0) topData.push({ className: cls, winners: sorted }); } 
+                });
+                return topData;
+            };
+
+            const getTeamScore = (teamName) => {
+                let total = 0;
+                processedData.forEach(d => { if (d.className === teamName) total += d.amount; });
+                return total;
+            };
 
             useEffect(() => {
                 if (!posterData) return;
@@ -292,8 +310,17 @@ const ListPoster = ({ data }) => {
                 generateImage();
             }, [posterData]);
 
-            let displayedData = []; const isJamiaView = activeTab === "All Jamiaat"; const isClassView = activeTab === "All Classes"; const isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
+            let displayedData = []; 
+            let isJamiaView = activeTab === "All Jamiaat"; 
+            let isClassView = activeTab === "All Classes"; 
+            let isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
             
+            const customDataForTab = customRecords.filter(d => d.className === activeTab).sort((a,b) => a.timestamp - b.timestamp);
+            const standardDataForTab = processedData.filter(d => getBaseClass(d.className) === activeTab).sort((a, b) => b.amount - a.amount);
+            
+            let isCustomView = false;
+            let currentHeadings = [];
+
             if (!isSpecialTab) {
                 if (isJamiaView) {
                     const jamiaMap = {}; processedData.forEach(d => { if (!jamiaMap[d.jamiaName]) jamiaMap[d.jamiaName] = { id: d.jamiaName, jamiaName: d.jamiaName, region: d.region, totalAmount: 0, teacherCount: 0 }; jamiaMap[d.jamiaName].totalAmount += d.amount; jamiaMap[d.jamiaName].teacherCount += 1; });
@@ -301,13 +328,20 @@ const ListPoster = ({ data }) => {
                 } else if (isClassView) {
                     const classMap = {}; processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
                     displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
+                } else if (customDataForTab.length > 0) {
+                    isCustomView = true;
+                    displayedData = customDataForTab;
+                    currentHeadings = classHeadingsMap[activeTab] || ["Rank", "Name", "Details"];
                 } else {
-                    displayedData = processedData.filter(d => getBaseClass(d.className) === activeTab).sort((a, b) => b.amount - a.amount);
+                    displayedData = standardDataForTab;
                 }
             }
-            // --- NAYA DASHBOARD MODE LOGIC KHATAM ---
 
-          const handleDownloadPoster = () => { if(displayedData.length === 0) return; setIsDownloading(true); setPosterData({ className: activeTab, items: displayedData, isJamiaView: isJamiaView, isClassView: isClassView }); };
+            const handleDownloadPoster = () => { 
+                if(displayedData.length === 0) return; 
+                setIsDownloading(true); 
+                setPosterData({ className: activeTab, items: displayedData, isJamiaView, isClassView, isCustomView, headings: currentHeadings }); 
+            };
             const DownloadIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> );
 
             return (
@@ -334,7 +368,7 @@ const ListPoster = ({ data }) => {
 
                         <nav className="mb-6">
                             <div className="flex flex-wrap gap-2 justify-center">
-                                {allClasses.map((opt) => (
+                                {allTabs.map((opt) => (
                                     <button
                                         key={opt}
                                         onClick={() => setActiveTab(opt)}
@@ -373,25 +407,19 @@ const ListPoster = ({ data }) => {
                                                                 <h4 className="text-xl sm:text-2xl font-['Bowlby_One_SC'] text-indigo-900 mb-4 border-b border-slate-100 pb-3 mt-2">{clsData.className}</h4>
                                                                 
                                                                 <div className="space-y-3 mb-4">
-                                                                    {/* Display Only Top 3 on Screen */}
                                                                     {clsData.winners.slice(0, 3).map((winner, idx) => {
                                                                         const photoSrc = typeof getDirectImageUrl === 'function' ? getDirectImageUrl(winner.photoUrl) : winner.photoUrl;
                                                                         return (
                                                                         <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border ${idx === 0 ? 'bg-amber-50 border-amber-200' : idx === 1 ? 'bg-slate-50 border-slate-200' : 'bg-orange-50/50 border-orange-200/50'}`}>
                                                                             <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? 'bg-amber-400 text-white' : idx === 1 ? 'bg-slate-300 text-slate-700' : 'bg-orange-300 text-orange-900'}`}>#{idx + 1}</div>
-                                                                            
-                                                                            {/* Image Frame */}
                                                                             <div className="w-11 h-11 shrink-0 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-200 flex items-center justify-center">
                                                                                 {photoSrc ? <img src={photoSrc} crossOrigin="anonymous" alt="pic" className="w-full h-full object-cover" /> : <span className="text-[9px] text-slate-400">No Pic</span>}
                                                                             </div>
-
                                                                             <div className="flex-1 min-w-0"><div className="font-bold text-slate-800 uppercase truncate text-[13px] sm:text-sm">{winner.ustazName}</div><div className="text-[11px] font-semibold text-indigo-600 truncate">{winner.jamiaName}</div></div>
                                                                             <div className="text-right shrink-0"><div className="font-['Bowlby_One_SC'] text-emerald-600 text-[15px] sm:text-base">₹{winner.amount.toLocaleString('en-IN')}</div><div className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded inline-block mt-0.5">{winner.units} Units</div></div>
                                                                         </div>
                                                                     )})}
                                                                 </div>
-
-                                                                {/* Download Banner Buttons */}
                                                                 <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 justify-center">
                                                                     <button onClick={() => setPosterData({ isResult: true, type: 3, className: clsData.className, items: clsData.winners })} className="text-[11px] bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg font-bold transition">Top 3 Poster</button>
                                                                     <button onClick={() => setPosterData({ isResult: true, type: 5, className: clsData.className, items: clsData.winners })} className="text-[11px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg font-bold transition">Top 5 Poster</button>
@@ -408,18 +436,33 @@ const ListPoster = ({ data }) => {
                             )}
 
                             {activeTab === "Muqabla" && (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 gap-6">
                                     {competitions.length === 0 ? (
-                                        <div className="col-span-1 lg:col-span-2 text-center py-16 text-slate-400 font-bold text-xl bg-slate-50 rounded-2xl border border-dashed border-slate-200">Koi muqabla set nahi kiya gaya.</div>
+                                        <div className="text-center py-16 text-slate-400 font-bold text-xl bg-slate-50 rounded-2xl border border-dashed border-slate-200">Koi muqabla set nahi kiya gaya.</div>
                                     ) : (
-                                        competitions.map((comp, idx) => (
-                                            <div key={idx} className="bg-gradient-to-r from-sky-500 to-indigo-600 p-8 rounded-3xl shadow-xl flex justify-between items-center text-white relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
+                                        competitions.map((comp, idx) => {
+                                            const teams = comp.teams || [comp.teamA, comp.teamB].filter(Boolean);
+                                            return (
+                                            <div key={idx} className="bg-gradient-to-r from-sky-500 to-indigo-600 p-8 rounded-3xl shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
                                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
-                                                <div className="w-5/12 text-center z-10"><span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md font-['Inter'] tracking-tight leading-tight block">{comp.teamA}</span></div>
-                                                <div className="w-2/12 text-center z-10 relative"><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[2px] h-20 bg-white/20"></div><div className="w-14 h-14 sm:w-16 sm:h-16 bg-amber-400 text-indigo-900 rounded-full flex items-center justify-center font-black text-xl sm:text-2xl italic mx-auto shadow-xl border-4 border-white transform -rotate-12 group-hover:rotate-12 transition-transform duration-300 relative z-20">VS</div></div>
-                                                <div className="w-5/12 text-center z-10"><span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md font-['Inter'] tracking-tight leading-tight block">{comp.teamB}</span></div>
+                                                <div className="flex flex-wrap justify-center items-center gap-y-8 relative z-10 w-full">
+                                                    {teams.map((team, tIdx) => {
+                                                        const score = getTeamScore(team);
+                                                        const units = (score / 7000).toFixed(1);
+                                                        return (
+                                                        <React.Fragment key={tIdx}>
+                                                            <div className="text-center flex flex-col items-center mx-4 min-w-[140px]">
+                                                                <span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md text-white mb-3">{team}</span>
+                                                                <span className="bg-white text-indigo-700 px-4 py-1.5 rounded-full font-bold text-xl sm:text-2xl shadow-inner border-2 border-indigo-100">{units} Units</span>
+                                                            </div>
+                                                            {tIdx < teams.length - 1 && (
+                                                                <div className="w-12 h-12 shrink-0 bg-amber-400 text-indigo-900 rounded-full flex items-center justify-center font-black text-xl italic shadow-xl border-4 border-white z-20 mx-2">VS</div>
+                                                            )}
+                                                        </React.Fragment>
+                                                    )})}
+                                                </div>
                                             </div>
-                                        ))
+                                        )})
                                     )}
                                 </div>
                             )}
@@ -428,16 +471,34 @@ const ListPoster = ({ data }) => {
                                 <div>
                                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
                                         <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 uppercase flex items-center gap-3">
-                                            {activeTab} <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">{displayedData.length} {isClassView ? 'Classes' : isJamiaView ? 'Jamiaat' : 'Teachers'}</span>
+                                            {activeTab} <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">{displayedData.length} {isClassView ? 'Classes' : isJamiaView ? 'Jamiaat' : 'Records'}</span>
                                         </h2>
                                         <button onClick={handleDownloadPoster} disabled={isDownloading || displayedData.length === 0} className="px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold transition">
                                             {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} Download Poster
                                         </button>
                                     </div>
 
-                                    {/* Desktop View */}
                                     <div className="hidden md:block">
-                                        {isClassView ? (
+                                        {isCustomView ? (
+                                            <div>
+                                                <div className="grid items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider" style={{ gridTemplateColumns: `repeat(${currentHeadings.length}, 1fr)` }}>
+                                                    {currentHeadings.map((h, i) => <div key={i} className={autoKeywords.some(kw => h.toLowerCase().includes(kw)) ? 'text-center' : ''}>{h}</div>)}
+                                                </div>
+                                                <div className="space-y-2 mt-2">
+                                                    {displayedData.map((it, idx) => (
+                                                        <div key={idx} className="grid items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow" style={{ gridTemplateColumns: `repeat(${currentHeadings.length}, 1fr)` }}>
+                                                            {currentHeadings.map((h, i) => {
+                                                                const isAuto = autoKeywords.some(kw => h.toLowerCase().includes(kw));
+                                                                const isRank = h.toLowerCase().includes('rank');
+                                                                if(isRank) return <div key={i} className="font-bold text-slate-400 text-lg pl-2 text-center">#{idx + 1}</div>;
+                                                                if(isAuto) return <div key={i} className="text-center text-slate-300">-</div>;
+                                                                return <div key={i} className="font-semibold text-slate-700 text-lg">{it.recordData[h] || "-"}</div>;
+                                                            })}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : isClassView ? (
                                             <div>
                                                 <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-2">Rank</div><div className="col-span-6">Class Name</div><div className="col-span-2 text-center">Teachers</div><div className="col-span-2 text-right text-sky-500">Total Units</div></div>
                                                 <div className="space-y-2 mt-2">
@@ -471,21 +532,39 @@ const ListPoster = ({ data }) => {
                                         {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-8 text-center font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div> )}
                                     </div>
 
-                                    {/* Mobile View */}
                                     <div className="md:hidden space-y-3 mt-4">
                                         {displayedData.map((it, idx) => (
-                                            <div key={it.id} className="p-4 rounded-xl shadow-sm bg-white border border-slate-100 relative overflow-hidden">
+                                            <div key={idx} className="p-4 rounded-xl shadow-sm bg-white border border-slate-100 relative overflow-hidden">
                                                 <div className={`absolute top-0 right-0 bg-gradient-to-l ${isClassView ? 'from-indigo-100' : isJamiaView ? 'from-sky-100' : 'from-emerald-100'} to-transparent p-2 rounded-bl-xl ${isClassView ? 'text-indigo-700' : isJamiaView ? 'text-sky-700' : 'text-emerald-700'} font-bold text-sm`}>Rank #{idx + 1}</div>
-                                                <div className="border-b pb-3 mb-3 pr-20">
-                                                    {isClassView ? ( <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 uppercase">{it.className}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers Registered</div></div>
-                                                    ) : isJamiaView ? ( <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1">{it.jamiaName}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers Registered</div></div>
-                                                    ) : ( <div><div className="font-bold text-slate-800 text-lg uppercase">{it.ustazName}{it.className !== activeTab && <span className="ml-2 text-[10px] text-white bg-indigo-500 px-1.5 py-0.5 rounded-full normal-case">Sec {it.className.slice(-1)}</span>}</div><div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div></div> )}
-                                                </div>
-                                                <div className="grid grid-cols-3 gap-2 text-sm items-center">
-                                                    {!isClassView && ( <div className="col-span-1"><span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span><span className="font-semibold text-slate-600">{it.region}</span></div> )}
-                                                    {isClassView || isJamiaView ? ( <div className={`${isClassView ? 'col-span-3' : 'col-span-2'} flex flex-col items-end`}><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div>
-                                                    ) : ( <div className="col-span-2 flex flex-col items-end"><span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span><span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span></div> )}
-                                                </div>
+                                                
+                                                {isCustomView ? (
+                                                    <div className="flex flex-col gap-2 mt-4">
+                                                        {currentHeadings.map((h, i) => {
+                                                            const isAuto = autoKeywords.some(kw => h.toLowerCase().includes(kw));
+                                                            if(isAuto) return null;
+                                                            return (
+                                                                <div key={i} className="flex justify-between border-b border-slate-50 pb-1">
+                                                                    <span className="text-xs font-bold text-slate-400 uppercase">{h}</span>
+                                                                    <span className="font-semibold text-slate-700">{it.recordData[h] || "-"}</span>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                ) : isClassView ? ( 
+                                                    <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 uppercase mt-4 pr-16">{it.className}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers</div>
+                                                    <div className="mt-3 flex flex-col"><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div></div>
+                                                ) : isJamiaView ? ( 
+                                                    <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 mt-4 pr-16">{it.jamiaName}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers</div>
+                                                    <div className="mt-3 flex flex-col"><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div></div>
+                                                ) : ( 
+                                                    <div>
+                                                        <div className="border-b pb-3 mb-3 mt-4 pr-16"><div className="font-bold text-slate-800 text-lg uppercase">{it.ustazName}{it.className !== activeTab && <span className="ml-2 text-[10px] text-white bg-indigo-500 px-1.5 py-0.5 rounded-full normal-case">Sec {it.className.slice(-1)}</span>}</div><div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div></div>
+                                                        <div className="grid grid-cols-3 gap-2 text-sm items-center">
+                                                            <div className="col-span-1"><span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span><span className="font-semibold text-slate-600">{it.region}</span></div>
+                                                            <div className="col-span-2 flex flex-col items-end"><span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span><span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span></div>
+                                                        </div>
+                                                    </div> 
+                                                )}
                                             </div>
                                         ))}
                                         {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div> )}
