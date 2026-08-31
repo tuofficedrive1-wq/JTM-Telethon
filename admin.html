@@ -14,7 +14,6 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; } 
         .hidden { display: none !important; }
-        /* Custom Scrollbar for better UI */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
@@ -50,7 +49,6 @@
                         <label class="block text-sm font-semibold">Assign Class</label>
                         <select id="assignedClass" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                             <option value="">Class Select Karein (Pehle Settings me add karein)...</option>
-                            <!-- Options Firebase se aayengi -->
                         </select>
                     </div>
                     <div class="pt-2 border-t">
@@ -87,11 +85,17 @@
                     <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">Live Updates (Optimized)</span>
                 </h2>
                 <div class="flex flex-wrap justify-end gap-3 w-full md:w-auto">
-                    <div class="relative w-full sm:w-64">
-                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search from loaded records..." class="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-indigo-500 bg-slate-50">
-                        <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    
+                    <!-- Full Database Search UI -->
+                    <div class="relative w-full sm:w-[350px] flex gap-2">
+                        <div class="relative w-full">
+                            <input type="text" id="searchInput" onkeypress="handleSearch(event)" placeholder="Search Full DB (Press Enter)..." class="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-indigo-500 bg-slate-50">
+                            <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <button onclick="doFullSearch()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">Find</button>
                     </div>
-                    <button onclick="downloadTableAsImage(event)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition shadow-sm whitespace-nowrap"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span>List Image</span></button>
+
+                    <button onclick="downloadTableAsImage(event)" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition shadow-sm whitespace-nowrap"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span>List Image</span></button>
                     <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Export Excel</button>
                 </div>
             </div>
@@ -122,7 +126,6 @@
                 </table>
             </div>
             
-            <!-- Optimized Load More Button -->
             <div class="mt-4 flex justify-center">
                 <button id="loadMoreBtn" onclick="loadMoreAsatiza()" class="bg-slate-100 text-slate-700 font-bold px-6 py-2 rounded-lg hover:bg-slate-200 transition shadow-sm border border-slate-300">
                     Load More Records
@@ -133,16 +136,15 @@
         <!-- DASHBOARD SETTINGS TAB -->
         <div id="settingsTab" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- NEW: Dynamic Classes Manager -->
+            <!-- Manage Classes (Darja) & Headings -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 col-span-1 md:col-span-2">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-purple-700">Manage Classes (Darja)</h2>
-                <div class="flex gap-2 mb-4 max-w-md">
-                    <input type="text" id="newClassInput" placeholder="Nayi Class ka naam likhein..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-purple-700">Manage Classes & Dashboard Headings</h2>
+                <div class="flex flex-col md:flex-row gap-2 mb-4">
+                    <input type="text" id="newClassInput" placeholder="Class ka naam (eg. Takhassusat)" class="w-full md:w-1/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
+                    <input type="text" id="newClassHeadings" placeholder="Headings likhein (eg. Rank, Jamia Name, Unit)" class="w-full md:w-2/3 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none">
                     <button onclick="addClass(event)" class="bg-purple-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-purple-700 transition shadow-md whitespace-nowrap">Add Class</button>
                 </div>
-                <div id="classesListContainer" class="flex flex-wrap gap-2">
-                    <!-- Classes will be loaded here dynamically -->
-                </div>
+                <div id="classesListContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
 
             <!-- 1. Live Header Change -->
@@ -163,28 +165,34 @@
                 <button onclick="updateHeader(event)" class="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-indigo-700 transition shadow-md">Update Sub-Headings</button>
             </div>
 
-            <!-- 2. Competition Matchmaking (Multi-Team) -->
+            <!-- 2. Competition Matchmaking (Multi-Team Dropdown + Live Score) -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
                 <h2 class="text-lg font-bold mb-4 border-b pb-2 text-amber-700">2. Set Competition (Muqabla)</h2>
-                <p class="text-xs text-slate-500 mb-3">Aap 2 se zyada teams ka muqabla bhi ek sath karwa sakte hain.</p>
+                <p class="text-xs text-slate-500 mb-3">Class select karein. Unke current units samne show honge.</p>
                 
                 <div id="teamInputsContainer" class="flex flex-col gap-3 mb-3">
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-slate-400">1.</span>
-                        <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
+                        <select class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateTeamScore(this)">
+                            <option value="">Class Select Karein...</option>
+                        </select>
+                        <span class="team-score font-bold text-lg text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg min-w-[80px] text-center border border-indigo-200 shadow-inner" title="Total Units">0</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 mt-2">
                         <span class="font-bold text-slate-400">2.</span>
-                        <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
+                        <select class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateTeamScore(this)">
+                            <option value="">Class Select Karein...</option>
+                        </select>
+                        <span class="team-score font-bold text-lg text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg min-w-[80px] text-center border border-indigo-200 shadow-inner" title="Total Units">0</span>
                     </div>
                 </div>
                 
                 <div class="flex justify-between items-center mb-4">
                     <button onclick="addTeamInputRow()" class="text-amber-600 font-bold text-sm hover:underline">+ Aur Team Add Karein</button>
-                    <button onclick="clearTeamInputs()" class="text-rose-500 font-bold text-sm hover:underline">Clear</button>
+                    <button onclick="clearTeamInputs()" class="text-rose-500 font-bold text-sm hover:underline">Clear List</button>
                 </div>
 
-                <button onclick="addCompetition(event)" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-amber-700 transition shadow-md">Save Match</button>
+                <button onclick="addCompetition(event)" class="bg-amber-600 text-white font-bold px-4 py-2 rounded-lg w-full hover:bg-amber-700 transition shadow-md">Save Match Dashboard Par</button>
             </div>
 
             <!-- 3. Dashboard Mode & Reset -->
@@ -255,7 +263,6 @@
                 <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Class (Darja)</label>
                     <select id="editClassName" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-indigo-500 focus:outline-none">
                         <option value="">Class Select Karein...</option>
-                        <!-- Dynamic Classes aayengi -->
                     </select>
                 </div>
                 <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Section</label>
@@ -278,146 +285,160 @@
         const secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
         const secondaryAuth = secondaryApp.auth();
 
-        // ---------------- DYNAMIC CLASSES LOGIC ----------------
+        let currentDashboardMode = "total"; // Global Mode Tracker
+
+        db.collection('settings').doc('dashboard').onSnapshot((doc) => {
+            if(doc.exists && doc.data().dashboardMode) {
+                currentDashboardMode = doc.data().dashboardMode;
+                const selectEl = document.getElementById('dashboardModeSelect');
+                if(selectEl) selectEl.value = currentDashboardMode;
+                
+                document.querySelectorAll('.team-input').forEach(select => {
+                    if(select.value) updateTeamScore(select);
+                });
+            }
+        });
+
+        // ---------------- DYNAMIC CLASSES & HEADINGS LOGIC ----------------
         let availableClasses = [];
+        let classHeadingsMap = {};
 
         db.collection('settings').doc('classes').onSnapshot((doc) => {
             if(doc.exists) {
                 availableClasses = doc.data().list || [];
+                classHeadingsMap = doc.data().headings || {};
             } else {
-                availableClasses = ["Prep Class", "Hifz Class", "Ibtidaiya", "Ula", "Saniya", "Salisa"]; // Default fallback
+                availableClasses = ["Prep Class", "Hifz Class", "Ibtidaiya", "Ula", "Saniya", "Salisa"]; 
+                classHeadingsMap = {};
             }
             updateClassUI();
         });
 
         function updateClassUI() {
-            // Update the settings tab list
             const container = document.getElementById('classesListContainer');
             container.innerHTML = "";
             availableClasses.forEach((cls) => {
+                const headings = classHeadingsMap[cls] ? classHeadingsMap[cls].join(', ') : "Rank, Name, Unit (Default)";
                 container.innerHTML += `
-                    <div class="bg-purple-50 border border-purple-200 text-purple-800 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2">
-                        ${cls}
-                        <button onclick="removeClass('${cls}')" class="text-purple-400 hover:text-red-500 transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
+                    <div class="bg-purple-50 border border-purple-200 text-purple-800 px-4 py-3 rounded-xl text-sm flex flex-col gap-1 w-full shadow-sm">
+                        <div class="font-bold flex justify-between items-center text-base">
+                            ${cls}
+                            <button onclick="removeClass('${cls}')" class="text-rose-400 hover:text-rose-600 transition p-1 bg-rose-50 rounded-md">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                        <div class="text-xs text-purple-600 font-medium">Headings: ${headings}</div>
                     </div>`;
             });
 
-            // Update dropdowns
-            const d1 = document.getElementById('assignedClass');
-            const d2 = document.getElementById('editClassName');
-            
-            // Save currently selected values if any
-            const val1 = d1.value; const val2 = d2.value;
+            const updateDropdown = (elementId) => {
+                const select = document.getElementById(elementId); if(!select) return;
+                const val = select.value; let html = '<option value="">Class Select Karein...</option>';
+                availableClasses.forEach(cls => html += `<option value="${cls}">${cls}</option>`);
+                select.innerHTML = html; if(availableClasses.includes(val)) select.value = val;
+            };
 
-            let optionsHtml = '<option value="">Class Select Karein...</option>';
-            availableClasses.forEach(cls => {
-                optionsHtml += `<option value="${cls}">${cls}</option>`;
+            updateDropdown('assignedClass'); updateDropdown('editClassName');
+            document.querySelectorAll('.team-input').forEach(select => {
+                const currentVal = select.value; let optsHtml = '<option value="">Class Select Karein...</option>';
+                availableClasses.forEach(cls => optsHtml += `<option value="${cls}">${cls}</option>`);
+                select.innerHTML = optsHtml; if(availableClasses.includes(currentVal)) select.value = currentVal;
             });
-
-            d1.innerHTML = optionsHtml; d2.innerHTML = optionsHtml;
-            
-            if(availableClasses.includes(val1)) d1.value = val1;
-            if(availableClasses.includes(val2)) d2.value = val2;
         }
 
         function addClass(e) {
-            const input = document.getElementById('newClassInput');
-            const val = input.value.trim();
-            if(!val) return alert("Class ka naam likhein");
+            const nameInput = document.getElementById('newClassInput'); 
+            const headsInput = document.getElementById('newClassHeadings');
             
+            const className = nameInput.value.trim();
+            const headingsString = headsInput.value.trim();
+            
+            if(!className) return alert("Class ka naam likhein");
+            if(!headingsString) return alert("Table ki headings likhein (eg: Rank, Jamia Name, Unit)");
+
+            // Comma separated string ko array me convert karein
+            const headingsArray = headingsString.split(',').map(item => item.trim()).filter(item => item !== "");
+
             const btn = e.target; btn.disabled = true; btn.innerText = "...";
-            db.collection('settings').doc('classes').set({
-                list: firebase.firestore.FieldValue.arrayUnion(val)
-            }, {merge: true}).then(() => {
-                input.value = "";
-            }).catch(err => alert(err.message)).finally(() => {
-                btn.disabled = false; btn.innerText = "Add Class";
-            });
+            
+            db.collection('settings').doc('classes').set({ 
+                list: firebase.firestore.FieldValue.arrayUnion(className),
+                headings: {
+                    [className]: headingsArray // Object ke andar class ke naam ki key banegi
+                }
+            }, {merge: true})
+            .then(() => {
+                nameInput.value = ""; headsInput.value = "";
+            }).catch(err => alert(err.message)).finally(() => { btn.disabled = false; btn.innerText = "Add Class"; });
         }
 
         function removeClass(className) {
             if(!confirm(`Kya aap waqai '${className}' ko delete karna chahte hain?`)) return;
-            db.collection('settings').doc('classes').set({
-                list: firebase.firestore.FieldValue.arrayRemove(className)
-            }, {merge: true}).catch(err => alert(err.message));
+            
+            // Delete from list and remove its headings
+            db.collection('settings').doc('classes').update({ 
+                list: firebase.firestore.FieldValue.arrayRemove(className),
+                [`headings.${className}`]: firebase.firestore.FieldValue.delete()
+            }).catch(err => alert(err.message));
         }
 
-        // ---------------- MULTI-TEAM COMPETITION LOGIC ----------------
+        // ---------------- MULTI-TEAM COMPETITION (WITH LIVE SCORES) ----------------
+        async function updateTeamScore(selectElement) {
+            const scoreSpan = selectElement.nextElementSibling; const className = selectElement.value;
+            if(!className) { scoreSpan.innerText = "0"; return; }
+            scoreSpan.innerText = "..."; 
+            try {
+                const snapshot = await db.collection('asatiza_details').where('className', '==', className).get();
+                let totalScore = 0;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    let amt = currentDashboardMode === 'daily' ? (Number(data.daily_amount) || 0) : (Number(data.total_amount) || Number(data.amount) || Number(data.grand_total) || 0);
+                    totalScore += amt;
+                });
+                scoreSpan.innerText = totalScore.toLocaleString('en-IN');
+            } catch (e) { scoreSpan.innerText = "Err"; }
+        }
+
         function addTeamInputRow() {
             const container = document.getElementById('teamInputsContainer');
             const count = container.children.length + 1;
-            const div = document.createElement('div');
-            div.className = "flex items-center gap-2 mt-2";
-            div.innerHTML = `
-                <span class="font-bold text-slate-400">${count}.</span>
-                <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
-            `;
+            let optionsHtml = '<option value="">Class Select Karein...</option>';
+            availableClasses.forEach(cls => { optionsHtml += `<option value="${cls}">${cls}</option>`; });
+            const div = document.createElement('div'); div.className = "flex items-center gap-2 mt-2";
+            div.innerHTML = `<span class="font-bold text-slate-400">${count}.</span><select class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" onchange="updateTeamScore(this)">${optionsHtml}</select><span class="team-score font-bold text-lg text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg min-w-[80px] text-center border border-indigo-200 shadow-inner" title="Total Units">0</span>`;
             container.appendChild(div);
         }
 
         function clearTeamInputs() {
             const container = document.getElementById('teamInputsContainer');
-            container.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-400">1.</span>
-                    <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
-                </div>
-                <div class="flex items-center gap-2 mt-2">
-                    <span class="font-bold text-slate-400">2.</span>
-                    <input type="text" class="team-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Team/Class Name">
-                </div>
-            `;
+            while(container.children.length > 2) { container.removeChild(container.lastChild); }
+            document.querySelectorAll('.team-input').forEach(select => { select.value = ""; select.nextElementSibling.innerText = "0"; });
         }
 
         function addCompetition(event) {
-            const inputs = document.querySelectorAll('.team-input');
-            let teams = [];
-            inputs.forEach(inp => {
-                let val = inp.value.trim();
-                if(val) teams.push(val);
-            });
-
-            if(teams.length < 2) { 
-                alert("Muqabla ke liye kam se kam 2 teams zaruri hain."); return; 
-            }
-            
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "Saving..."; btn.disabled = true;
-            
-            db.collection('competitions').add({ 
-                teams: teams, 
-                timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-            }).then(() => {
-                alert("✅ Muqabla (Match) Dashboard par Save ho gaya!");
-                clearTeamInputs();
-            }).catch(err => alert("Error: " + err.message))
-            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+            const inputs = document.querySelectorAll('.team-input'); let teams = [];
+            inputs.forEach(inp => { let val = inp.value.trim(); if(val) teams.push(val); });
+            if(teams.length < 2) { alert("Muqabla ke liye kam se kam 2 teams zaruri hain."); return; }
+            const btn = event.target; const originalText = btn.innerText; btn.innerText = "Saving..."; btn.disabled = true;
+            db.collection('competitions').add({ teams: teams, timestamp: firebase.firestore.FieldValue.serverTimestamp() })
+            .then(() => { alert("✅ Muqabla (Match) Dashboard par Save ho gaya!"); clearTeamInputs(); }).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
-
-        // ---------------- ASATIZA PAGINATION (READ OPTIMIZATION) ----------------
+        // ---------------- ASATIZA FULL DATABASE SEARCH & PAGINATION ----------------
         let asatizaUnsubscribe = null;
-        let currentRecordLimit = 50; // Pehli baar sirf 50 record
+        let currentRecordLimit = 50; 
         let allAsatizaData = []; 
         let currentFilteredData = []; 
         let asatizaDataList = [];
 
         function startAsatizaListener() {
             if(asatizaUnsubscribe) asatizaUnsubscribe();
-            
             asatizaUnsubscribe = db.collection('asatiza_details')
-                .orderBy('timestamp', 'desc')
-                .limit(currentRecordLimit)
-                .onSnapshot((snapshot) => {
+                .orderBy('timestamp', 'desc').limit(currentRecordLimit).onSnapshot((snapshot) => {
                     allAsatizaData = []; 
                     snapshot.forEach((doc) => {
-                        const data = doc.data(); 
-                        data.docId = doc.id; 
-                        data.jamiaName = data.jamiaName || "N/A"; 
-                        data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
+                        const data = doc.data(); data.docId = doc.id; 
+                        data.jamiaName = data.jamiaName || "N/A"; data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
                         allAsatizaData.push(data);
                     });
                     renderTableAndFilter(); 
@@ -425,16 +446,56 @@
         }
 
         function loadMoreAsatiza() {
-            currentRecordLimit += 50; // Agli baar 50 aur jodd den
+            currentRecordLimit += 50; 
             document.getElementById('loadMoreBtn').innerText = "Loading...";
             startAsatizaListener();
-            setTimeout(() => {
-                document.getElementById('loadMoreBtn').innerText = "Load More Records";
-            }, 1000);
+            setTimeout(() => { document.getElementById('loadMoreBtn').innerText = "Load More Records"; }, 1000);
         }
 
-        // Initialize first load
-        startAsatizaListener();
+        function handleSearch(e) {
+            if (e.key === 'Enter') {
+                doFullSearch();
+            }
+        }
+
+        async function doFullSearch() {
+            const searchVal = document.getElementById("searchInput").value.trim().toLowerCase();
+            const tbody = document.getElementById('asatizaTableBody');
+
+            if(!searchVal) {
+                document.getElementById('loadMoreBtn').classList.remove('hidden');
+                startAsatizaListener(); // Agar empty hai to normally load karo
+                return;
+            }
+
+            if(asatizaUnsubscribe) asatizaUnsubscribe(); // Stop live listener to save reads
+            document.getElementById('loadMoreBtn').classList.add('hidden'); // Hide load more during search
+            tbody.innerHTML = '<tr><td colspan="10" class="p-6 text-center text-indigo-600 font-bold">Poore database me talash kiya ja raha hai, kripya intezar karein...</td></tr>';
+            
+            try {
+                // Poore database se aik hi bar get karega jisse reads kam lagen
+                const snapshot = await db.collection('asatiza_details').get();
+                allAsatizaData = [];
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data(); data.docId = doc.id;
+                    data.jamiaName = data.jamiaName || "N/A"; 
+                    data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
+                    
+                    const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase();
+                    if(searchString.includes(searchVal)) {
+                        allAsatizaData.push(data);
+                    }
+                });
+                
+                renderTableAndFilter(); // Sirf matched data show hoga
+            } catch(e) {
+                alert("Search Error: " + e.message);
+                startAsatizaListener();
+            }
+        }
+
+        startAsatizaListener(); // Initial Load
 
         // ---------------- ZIMMEDAR LIST (MAPPING) ----------------
         const zimmedarList = {
@@ -463,80 +524,46 @@
         }
 
         function switchTab(tabId) {
-            document.getElementById('zimmedarTab').classList.add('hidden');
-            document.getElementById('asatizaTab').classList.add('hidden');
-            document.getElementById('settingsTab').classList.add('hidden');
-            document.getElementById('btnZimmedar').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
-            document.getElementById('btnAsatiza').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
-            document.getElementById('btnSettings').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
+            document.getElementById('zimmedarTab').classList.add('hidden'); document.getElementById('asatizaTab').classList.add('hidden'); document.getElementById('settingsTab').classList.add('hidden');
+            document.getElementById('btnZimmedar').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition"; document.getElementById('btnAsatiza').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition"; document.getElementById('btnSettings').className = "px-4 py-2 text-white font-bold rounded-md hover:bg-indigo-700 transition";
             document.getElementById(tabId).classList.remove('hidden');
-            if(tabId === 'zimmedarTab') document.getElementById('btnZimmedar').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
-            else if(tabId === 'asatizaTab') document.getElementById('btnAsatiza').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
-            else document.getElementById('btnSettings').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
+            if(tabId === 'zimmedarTab') document.getElementById('btnZimmedar').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition"; else if(tabId === 'asatizaTab') document.getElementById('btnAsatiza').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition"; else document.getElementById('btnSettings').className = "px-4 py-2 bg-white text-indigo-700 font-bold rounded-md shadow transition";
         }
 
         function updateHeader(event) {
-            const line1 = document.getElementById('line1Text').value.trim();
-            const line2 = document.getElementById('line2Text').value.trim();
-            const color2 = document.getElementById('line2Color').value;
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "Updating..."; btn.disabled = true;
-            db.collection('settings').doc('dashboard').set({
-                line1Text: line1, line2Text: line2, line2Color: color2
-            }, {merge: true}).then(() => alert("✅ Sub-Headings Updated LIVE!"))
-            .catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
+            const line1 = document.getElementById('line1Text').value.trim(); const line2 = document.getElementById('line2Text').value.trim(); const color2 = document.getElementById('line2Color').value;
+            const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true;
+            db.collection('settings').doc('dashboard').set({ line1Text: line1, line2Text: line2, line2Color: color2 }, {merge: true}).then(() => alert("✅ Sub-Headings Updated LIVE!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
         function updateCountdown(event) {
-            const endTime = document.getElementById('endTime').value;
-            const delayMinutes = document.getElementById('resultDelay').value;
-            const message = document.getElementById('resultMessage').value;
+            const endTime = document.getElementById('endTime').value; const delayMinutes = document.getElementById('resultDelay').value; const message = document.getElementById('resultMessage').value;
             if(!endTime || !delayMinutes) { alert("Waqt aur delay dono set karein"); return; }
             const btn = event.target; const originalText = btn.innerText; btn.innerText = "Starting..."; btn.disabled = true;
-            db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message })
-            .then(() => alert("✅ Countdown Started!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
+            db.collection('settings').doc('timer').set({ endTime: endTime, delayMinutes: parseInt(delayMinutes), message: message }).then(() => alert("✅ Countdown Started!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
 
         let zimmedarDataMap = {};
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const isEditing = document.getElementById('zimmedarDocId').value !== "";
-            btn.innerHTML = isEditing ? "Updating..." : "Creating..."; btn.disabled = true;
-            const ustazName = document.getElementById('ustazName').value.trim();
-            const assignedClass = document.getElementById('assignedClass').value;
-            const username = document.getElementById('username').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn'); const isEditing = document.getElementById('zimmedarDocId').value !== ""; btn.innerHTML = isEditing ? "Updating..." : "Creating..."; btn.disabled = true;
+            const ustazName = document.getElementById('ustazName').value.trim(); const assignedClass = document.getElementById('assignedClass').value; const username = document.getElementById('username').value.trim().toLowerCase(); const password = document.getElementById('password').value;
             if (isEditing) {
                 const docId = document.getElementById('zimmedarDocId').value;
-                try {
-                    await db.collection('users').doc(docId).update({ username: username, ustazName: ustazName, assignedClass: assignedClass });
-                    alert("✅ Zimmedar successfully update ho gaya!"); resetZimmedarForm();
-                } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
+                try { await db.collection('users').doc(docId).update({ username: username, ustazName: ustazName, assignedClass: assignedClass }); alert("✅ Zimmedar successfully update ho gaya!"); resetZimmedarForm(); } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
             } else {
                 if(!password) { alert("Kripya password darj karein."); btn.innerHTML = "Account Banayein"; btn.disabled = false; return; }
                 const fakeEmail = username + "@telethon.com";
-                try {
-                    const userCredential = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, password);
-                    await secondaryAuth.signOut();
-                    await db.collection('users').doc(userCredential.user.uid).set({ username: username, ustazName: ustazName, assignedClass: assignedClass, role: "zimmedar", createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-                    alert("✅ Zimmedar ka account successfully ban gaya!"); resetZimmedarForm();
-                } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
+                try { const userCredential = await secondaryAuth.createUserWithEmailAndPassword(fakeEmail, password); await secondaryAuth.signOut(); await db.collection('users').doc(userCredential.user.uid).set({ username: username, ustazName: ustazName, assignedClass: assignedClass, role: "zimmedar", createdAt: firebase.firestore.FieldValue.serverTimestamp() }); alert("✅ Zimmedar ka account successfully ban gaya!"); resetZimmedarForm(); } catch (error) { alert("❌ Error: " + error.message); } finally { btn.innerHTML = "Account Banayein"; btn.disabled = false; }
             }
         });
 
         function resetZimmedarForm() {
-            document.getElementById('createUserForm').reset(); document.getElementById('zimmedarDocId').value = "";
-            document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein"; document.getElementById('submitBtn').innerText = "Account Banayein";
-            document.getElementById('passwordDiv').classList.remove('hidden'); document.getElementById('password').setAttribute('required', 'required');
-            document.getElementById('username').removeAttribute('disabled'); document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed');
-            document.getElementById('cancelEditZimmedarBtn').classList.add('hidden');
+            document.getElementById('createUserForm').reset(); document.getElementById('zimmedarDocId').value = ""; document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein"; document.getElementById('submitBtn').innerText = "Account Banayein"; document.getElementById('passwordDiv').classList.remove('hidden'); document.getElementById('password').setAttribute('required', 'required'); document.getElementById('username').removeAttribute('disabled'); document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.add('hidden');
         }
 
         db.collection('users').where("role", "==", "zimmedar").onSnapshot((snapshot) => {
-            const tbody = document.getElementById('userTableBody');
-            tbody.innerHTML = snapshot.empty ? '<tr><td colspan="4" class="p-4 text-center text-slate-500">Koi zimmedar add nahi hua abhi.</td></tr>' : "";
+            const tbody = document.getElementById('userTableBody'); tbody.innerHTML = snapshot.empty ? '<tr><td colspan="4" class="p-4 text-center text-slate-500">Koi zimmedar add nahi hua abhi.</td></tr>' : "";
             zimmedarDataMap = {};
             snapshot.forEach((doc) => {
                 const data = doc.data(); data.docId = doc.id; zimmedarDataMap[doc.id] = data;
@@ -546,12 +573,7 @@
 
         function editZimmedar(docId) {
             const data = zimmedarDataMap[docId]; if (!data) return;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            document.getElementById('zimmedarDocId').value = docId; document.getElementById('ustazName').value = data.ustazName; document.getElementById('assignedClass').value = data.assignedClass; document.getElementById('username').value = data.username;
-            document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein"; document.getElementById('submitBtn').innerText = "Update Record";
-            document.getElementById('passwordDiv').classList.add('hidden'); document.getElementById('password').removeAttribute('required');
-            document.getElementById('username').setAttribute('disabled', 'disabled'); document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed');
-            document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('zimmedarDocId').value = docId; document.getElementById('ustazName').value = data.ustazName; document.getElementById('assignedClass').value = data.assignedClass; document.getElementById('username').value = data.username; document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein"; document.getElementById('submitBtn').innerText = "Update Record"; document.getElementById('passwordDiv').classList.add('hidden'); document.getElementById('password').removeAttribute('required'); document.getElementById('username').setAttribute('disabled', 'disabled'); document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
         }
 
         async function deleteZimmedar(docId) { if (confirm("Kya aap waqai is zimmedar ko delete karna chahte hain?")) { try { await db.collection('users').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); } } }
@@ -559,20 +581,23 @@
         function renderTableAndFilter() {
             const tbody = document.getElementById('asatizaTableBody');
             const searchInput = document.getElementById("searchInput").value.toLowerCase();
+            
+            // Re-filter client side incase they typed while live limit was running
             currentFilteredData = allAsatizaData.filter(data => {
                 const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase();
                 return searchString.includes(searchInput);
             });
+            
             currentFilteredData.sort((a, b) => a.jamiaName.localeCompare(b.jamiaName));
+            
             const uniqueJamias = new Set(currentFilteredData.map(d => d.jamiaName)).size;
             const uniqueClasses = new Set(currentFilteredData.map(d => d.className)).size;
-            
             document.getElementById('countEntries').innerText = currentFilteredData.length;
             document.getElementById('countJamia').innerText = uniqueJamias;
             document.getElementById('countClass').innerText = uniqueClasses;
             
             asatizaDataList = [];
-            if (currentFilteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila. (Ya agla Load More karein)</td></tr>'; return; }
+            if (currentFilteredData.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500">Koi record nahi mila.</td></tr>'; return; }
             
             let tableHTML = ""; window.renderedDataMap = {}; let serialNumber = 1; 
             currentFilteredData.forEach(data => {
@@ -581,7 +606,6 @@
                 const directUrl = getDirectImageUrl(data.photoUrl);
                 const photoHtml = data.photoUrl ? `<img src="${directUrl}" referrerpolicy="no-referrer" onclick="openImageModal('${directUrl}')" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:ring-2 ring-indigo-300 transition" alt="Photo">` : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs">No Pic</div>`;
                 const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
-                
                 asatizaDataList.push({ "Sr. No": serialNumber, "Ustaz Name": data.ustazName || "N/A", "Jamia Name": data.jamiaName, "Zimmedar Name": data.zimmedarName, "Region": data.region || "N/A", "State": data.state || "N/A", "Mobile No": data.mobileNo || "N/A", "Class (Darja)": classWithSection || "N/A", "Photo Link": directUrl || "N/A", "Submission Date": dateStr });
                 
                 tableHTML += `<tr class="border-b hover:bg-slate-50 search-row" id="row-${data.docId}"><td class="p-3 font-bold text-slate-500 text-xs">${serialNumber}</td><td class="p-2">${photoHtml}</td><td class="p-3 font-semibold text-slate-800">${data.ustazName || "N/A"}</td><td class="p-3 font-bold text-indigo-700">${data.jamiaName}</td><td class="p-3 text-sm font-bold text-slate-700 bg-slate-100 rounded-lg border-x-4 border-white">${data.zimmedarName}</td><td class="p-3"><div class="text-sm font-semibold">${data.region || "N/A"}</div><div class="text-xs text-slate-500">${data.state || "N/A"}</div></td><td class="p-3 font-semibold text-emerald-600">${data.mobileNo || "N/A"}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">${classWithSection || "N/A"}</span></td><td class="p-3 text-xs text-slate-500">${dateStr}</td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2" data-html2canvas-ignore><button onclick="openEditModal('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteEntry('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`;
@@ -590,12 +614,7 @@
             tbody.innerHTML = tableHTML;
         }
 
-        function openEditModal(docId) {
-            const data = window.renderedDataMap[docId]; if(!data) return;
-            document.getElementById('editDocId').value = docId; document.getElementById('editUstazName').value = data.ustazName || ''; document.getElementById('editJamiaName').value = data.jamiaName || ''; document.getElementById('editMobileNo').value = data.mobileNo || ''; document.getElementById('editRegion').value = data.region || ''; document.getElementById('editState').value = data.state || ''; document.getElementById('editClassName').value = data.className || '';
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
+        function openEditModal(docId) { const data = window.renderedDataMap[docId]; if(!data) return; document.getElementById('editDocId').value = docId; document.getElementById('editUstazName').value = data.ustazName || ''; document.getElementById('editJamiaName').value = data.jamiaName || ''; document.getElementById('editMobileNo').value = data.mobileNo || ''; document.getElementById('editRegion').value = data.region || ''; document.getElementById('editState').value = data.state || ''; document.getElementById('editClassName').value = data.className || ''; document.getElementById('editModal').classList.remove('hidden'); }
         function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); document.getElementById('editRecordForm').reset(); }
 
         document.getElementById('editRecordForm').addEventListener('submit', async (e) => {
@@ -603,37 +622,24 @@
             try { await db.collection('asatiza_details').doc(docId).update({ ustazName: document.getElementById('editUstazName').value.trim(), jamiaName: document.getElementById('editJamiaName').value.trim(), mobileNo: document.getElementById('editMobileNo').value.trim(), region: document.getElementById('editRegion').value.trim(), state: document.getElementById('editState').value.trim(), className: document.getElementById('editClassName').value }); closeEditModal(); } catch (error) { alert("Error: " + error.message); } finally { btn.innerHTML = "Update Record"; btn.disabled = false; }
         });
 
-        let searchTimeout; function filterTable() { clearTimeout(searchTimeout); searchTimeout = setTimeout(() => { renderTableAndFilter(); }, 300); }
         async function deleteEntry(docId) { if (confirm("Kya aap waqai is entry ko delete karna chahte hain?")) { try { await db.collection('asatiza_details').doc(docId).delete(); } catch (error) { alert("Error: " + error.message); } } }
         function exportToExcel() { if (asatizaDataList.length === 0) { alert("Koi data mojood nahi hai."); return; } const worksheet = XLSX.utils.json_to_sheet(asatizaDataList); const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Asatiza Details"); XLSX.writeFile(workbook, "Asatiza_Telethon_2026.xlsx"); }
-
         function downloadTableAsImage(event) {
-            const tableElement = document.getElementById('asatizaMainTable'); const btn = event.currentTarget; const btnText = btn.querySelector('span'); const originalText = btnText.innerText;
-            btnText.innerText = "Processing..."; btn.classList.add("opacity-70", "cursor-wait");
+            const tableElement = document.getElementById('asatizaMainTable'); const btn = event.currentTarget; const btnText = btn.querySelector('span'); const originalText = btnText.innerText; btnText.innerText = "Processing..."; btn.classList.add("opacity-70", "cursor-wait");
             html2canvas(tableElement, { scale: 2, backgroundColor: "#ffffff", useCORS: true }).then(canvas => {
-                const searchVal = document.getElementById("searchInput").value.trim(); const fileName = searchVal ? `Telethon_List_${searchVal}.png` : 'Telethon_List_All.png';
-                const link = document.createElement('a'); link.download = fileName; link.href = canvas.toDataURL('image/png'); link.click();
-                btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait");
+                const searchVal = document.getElementById("searchInput").value.trim(); const fileName = searchVal ? `Telethon_List_${searchVal}.png` : 'Telethon_List_All.png'; const link = document.createElement('a'); link.download = fileName; link.href = canvas.toDataURL('image/png'); link.click(); btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait");
             }).catch(error => { alert("Error image generate karne mein."); btnText.innerText = originalText; btn.classList.remove("opacity-70", "cursor-wait"); });
         }
         function openImageModal(imgSrc) { document.getElementById('modalImage').src = imgSrc; document.getElementById('imageModal').classList.remove('hidden'); }
         function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); document.getElementById('modalImage').src = ""; }
-        
         function updateDashboardMode(event) {
-            const mode = document.getElementById('dashboardModeSelect').value;
-            const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true;
+            const mode = document.getElementById('dashboardModeSelect').value; const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true;
             db.collection('settings').doc('dashboard').set({ dashboardMode: mode }, {merge: true}).then(() => alert("✅ Dashboard Mode Live Update Ho Gaya!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; });
         }
-
         async function resetDailyAmounts(event) {
             if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return;
             const btn = event.target; const origText = btn.innerText; btn.innerText = "Resetting..."; btn.disabled = true;
-            try {
-                const snapshot = await db.collection('asatiza_details').get();
-                const batch = db.batch();
-                snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); });
-                await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!");
-            } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; }
+            try { const snapshot = await db.collection('asatiza_details').get(); const batch = db.batch(); snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); }); await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!"); } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; }
         }
     </script>
 </body>
