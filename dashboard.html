@@ -40,7 +40,7 @@
 
         const ListPoster = ({ data }) => {
             if (!data) return null;
-            const { className, items, isJamiaView, isClassView, isResult, isCustomView, headings, type } = data;
+            const { className, items, isJamiaView, isClassView, isRegionView, isResult, isCustomView, headings, type } = data;
             const dateStr = new Date().toLocaleDateString('en-IN');
 
             if (isResult) {
@@ -99,7 +99,7 @@
                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                         <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '72px', color: '#1e3a8a', letterSpacing: '2px', margin: 0 }}>TELETHON 2026 LEADERBOARD</h1>
                         <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
-                            {isClassView ? "OVERALL CLASSES RANKING" : isJamiaView ? "OVERALL JAMIAAT RANKING" : `ASATIZA RECORD - ${className}`}
+                            {isClassView ? "OVERALL CLASSES RANKING" : isJamiaView ? "OVERALL JAMIAAT RANKING" : isRegionView ? "OVERALL REGION RANKING" : `ASATIZA RECORD - ${className}`}
                         </p>
                     </div>
                     <div style={{ flexGrow: 1 }}>
@@ -121,6 +121,22 @@
                                                 if(isAmount) return <span key={i} style={{textAlign:'center', color: '#059669', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>₹{it.amount.toLocaleString('en-IN')}</span>;
                                                 return <span key={i} style={{textTransform: i===1?'uppercase':'none', fontWeight: i===1?700:600}}>{it.recordData[h] || "-"}</span>;
                                             })}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : isRegionView ? (
+                            <div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '100px 3fr 1fr 1.5fr', alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#dbeafe', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', color: '#1e3a8a', marginBottom: '12px', textTransform: 'uppercase' }}>
+                                    <span>Rank</span><span>Region Name</span><span style={{textAlign: 'center'}}>Teachers</span><span style={{textAlign: 'right'}}>Total Units</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {items.map((it, idx) => (
+                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: '100px 3fr 1fr 1.5fr', alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', fontSize: '20px', color: '#1e293b', fontWeight: 600, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                            <span style={{color: '#64748b', fontSize:'24px', fontWeight:'bold'}}>#{idx + 1}</span>
+                                            <span style={{color: '#4338ca', textTransform: 'uppercase'}}>{it.region}</span>
+                                            <span style={{textAlign: 'center'}}>{it.teacherCount}</span>
+                                            <span style={{textAlign: 'right', color: '#0ea5e9', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>{it.units}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -222,10 +238,11 @@
             useEffect(() => {
                 posterContainerRef.current = document.getElementById('poster-container');
                 
-                // Fetch Settings & Auto-Recover default classes
                 const unsubSettings = db.collection('settings').doc('classes').onSnapshot(doc => {
                     if(doc.exists && doc.data().list) {
                         let dbList = doc.data().list;
+                        dbList = dbList.filter(c => c !== "Sale Duwam Khususi");
+
                         if (!dbList.includes("Ula") && !dbList.includes("Saniya")) {
                             setAvailableClasses(Array.from(new Set([...defaultClassesList, ...dbList])));
                         } else {
@@ -273,8 +290,9 @@
                 return () => clearInterval(interval);
             }, [timerConfig]);
 
+            // --- TABS LOGIC UPDATE ---
             const topTabs = ['All Jamiaat', 'All Classes'];
-            const endTabs = ['Result', 'Muqabla'];
+            const endTabs = ['All Regions', 'Result', 'Muqabla']; // All Regions tab placed before Result
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
             const currentMode = headerConfig?.dashboardMode || 'total';
@@ -283,7 +301,6 @@
                 return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
             });
 
-            // CUSTOM RECORDS AUTO FIELDS CALCULATION
             const processedCustomData = customRecords.map(d => {
                 const activeAmt = currentMode === 'daily' ? (d.daily_amount || 0) : (d.amount || 0);
                 return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
@@ -302,7 +319,7 @@
             const getTeamScore = (teamName) => {
                 let total = 0;
                 processedData.forEach(d => { if (d.className === teamName) total += d.amount; });
-                processedCustomData.forEach(d => { if (d.className === teamName) total += d.amount; }); // Custom Team score inclusion
+                processedCustomData.forEach(d => { if (d.className === teamName) total += d.amount; });
                 return total;
             };
 
@@ -322,6 +339,7 @@
             let displayedData = []; 
             let isJamiaView = activeTab === "All Jamiaat"; 
             let isClassView = activeTab === "All Classes"; 
+            let isRegionView = activeTab === "All Regions"; // Region view flag
             let isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
             
             const customDataForTab = processedCustomData.filter(d => d.className === activeTab).sort((a,b) => b.amount - a.amount);
@@ -329,9 +347,7 @@
             
             let isCustomView = false;
             let currentHeadings = [];
-
-            // AGAR TAB CUSTOM CLASSES KI LIST MEIN HAI TO CUSTOM VIEW ENABLE KARO
-            const isCustomTab = !defaultClassesList.includes(activeTab) && availableClasses.includes(activeTab);
+            const isCustomTab = !defaultClassesList.includes(activeTab) && availableClasses.includes(activeTab) && activeTab !== "All Regions";
 
             if (!isSpecialTab) {
                 if (isJamiaView) {
@@ -340,6 +356,16 @@
                 } else if (isClassView) {
                     const classMap = {}; processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
                     displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
+                } else if (isRegionView) {
+                    // Region logic
+                    const regionMap = {};
+                    processedData.forEach(d => { 
+                        const reg = d.region || "Unknown";
+                        if (!regionMap[reg]) regionMap[reg] = { id: reg, region: reg, totalAmount: 0, teacherCount: 0 }; 
+                        regionMap[reg].totalAmount += d.amount; 
+                        regionMap[reg].teacherCount += 1; 
+                    });
+                    displayedData = Object.values(regionMap).map(r => ({ ...r, units: (r.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
                 } else if (isCustomTab) {
                     isCustomView = true;
                     displayedData = customDataForTab;
@@ -352,7 +378,7 @@
             const handleDownloadPoster = () => { 
                 if(displayedData.length === 0) return; 
                 setIsDownloading(true); 
-                setPosterData({ className: activeTab, items: displayedData, isJamiaView, isClassView, isCustomView, headings: currentHeadings }); 
+                setPosterData({ className: activeTab, items: displayedData, isJamiaView, isClassView, isRegionView, isCustomView, headings: currentHeadings }); 
             };
             const DownloadIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> );
 
@@ -374,7 +400,7 @@
                                 </h3>
                             )}
                             <p className="text-sm text-slate-500 mt-3 font-medium">
-                                {isSpecialTab ? "" : isClassView ? "Overall Classes Ranking based on Total Units" : isJamiaView ? "Overall Jamiaat Ranking based on Total Units" : "Jamia-tul-Madina India Class/Jamia Wise Positions"}
+                                {isSpecialTab ? "" : isClassView ? "Overall Classes Ranking based on Total Units" : isJamiaView ? "Overall Jamiaat Ranking based on Total Units" : isRegionView ? "Overall Region Ranking based on Total Units" : "Jamia-tul-Madina India Class/Jamia Wise Positions"}
                             </p>
                         </header>
 
@@ -483,7 +509,7 @@
                                 <div>
                                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
                                         <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 uppercase flex items-center gap-3">
-                                            {activeTab} <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">{displayedData.length} {isClassView ? 'Classes' : isJamiaView ? 'Jamiaat' : 'Records'}</span>
+                                            {activeTab} <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">{displayedData.length} {isClassView ? 'Classes' : isJamiaView ? 'Jamiaat' : isRegionView ? 'Regions' : 'Records'}</span>
                                         </h2>
                                         <button onClick={handleDownloadPoster} disabled={isDownloading || displayedData.length === 0} className="px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold transition">
                                             {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} Download Poster
@@ -514,6 +540,13 @@
                                                             })}
                                                         </div>
                                                     ))}
+                                                </div>
+                                            </div>
+                                        ) : isRegionView ? (
+                                            <div>
+                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-2">Rank</div><div className="col-span-6">Region Name</div><div className="col-span-2 text-center">Teachers</div><div className="col-span-2 text-right text-sky-500">Total Units</div></div>
+                                                <div className="space-y-2 mt-2">
+                                                    {displayedData.map((it, idx) => ( <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-2 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-6 font-bold text-indigo-600 text-lg uppercase">{it.region}</div><div className="col-span-2 text-center font-semibold text-slate-500 bg-slate-50 py-1 rounded-md">{it.teacherCount}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
                                                 </div>
                                             </div>
                                         ) : isClassView ? (
@@ -578,6 +611,9 @@
                                                             )
                                                         })}
                                                     </div>
+                                                ) : isRegionView ? ( 
+                                                    <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 uppercase mt-4 pr-16">{it.region}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers</div>
+                                                    <div className="mt-3 flex flex-col"><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div></div>
                                                 ) : isClassView ? ( 
                                                     <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 uppercase mt-4 pr-16">{it.className}</div><div className="text-xs font-semibold text-slate-500">{it.teacherCount} Teachers</div>
                                                     <div className="mt-3 flex flex-col"><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div></div>
