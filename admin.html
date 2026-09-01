@@ -319,8 +319,8 @@
                     <thead>
                         <tr class="bg-slate-100 text-slate-600 text-xs uppercase">
                             <th class="p-3 border-b border-slate-200">Date & Time</th>
-                            <th class="p-3 border-b border-slate-200 text-right">Kitna Add Kiya</th>
-                            <th class="p-3 border-b border-slate-200 text-right">Naya Total</th>
+                            <th class="p-3 border-b border-slate-200 text-center">Action</th>
+                            <th class="p-3 border-b border-slate-200 text-right">Amount</th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody" class="text-sm">
@@ -361,6 +361,8 @@
                 document.querySelectorAll('.team-input').forEach(select => { if(select.value) updateTeamScore(select); });
             }
         });
+
+        const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         // ---------------- 1. DYNAMIC CLASSES & AUTO-RECOVERY LOGIC ----------------
         const defaultClasses = ["Prep Class", "Hifz Class", "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Sale Duwam Khususi", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis"];
@@ -785,10 +787,10 @@
                     <td class="p-3 text-right font-bold text-emerald-600 text-sm">₹${totalAmt.toLocaleString('en-IN')}</td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center items-center gap-2">
-                            <button onclick="quickAddAmount('${data.docId}', '${data.ustazName}', ${totalAmt})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm whitespace-nowrap">
-                                ➕ Nayi Entry
+                            <button onclick="quickUpdateTotal('${data.docId}', '${escapeStr(data.ustazName)}', '${escapeStr(data.jamiaName)}', ${totalAmt})" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-indigo-200 whitespace-nowrap">
+                                ✏️ Update Total
                             </button>
-                            <button onclick="viewHistory('${data.docId}', '${data.ustazName}')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-indigo-200 whitespace-nowrap">
+                            <button onclick="viewHistory('${data.docId}', '${escapeStr(data.ustazName)}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-slate-200 whitespace-nowrap">
                                 🕒 History
                             </button>
                         </div>
@@ -798,34 +800,34 @@
             tbody.innerHTML = tableHtml || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Koi record nahi mila is filter ke hisaab se.</td></tr>`;
         }
 
-        async function quickAddAmount(docId, ustazName, currentTotal) {
-            let addVal = prompt(`${ustazName} ka AAJ KA amount (jo abhi jama kiya hai) darj karein:\n(Pichla Total: ₹${currentTotal})`, "0");
-            if (addVal === null || addVal === "") return; 
-            addVal = parseInt(addVal);
-            if (isNaN(addVal) || addVal < 0) {
+        async function quickUpdateTotal(docId, ustazName, jamiaName, currentTotal) {
+            let newVal = prompt(`${ustazName} ka naya TOTAL Amount darj karein:\n(Pichla Total: ₹${currentTotal})`, currentTotal);
+            if (newVal === null || newVal === "") return; 
+            newVal = parseInt(newVal);
+            if (isNaN(newVal) || newVal < 0) {
                 alert("Kripya sahi number darj karein."); return;
             }
-            
-            let newTotal = (parseInt(currentTotal) || 0) + addVal;
-            if(!confirm(`Ustaz ${ustazName} ka naya Total ₹${newTotal} ho jayega. Confirm karein?`)) return;
+
+            if(!confirm(`Ustaz ${ustazName} ka naya Total ₹${newVal} ho jayega. Confirm karein?`)) return;
 
             try {
-                // Main update
+                // Main details update (Total Update)
                 await db.collection('asatiza_details').doc(docId).update({
-                    daily_amount: addVal,
-                    amount: newTotal,
-                    total_amount: newTotal,
+                    amount: newVal,
+                    total_amount: newVal,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // History log save karein
-                await db.collection('asatiza_history').add({
-                    ustazId: docId,
+                // History me log save karein (Zimmedar panel format ke hisaab se)
+                await db.collection('entries_history').add({
+                    asatizaId: docId,
+                    collectionName: 'asatiza_details',
+                    jamiaName: jamiaName,
                     ustazName: ustazName,
-                    addedAmount: addVal,
-                    totalAmount: newTotal,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    dateStr: new Date().toLocaleDateString('en-IN')
+                    actionType: 'set',
+                    amountVal: newVal,
+                    zimmedarUid: 'ADMIN', // specific tag
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
             } catch (err) {
@@ -839,15 +841,17 @@
             document.getElementById('historyModal').classList.remove('hidden');
 
             try {
-                // Fetching all history for this teacher
-                const snapshot = await db.collection('asatiza_history').where('ustazId', '==', docId).get();
+                // Fetching exactly from Zimmedar's history collection
+                const snapshot = await db.collection('entries_history')
+                                       .where('asatizaId', '==', docId)
+                                       .get();
                 
                 if (snapshot.empty) {
-                    document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-500 font-medium">Is teacher ki abhi tak koi history (entry) save nahi hui hai.</td></tr>';
+                    document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-500 font-medium">Is teacher ki abhi tak koi history save nahi hui hai.</td></tr>';
                     return;
                 }
 
-                // Convert to array and sort locally (Naya sabse upar)
+                // Convert to array and sort locally (Newest first)
                 let records = [];
                 snapshot.forEach(doc => records.push(doc.data()));
                 records.sort((a, b) => {
@@ -858,12 +862,33 @@
 
                 let html = "";
                 records.forEach(data => {
-                    let dDate = data.timestamp ? data.timestamp.toDate().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : data.dateStr;
+                    let dDate = data.timestamp ? data.timestamp.toDate().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : "N/A";
+                    let actionLabel = "";
+                    let amtColor = "";
+                    let displayAmt = (data.amountVal || 0).toLocaleString('en-IN');
+
+                    if(data.actionType === 'add') {
+                        actionLabel = '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">ADD (+)</span>';
+                        amtColor = "text-emerald-600";
+                        displayAmt = "+₹" + displayAmt;
+                    } else if(data.actionType === 'minus') {
+                        actionLabel = '<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[10px] font-bold">MINUS (-)</span>';
+                        amtColor = "text-rose-600";
+                        displayAmt = "-₹" + displayAmt;
+                    } else { // 'set'
+                        actionLabel = '<span class="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-bold">SET (=)</span>';
+                        amtColor = "text-blue-600";
+                        displayAmt = "₹" + displayAmt;
+                    }
+
+                    // Agar Admin ne update kiya hai toh show karenge
+                    let byAdmin = data.zimmedarUid === 'ADMIN' ? '<br><span class="text-[9px] text-purple-500 font-bold">By Admin</span>' : '';
+
                     html += `
                     <tr class="border-b hover:bg-slate-50">
-                        <td class="p-3 text-xs font-semibold text-slate-600">${dDate}</td>
-                        <td class="p-3 text-right font-bold text-blue-600">+₹${(data.addedAmount||0).toLocaleString('en-IN')}</td>
-                        <td class="p-3 text-right font-bold text-emerald-600">₹${(data.totalAmount||0).toLocaleString('en-IN')}</td>
+                        <td class="p-3 text-xs font-semibold text-slate-600">${dDate}${byAdmin}</td>
+                        <td class="p-3 text-center">${actionLabel}</td>
+                        <td class="p-3 text-right font-bold ${amtColor}">${displayAmt}</td>
                     </tr>`;
                 });
                 document.getElementById('historyTableBody').innerHTML = html;
