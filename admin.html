@@ -80,7 +80,7 @@
             </div>
         </div>
 
-        <!-- 2. ASATIZA REPORT TAB -->
+        <!-- 2. ASATIZA DETAIL TAB -->
         <div id="asatizaTab" class="hidden bg-white p-6 rounded-xl shadow-md border border-slate-200">
             <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 border-b pb-4">
                 <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">Asatiza Records
@@ -120,7 +120,7 @@
             </div>
         </div>
 
-        <!-- REPORTS & ACTIVITY TAB -->
+        <!-- NEW: REPORTS & ACTIVITY TAB WITH HISTORY -->
         <div id="reportsTab" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Zimmedar Status -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
@@ -130,24 +130,21 @@
                 </div>
             </div>
             
-            <!-- Daily Report Table with Class & Date Filters -->
+            <!-- Daily Report Table -->
             <div class="col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-200">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3">
-                    <span>Asatiza Daily Reports</span>
+                    <span>Asatiza Reports & History</span>
                     <div class="flex flex-wrap gap-2 w-full xl:w-auto">
-                        <!-- Date Filter -->
-                        <input type="date" id="reportDateFilter" onchange="renderReportsTab()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none" title="Date (Last Updated) se filter karein">
                         <!-- Class Filter -->
                         <select id="reportClassFilter" onchange="renderReportsTab()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option value="all">Sabhi Classes</option>
+                            <option value="all">Sabhi Classes Dekhein</option>
                             <!-- Dynamic Population -->
                         </select>
                         <!-- Status Filter -->
                         <select id="reportFilter" onchange="renderReportsTab()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option value="all">Sabhi Dekhein (All)</option>
-                            <option value="zero_daily">Aaj 0 Wale (Daily 0)</option>
-                            <option value="zero_total">Lagatar 0 Wale (Total 0)</option>
-                            <option value="active">Active (Aaj Jama Kiya)</option>
+                            <option value="all">Sare Teachers (All)</option>
+                            <option value="active">Aaj Amount Diya (Active)</option>
+                            <option value="zero_total">Abhi Tak 0 Hai</option>
                         </select>
                     </div>
                 </h2>
@@ -159,7 +156,7 @@
                                 <th class="p-3 border-b whitespace-nowrap">Class & Jamia</th>
                                 <th class="p-3 border-b text-right text-blue-600 font-bold whitespace-nowrap">Aaj Ka (Daily)</th>
                                 <th class="p-3 border-b text-right text-emerald-600 font-bold">Total Amount</th>
-                                <th class="p-3 border-b text-center">Action</th>
+                                <th class="p-3 border-b text-center">Action / History</th>
                             </tr>
                         </thead>
                         <tbody id="reportsTableBody" class="text-sm"></tbody>
@@ -310,17 +307,42 @@
         </div>
     </div>
 
+    <!-- HISTORY MODAL -->
+    <div id="historyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-white font-bold text-lg" id="historyModalTitle">Teacher History</h3>
+                <button onclick="closeHistoryModal()" class="text-white/80 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-slate-50">
+                <table class="w-full text-left border-collapse bg-white rounded-lg overflow-hidden shadow-sm border border-slate-200">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase">
+                            <th class="p-3 border-b border-slate-200">Date & Time</th>
+                            <th class="p-3 border-b border-slate-200 text-right">Kitna Add Kiya</th>
+                            <th class="p-3 border-b border-slate-200 text-right">Naya Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="text-sm">
+                        <tr><td colspan="3" class="p-4 text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-4 bg-white border-t flex justify-end">
+                <button onclick="closeHistoryModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-300">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- SINGLE JAVASCRIPT BLOCK -->
     <script>
         const firebaseConfig = { apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg", authDomain: "telethon-28c88.firebaseapp.com", projectId: "telethon-28c88", storageBucket: "telethon-28c88.firebasestorage.app", messagingSenderId: "609452116316", appId: "1:609452116316:web:e940fc5dc4537b34551999", measurementId: "G-FYS0PJLQQB" };
         
-        // Initialize Firebase exactly once
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
         
-        // Secondary App for Authentication (Creating Zimmedar accounts)
         let secondaryApp;
         if (!firebase.apps.find(app => app.name === "SecondaryApp")) {
             secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
@@ -393,7 +415,7 @@
             const reportClassSelect = document.getElementById('reportClassFilter');
             if(reportClassSelect) {
                 const rVal = reportClassSelect.value;
-                let rcHtml = '<option value="all">Sabhi Classes</option>';
+                let rcHtml = '<option value="all">Sabhi Classes Dekhein</option>';
                 availableClasses.forEach(cls => rcHtml += `<option value="${cls}">${cls}</option>`);
                 reportClassSelect.innerHTML = rcHtml;
                 if(availableClasses.includes(rVal) || rVal === 'all') reportClassSelect.value = rVal;
@@ -679,7 +701,6 @@
             const tbody = document.getElementById('reportsTableBody');
             const statusFilter = document.getElementById('reportFilter').value;
             const classFilter = document.getElementById('reportClassFilter') ? document.getElementById('reportClassFilter').value : 'all';
-            const dateFilter = document.getElementById('reportDateFilter') ? document.getElementById('reportDateFilter').value : '';
             const zimActivityContainer = document.getElementById('zimmedarActivityList');
             
             if(!allAsatizaData || allAsatizaData.length === 0) {
@@ -716,7 +737,7 @@
             }
             zimActivityContainer.innerHTML = zimHtml;
 
-            // 2. Filter Data (Class, Date, and Status)
+            // 2. Filter Data (Class and Status) - SHOW ALL by default
             let filteredData = allAsatizaData.filter(data => {
                 let dailyAmt = Number(data.daily_amount) || 0;
                 let totalAmt = Number(data.total_amount) || Number(data.amount) || Number(data.grand_total) || 0;
@@ -724,24 +745,25 @@
                 // Class Filter Check
                 if(classFilter !== 'all' && data.className !== classFilter) return false;
                 
-                // Date Filter Check (Based on last timestamp update)
-                if(dateFilter && data.timestamp) {
-                    let d = data.timestamp.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
-                    let localDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                    if(localDate !== dateFilter) return false;
-                } else if (dateFilter && !data.timestamp) {
-                    return false; // If searching by date but data has no date
-                }
-
                 // Status Filter Check
-                if(statusFilter === 'zero_daily') return dailyAmt === 0;
-                if(statusFilter === 'zero_total') return totalAmt === 0;
                 if(statusFilter === 'active') return dailyAmt > 0;
+                if(statusFilter === 'zero_total') return totalAmt === 0;
                 
                 return true; 
             });
 
-            filteredData.sort((a,b) => (Number(b.daily_amount)||0) - (Number(a.daily_amount)||0));
+            // Sort: 1st Daily (High to Low), 2nd Total (High to Low), 3rd Name (A-Z)
+            filteredData.sort((a, b) => {
+                let bDaily = Number(b.daily_amount) || 0;
+                let aDaily = Number(a.daily_amount) || 0;
+                if (bDaily !== aDaily) return bDaily - aDaily;
+                
+                let bTotal = Number(b.total_amount) || Number(b.amount) || Number(b.grand_total) || 0;
+                let aTotal = Number(a.total_amount) || Number(a.amount) || Number(a.grand_total) || 0;
+                if (bTotal !== aTotal) return bTotal - aTotal;
+                
+                return (a.ustazName || "").localeCompare(b.ustazName || "");
+            });
 
             let tableHtml = "";
             filteredData.forEach(data => {
@@ -762,31 +784,96 @@
                     <td class="p-3 text-right font-bold text-blue-600 text-sm">₹${dailyAmt.toLocaleString('en-IN')}</td>
                     <td class="p-3 text-right font-bold text-emerald-600 text-sm">₹${totalAmt.toLocaleString('en-IN')}</td>
                     <td class="p-3 text-center">
-                        <button onclick="quickUpdateTotal('${data.docId}', '${data.ustazName}', ${totalAmt})" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded text-[11px] font-bold transition shadow-sm border border-indigo-200 whitespace-nowrap">
-                            Update Total
-                        </button>
+                        <div class="flex justify-center items-center gap-2">
+                            <button onclick="quickAddAmount('${data.docId}', '${data.ustazName}', ${totalAmt})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm whitespace-nowrap">
+                                ➕ Nayi Entry
+                            </button>
+                            <button onclick="viewHistory('${data.docId}', '${data.ustazName}')" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-indigo-200 whitespace-nowrap">
+                                🕒 History
+                            </button>
+                        </div>
                     </td>
                 </tr>`;
             });
             tbody.innerHTML = tableHtml || `<tr><td colspan="5" class="p-4 text-center text-slate-500">Koi record nahi mila is filter ke hisaab se.</td></tr>`;
         }
 
-        async function quickUpdateTotal(docId, ustazName, currentTotal) {
-            let newVal = prompt(`${ustazName} ka naya Total Amount darj karein:`, currentTotal);
-            if (newVal === null) return; 
-            newVal = parseInt(newVal);
-            if (isNaN(newVal) || newVal < 0) {
+        async function quickAddAmount(docId, ustazName, currentTotal) {
+            let addVal = prompt(`${ustazName} ka AAJ KA amount (jo abhi jama kiya hai) darj karein:\n(Pichla Total: ₹${currentTotal})`, "0");
+            if (addVal === null || addVal === "") return; 
+            addVal = parseInt(addVal);
+            if (isNaN(addVal) || addVal < 0) {
                 alert("Kripya sahi number darj karein."); return;
             }
+            
+            let newTotal = (parseInt(currentTotal) || 0) + addVal;
+            if(!confirm(`Ustaz ${ustazName} ka naya Total ₹${newTotal} ho jayega. Confirm karein?`)) return;
+
             try {
+                // Main update
                 await db.collection('asatiza_details').doc(docId).update({
-                    amount: newVal,
-                    total_amount: newVal,
+                    daily_amount: addVal,
+                    amount: newTotal,
+                    total_amount: newTotal,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                // History log save karein
+                await db.collection('asatiza_history').add({
+                    ustazId: docId,
+                    ustazName: ustazName,
+                    addedAmount: addVal,
+                    totalAmount: newTotal,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    dateStr: new Date().toLocaleDateString('en-IN')
+                });
+                
             } catch (err) {
-                alert("Error updating total: " + err.message);
+                alert("Error updating amount: " + err.message);
             }
+        }
+
+        async function viewHistory(docId, ustazName) {
+            document.getElementById('historyModalTitle').innerText = `${ustazName} - Amount History`;
+            document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-500">History load ho rahi hai...</td></tr>';
+            document.getElementById('historyModal').classList.remove('hidden');
+
+            try {
+                // Fetching all history for this teacher
+                const snapshot = await db.collection('asatiza_history').where('ustazId', '==', docId).get();
+                
+                if (snapshot.empty) {
+                    document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-500 font-medium">Is teacher ki abhi tak koi history (entry) save nahi hui hai.</td></tr>';
+                    return;
+                }
+
+                // Convert to array and sort locally (Naya sabse upar)
+                let records = [];
+                snapshot.forEach(doc => records.push(doc.data()));
+                records.sort((a, b) => {
+                    let t1 = a.timestamp ? a.timestamp.toMillis() : 0;
+                    let t2 = b.timestamp ? b.timestamp.toMillis() : 0;
+                    return t2 - t1;
+                });
+
+                let html = "";
+                records.forEach(data => {
+                    let dDate = data.timestamp ? data.timestamp.toDate().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : data.dateStr;
+                    html += `
+                    <tr class="border-b hover:bg-slate-50">
+                        <td class="p-3 text-xs font-semibold text-slate-600">${dDate}</td>
+                        <td class="p-3 text-right font-bold text-blue-600">+₹${(data.addedAmount||0).toLocaleString('en-IN')}</td>
+                        <td class="p-3 text-right font-bold text-emerald-600">₹${(data.totalAmount||0).toLocaleString('en-IN')}</td>
+                    </tr>`;
+                });
+                document.getElementById('historyTableBody').innerHTML = html;
+            } catch (e) {
+                document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="3" class="p-4 text-center text-rose-500">Error: ${e.message}</td></tr>`;
+            }
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
         }
 
         function openEditModal(docId) { 
@@ -822,8 +909,7 @@
                     region: document.getElementById('editRegion').value.trim(), 
                     state: document.getElementById('editState').value.trim(), 
                     className: document.getElementById('editClassName').value, 
-                    section: document.getElementById('editSection').value,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                    section: document.getElementById('editSection').value
                 }); 
                 closeEditModal(); 
             } catch (error) { 
