@@ -287,9 +287,8 @@
                 return () => clearInterval(interval);
             }, [timerConfig]);
 
-            // --- TABS LOGIC UPDATE ---
             const topTabs = ['All Jamiaat', 'All Classes'];
-            const endTabs = ['All Regions', 'Result', 'Muqabla']; // All Regions tab placed before Result
+            const endTabs = ['All Regions', 'Result', 'Muqabla'];
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
             const currentMode = headerConfig?.dashboardMode || 'total';
@@ -336,7 +335,7 @@
             let displayedData = []; 
             let isJamiaView = activeTab === "All Jamiaat"; 
             let isClassView = activeTab === "All Classes"; 
-            let isRegionView = activeTab === "All Regions"; // Region view flag
+            let isRegionView = activeTab === "All Regions"; 
             let isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
             
             const customDataForTab = processedCustomData.filter(d => d.className === activeTab).sort((a,b) => b.amount - a.amount);
@@ -354,7 +353,6 @@
                     const classMap = {}; processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
                     displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
                 } else if (isRegionView) {
-                    // Region logic
                     const regionMap = {};
                     processedData.forEach(d => { 
                         const reg = d.region || "Unknown";
