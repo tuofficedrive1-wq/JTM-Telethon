@@ -120,7 +120,7 @@
             </div>
         </div>
 
-        <!-- NEW: REPORTS & ACTIVITY TAB WITH HISTORY -->
+        <!-- REPORTS & ACTIVITY TAB WITH HISTORY -->
         <div id="reportsTab" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Zimmedar Status -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
@@ -558,7 +558,13 @@
             if(!className) { scoreSpan.innerText = "0"; return; }
             scoreSpan.innerText = "..."; 
             try {
-                const snapshot = await db.collection('asatiza_details').where('className', '==', className).get();
+                // Section-wise fetch check for competition score
+                let classVariants = [className, className + " A", className + " B", className + " C", className + " D"];
+                if (className === "Sale Duwam" || className === "Sale Duwam Khususi") {
+                    classVariants = ["Sale Duwam", "Sale Duwam A", "Sale Duwam B", "Sale Duwam C", "Sale Duwam D", "Sale Duwam Khususi", "Sale Duwam Khususi A", "Sale Duwam Khususi B", "Sale Duwam Khususi C", "Sale Duwam Khususi D"];
+                }
+                const snapshot = await db.collection('asatiza_details').where('className', 'in', classVariants).get();
+                
                 let totalScore = 0;
                 snapshot.forEach(doc => {
                     const data = doc.data();
@@ -702,7 +708,7 @@
         }
 
         // ==========================================
-        // REPORTS TAB FAST LOADING LOGIC
+        // REPORTS TAB FAST LOADING LOGIC (CLASS VARIANTS)
         // ==========================================
         let reportsUnsubscribe = null;
         let reportHistUnsubscribe = null;
@@ -728,10 +734,15 @@
                 reportsUnsubscribe();
             }
 
-            // Firebase Class Fetch
+            // Firebase Class Fetch with Multi-Section mapping
             let query = db.collection('asatiza_details');
+            
             if (classFilter !== 'all') {
-                query = query.where('className', '==', classFilter);
+                let classVariants = [classFilter, classFilter + " A", classFilter + " B", classFilter + " C", classFilter + " D"];
+                if (classFilter === "Sale Duwam" || classFilter === "Sale Duwam Khususi") {
+                    classVariants = ["Sale Duwam", "Sale Duwam A", "Sale Duwam B", "Sale Duwam C", "Sale Duwam D", "Sale Duwam Khususi", "Sale Duwam Khususi A", "Sale Duwam Khususi B", "Sale Duwam Khususi C", "Sale Duwam Khususi D"];
+                }
+                query = query.where('className', 'in', classVariants);
             }
             
             reportsUnsubscribe = query.onSnapshot(snap => {
@@ -750,7 +761,7 @@
             const zimActivityContainer = document.getElementById('zimmedarActivityList');
             const tbody = document.getElementById('reportsTableBody');
 
-            // 1. Zimmedar Stats Calculation (From users & entries_history)
+            // 1. Zimmedar Stats Calculation (Registered Users only)
             let zimStats = {};
             for(let uid in zimmedarDataMap) {
                 let z = zimmedarDataMap[uid];
@@ -763,14 +774,15 @@
             window.cachedHistory.forEach(h => {
                 let uid = h.zimmedarUid;
                 if(!uid) return;
-                if(!zimStats[uid]) zimStats[uid] = { name: 'Unknown', class: '-', today: 0, total: 0 };
                 
-                zimStats[uid].total++;
-                
-                if(h.timestamp) {
-                    let hDate = h.timestamp.toDate().toLocaleDateString('en-IN');
-                    if(hDate === todayStr) {
-                        zimStats[uid].today++;
+                // Sirf unki record banegi jo user map me existing hain ya Admin hain
+                if(zimStats[uid]) {
+                    zimStats[uid].total++;
+                    if(h.timestamp) {
+                        let hDate = h.timestamp.toDate().toLocaleDateString('en-IN');
+                        if(hDate === todayStr) {
+                            zimStats[uid].today++;
+                        }
                     }
                 }
             });
@@ -778,6 +790,7 @@
             let zimHtml = "";
             for(let uid in zimStats) {
                 let s = zimStats[uid];
+                // Agar kabhi entry ki hai tabhi show karo, ya woh registered Zimmedar hai tab.
                 if(s.class !== '-' || s.total > 0) {
                     zimHtml += `
                     <div class="flex justify-between items-center p-3 border rounded-lg shadow-sm bg-slate-50 mb-2">
