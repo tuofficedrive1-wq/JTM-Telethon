@@ -255,7 +255,7 @@
             if (unsubStandard) unsubStandard();
             if (unsubCustom) unsubCustom();
 
-            // Sections aur mix class logic
+            // Sections aur mix class logic (A, B, C, D)
             let classVariants = [assignedClass, assignedClass + " A", assignedClass + " B", assignedClass + " C", assignedClass + " D"];
             if (assignedClass === "Sale Duwam" || assignedClass === "Sale Duwam Khususi") {
                 classVariants = ["Sale Duwam", "Sale Duwam A", "Sale Duwam B", "Sale Duwam C", "Sale Duwam D", "Sale Duwam Khususi", "Sale Duwam Khususi A", "Sale Duwam Khususi B", "Sale Duwam Khususi C", "Sale Duwam Khususi D"];
@@ -393,14 +393,39 @@
             document.getElementById('noResultsState').classList.toggle('hidden', anyVisible || cards.length === 0);
         });
 
+        // ==========================================
+        // SUBMIT ENTRY LOGIC (CRITICAL FOR LIVE UPDATE)
+        // ==========================================
         window.submitEntry = async function(action, docId, collectionName, jamiaName, ustazName) {
             vibrate(10); const inputField = document.getElementById(`amt_${docId}`); let amountVal = parseFloat(inputField.value);
             if (!amountVal || amountVal <= 0) { alert("Barae Karam box mein sahi amount darj karein!"); return; }
 
             let confirmMsg = ""; let updatePayload = {};
-            if (action === 'add') { confirmMsg = `Kya aap ${ustazName} (${jamiaName}) ke account mein ₹${amountVal} PLUS (+) karna chahte hain?`; updatePayload = { amount: firebase.firestore.FieldValue.increment(amountVal), daily_amount: firebase.firestore.FieldValue.increment(amountVal) };
-            } else if (action === 'set') { confirmMsg = `Kya aap ${ustazName} ka TOTAL amount ₹${amountVal} fix karna chahte hain?\n(Purana amount overwrite ho jayega)`; updatePayload = { amount: amountVal, daily_amount: amountVal };
-            } else if (action === 'minus') { confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`; updatePayload = { amount: firebase.firestore.FieldValue.increment(-amountVal), daily_amount: firebase.firestore.FieldValue.increment(-amountVal) }; }
+            if (action === 'add') { 
+                confirmMsg = `Kya aap ${ustazName} (${jamiaName}) ke account mein ₹${amountVal} PLUS (+) karna chahte hain?`; 
+                updatePayload = { 
+                    amount: firebase.firestore.FieldValue.increment(amountVal), 
+                    total_amount: firebase.firestore.FieldValue.increment(amountVal),
+                    daily_amount: firebase.firestore.FieldValue.increment(amountVal),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() // REQUIRED FOR ADMIN LIVE UPDATE
+                };
+            } else if (action === 'set') { 
+                confirmMsg = `Kya aap ${ustazName} ka TOTAL amount ₹${amountVal} fix karna chahte hain?\n(Purana amount overwrite ho jayega)`; 
+                updatePayload = { 
+                    amount: amountVal, 
+                    total_amount: amountVal,
+                    daily_amount: amountVal,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+            } else if (action === 'minus') { 
+                confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`; 
+                updatePayload = { 
+                    amount: firebase.firestore.FieldValue.increment(-amountVal), 
+                    total_amount: firebase.firestore.FieldValue.increment(-amountVal),
+                    daily_amount: firebase.firestore.FieldValue.increment(-amountVal),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }; 
+            }
 
             if (!confirm(confirmMsg)) return;
 
