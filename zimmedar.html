@@ -401,47 +401,93 @@
             document.getElementById('noResultsState').classList.toggle('hidden', anyVisible || cards.length === 0);
         });
 
-        // ==========================================
-        // SUBMIT ENTRY LOGIC (CRITICAL FOR LIVE UPDATE)
+      // ==========================================
+        // SUBMIT ENTRY LOGIC (FIXED FOR TOTAL OVERWRITE BUG)
         // ==========================================
         window.submitEntry = async function(action, docId, collectionName, jamiaName, ustazName) {
-            vibrate(10); const inputField = document.getElementById(`amt_${docId}`); let amountVal = parseFloat(inputField.value);
-            if (!amountVal || amountVal <= 0) { alert("Barae Karam box mein sahi amount darj karein!"); return; }
+            vibrate(10); 
+            const inputField = document.getElementById(`amt_${docId}`); 
+            let amountVal = parseFloat(inputField.value);
+            
+            if (!amountVal || amountVal <= 0) { 
+                alert("Barae Karam box mein sahi amount darj karein!"); 
+                return; 
+            }
 
-            let confirmMsg = ""; let updatePayload = {};
+            let confirmMsg = ""; 
+            
             if (action === 'add') { 
                 confirmMsg = `Kya aap ${ustazName} (${jamiaName}) ke account mein ₹${amountVal} PLUS (+) karna chahte hain?`; 
-                updatePayload = { 
-                    amount: firebase.firestore.FieldValue.increment(amountVal), 
-                    total_amount: firebase.firestore.FieldValue.increment(amountVal),
-                    daily_amount: firebase.firestore.FieldValue.increment(amountVal),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp() // REQUIRED FOR ADMIN LIVE UPDATE
-                };
             } else if (action === 'set') { 
                 confirmMsg = `Kya aap ${ustazName} ka TOTAL amount ₹${amountVal} fix karna chahte hain?\n(Purana amount overwrite ho jayega)`; 
-                updatePayload = { 
-                    amount: amountVal, 
-                    total_amount: amountVal,
-                    daily_amount: amountVal,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                };
             } else if (action === 'minus') { 
                 confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`; 
-                updatePayload = { 
-                    amount: firebase.firestore.FieldValue.increment(-amountVal), 
-                    total_amount: firebase.firestore.FieldValue.increment(-amountVal),
-                    daily_amount: firebase.firestore.FieldValue.increment(-amountVal),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }; 
             }
 
             if (!confirm(confirmMsg)) return;
 
             try {
-                await db.collection(collectionName).doc(docId).update(updatePayload);
-                await db.collection('entries_history').add({ asatizaId: docId, collectionName: collectionName, jamiaName: jamiaName, ustazName: ustazName, actionType: action, amountVal: amountVal, zimmedarUid: auth.currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                // Step 1: Database se sabse taza (latest) amount nikalein (Jo Admin ne set kiya hai)
+                const docRef = db.collection(collectionName).doc(docId);
+                const docSnap = await docRef.get();
+                
+                if (!docSnap.exists) {
+                    alert("Record nahi mila!");
+                    return;
+                }
+
+                const data = docSnap.data();
+                
+                // Step 2: Purane figure ko mathematically theek karein taaki overwrite ka masla na aaye
+                let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+                let currentDaily = parseFloat(data.daily_amount) || 0;
+                
+                let updatePayload = {};
+
+                if (action === 'add') { 
+                    updatePayload = { 
+                        amount: currentTotal + amountVal, 
+                        total_amount: currentTotal + amountVal,
+                        daily_amount: currentDaily + amountVal,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                    };
+                } else if (action === 'set') { 
+                    updatePayload = { 
+                        amount: amountVal, 
+                        total_amount: amountVal,
+                        daily_amount: amountVal,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                } else if (action === 'minus') { 
+                    updatePayload = { 
+                        amount: currentTotal - amountVal, 
+                        total_amount: currentTotal - amountVal,
+                        daily_amount: currentDaily - amountVal,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    }; 
+                }
+
+                // Step 3: Calculation ke baad Database me Sahi amount save karein
+                await docRef.update(updatePayload);
+                
+                // Step 4: Zimmedar ki entry ko History ledger me mehfooz karein
+                await db.collection('entries_history').add({ 
+                    asatizaId: docId, 
+                    collectionName: collectionName, 
+                    jamiaName: jamiaName, 
+                    ustazName: ustazName, 
+                    actionType: action, 
+                    amountVal: amountVal, 
+                    zimmedarUid: auth.currentUser.uid, 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                
                 document.getElementById(`amt_${docId}`).value = "";
-            } catch (error) { console.error(error); alert("Entry save nahi hui, Barae Karam internet check karein."); }
+                
+            } catch (error) { 
+                console.error(error); 
+                alert("Entry save nahi hui, Barae Karam internet check karein."); 
+            }
         };
 
         async function openTeacherHistory(docId, ustazName) {
