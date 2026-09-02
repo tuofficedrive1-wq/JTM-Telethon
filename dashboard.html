@@ -587,27 +587,18 @@
                                                     {displayedData.map((it, idx) => ( <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-6 font-bold text-indigo-600 text-lg">{it.jamiaName}</div><div className="col-span-3 text-center font-bold text-slate-700">{it.region}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
                                                 </div>
                                             </div>
-                                       ) : (
+                                        ) : (
                                             <div>
-                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider">
-                                                    <div className="col-span-1">Rank</div>
-                                                    <div className="col-span-3">Ustaz Name</div>
-                                                    <div className="col-span-2">Jamia Name</div>
-                                                    <div className="col-span-1 text-center">Region</div>
-                                                    <div className="col-span-2 text-right text-orange-500">Daily Amt</div>
-                                                    <div className="col-span-1 text-right text-sky-500">Units</div>
-                                                    <div className="col-span-2 text-right text-emerald-600">Total Amt</div>
-                                                </div>
+                                                <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-1">Rank</div><div className="col-span-3">Ustaz Name</div><div className="col-span-4">Jamia Name</div><div className="col-span-1 text-center">Region</div><div className="col-span-2 text-right text-emerald-600">Total Amount</div><div className="col-span-1 text-right text-sky-500">Units</div></div>
                                                 <div className="space-y-2 mt-2">
                                                     {displayedData.map((it, idx) => (
                                                         <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                                             <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
                                                             <div className="col-span-3 font-semibold text-slate-800 uppercase">{it.ustazName}{it.className !== activeTab && <div className="text-[11px] text-indigo-500 normal-case mt-0.5">Section: {it.className.slice(-1)}</div>}</div>
-                                                            <div className="col-span-2 font-bold text-indigo-600 truncate">{it.jamiaName}</div>
+                                                            <div className="col-span-4 font-bold text-indigo-600">{it.jamiaName}</div>
                                                             <div className="col-span-1 text-center"><div className="text-sm font-bold text-slate-700">{it.region}</div><div className="text-xs text-slate-500">{it.state}</div></div>
-                                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-orange-500 text-lg tracking-wide">₹{(it.daily_amount || 0).toLocaleString('en-IN')}</div>
+                                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-emerald-600 text-lg tracking-wide">₹{it.amount.toLocaleString('en-IN')}</div>
                                                             <div className="col-span-1 text-right font-bold text-sky-600 bg-sky-50 py-1 px-2 rounded-lg border border-sky-100 text-sm w-fit ml-auto">{it.units}</div>
-                                                            <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-emerald-600 text-lg tracking-wide">₹{(it.total_amount || 0).toLocaleString('en-IN')}</div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -653,22 +644,12 @@
                                                 ) : isJamiaView ? ( 
                                                     <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 mt-4 pr-16">{it.jamiaName}</div>
                                                     <div className="mt-3 flex flex-col"><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div></div>
-                                               ) : ( 
+                                                ) : ( 
                                                     <div>
                                                         <div className="border-b pb-3 mb-3 mt-4 pr-16"><div className="font-bold text-slate-800 text-lg uppercase">{it.ustazName}{it.className !== activeTab && <span className="ml-2 text-[10px] text-white bg-indigo-500 px-1.5 py-0.5 rounded-full normal-case">Sec {it.className.slice(-1)}</span>}</div><div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div></div>
                                                         <div className="grid grid-cols-3 gap-2 text-sm items-center">
-                                                            <div className="col-span-1">
-                                                                <span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span>
-                                                                <span className="font-semibold text-slate-600">{it.region}</span>
-                                                            </div>
-                                                            <div className="col-span-1 flex flex-col items-center">
-                                                                <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider mb-0.5">Daily Amt</span>
-                                                                <span className="text-lg font-['Bowlby_One_SC'] text-orange-500 leading-none">₹{(it.daily_amount || 0).toLocaleString('en-IN')}</span>
-                                                            </div>
-                                                            <div className="col-span-1 flex flex-col items-end">
-                                                                <span className="text-xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{(it.total_amount || 0).toLocaleString('en-IN')}</span>
-                                                                <span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span>
-                                                            </div>
+                                                            <div className="col-span-1"><span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span><span className="font-semibold text-slate-600">{it.region}</span></div>
+                                                            <div className="col-span-2 flex flex-col items-end"><span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span><span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span></div>
                                                         </div>
                                                     </div> 
                                                 )}
