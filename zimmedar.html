@@ -149,10 +149,10 @@
                 <button id="tabTableBtn" class="flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent">Table Report</button>
             </div>
 
-            <!-- Search Bar -->
+            <!-- Search Bar (Now visible for both tabs) -->
             <div id="searchContainer" class="mb-4">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Search karein..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition text-sm font-semibold text-slate-700 shadow-sm bg-white">
+                    <input type="text" id="searchInput" placeholder="Search Ustaz ya Jamia..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition text-sm font-semibold text-slate-700 shadow-sm bg-white">
                     <svg class="w-4 h-4 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
             </div>
@@ -257,25 +257,26 @@
         document.getElementById('tabCardsBtn').addEventListener('click', () => {
             document.getElementById('jamiaList').classList.remove('hidden');
             document.getElementById('tableView').classList.add('hidden');
-            document.getElementById('searchContainer').classList.remove('hidden');
             
-            // Tab styling
             document.getElementById('tabCardsBtn').className = "flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100";
             document.getElementById('tabTableBtn').className = "flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent";
+            
+            // Re-trigger search to update view
+            document.getElementById('searchInput').dispatchEvent(new Event('input'));
         });
 
         document.getElementById('tabTableBtn').addEventListener('click', () => {
             document.getElementById('jamiaList').classList.add('hidden');
             document.getElementById('tableView').classList.remove('hidden');
-            document.getElementById('searchContainer').classList.add('hidden'); // Hide search for table temporarily
             
-            // Tab styling
             document.getElementById('tabTableBtn').className = "flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100";
             document.getElementById('tabCardsBtn').className = "flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent";
             
-            generateTableView(); // Build table when clicked
+            generateTableView().then(() => {
+                // Re-trigger search to apply any existing typed text to the newly generated table
+                document.getElementById('searchInput').dispatchEvent(new Event('input'));
+            }); 
         });
-
 
         window.addEventListener('scroll', () => {
             const bar = document.getElementById('appBar'); if (!bar) return;
@@ -485,14 +486,12 @@
                     if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
                     if(!ustadDateMap[log.asatizaId][dateStr]) ustadDateMap[log.asatizaId][dateStr] = 0;
                     
-                    // Note: 'set' in history overrides logic can be complex in a date-wise table. 
-                    // Hum add/minus ki daily aggregate nikalenge basic calculation ke liye.
                     if(log.actionType === 'add') ustadDateMap[log.asatizaId][dateStr] += log.amountVal;
                     else if (log.actionType === 'minus') ustadDateMap[log.asatizaId][dateStr] -= log.amountVal;
                 });
                 
                 // Sort dates chronologically
-                let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); // Fake year to sort properly
+                let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
                 
                 // Build Headers
                 let headerHtml = `<th>Teacher Name</th><th>Jamia</th>`;
@@ -507,7 +506,10 @@
                 allCurrentRecords.forEach(teacher => {
                     const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
                     
-                    bodyHtml += `<tr class="hover:bg-slate-50 transition">
+                    // Added data-search for filtering
+                    const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()}`;
+                    
+                    bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
                         <td class="text-slate-500 text-xs truncate max-w-[120px]">${teacher.jamiaName}</td>`;
                     
@@ -521,11 +523,10 @@
                         let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount}`;
                         let colorClass = dateAmount > 0 ? 'text-indigo-600 font-bold' : (dateAmount < 0 ? 'text-rose-500 font-bold' : 'text-slate-300');
                         
-                        // Edit function call directly on cell click
                         bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                     });
                     
-                    // Grand Total Column (Clickable to Edit Grand Total)
+                    // Grand Total Column
                     bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 cursor-pointer hover:bg-emerald-100 transition" onclick="editGrandTotalPrompt('${teacher.id}', '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}', ${grandTotal})">₹${grandTotal.toLocaleString('en-IN')} <span class="text-[10px] font-normal text-emerald-400 block -mt-1 leading-none">(Edit)</span></td>
                     </tr>`;
                 });
@@ -554,7 +555,6 @@
             let diff = newAmount - oldAmount;
             if(diff === 0) return; // No change
             
-            // To fix it without breaking firebase timestamp logics, we calculate the difference and process an "add" or "minus" adjustment.
             let action = diff > 0 ? 'add' : 'minus';
             let finalDiff = Math.abs(diff);
             
@@ -580,9 +580,6 @@
                     daily_amount: newDaily,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                
-                // Add History Entry (We try to parse the date string back to roughly match the target day for history reports, but use server time so it syncs)
-                let dateObj = new Date(dateStr + " 2026"); 
                 
                 await db.collection('entries_history').add({ 
                     asatizaId: docId, 
@@ -614,9 +611,8 @@
             let newAmount = parseFloat(input);
             if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
             
-            // Re-use logic to set amount via DOM element injection (simulating standard submitEntry logic to keep code clean)
             let tempInput = document.getElementById(`amt_${docId}`);
-            if(!tempInput) { // If card view wasn't rendered yet
+            if(!tempInput) { 
                 tempInput = document.createElement('input');
                 tempInput.id = `amt_${docId}`;
                 document.body.appendChild(tempInput);
@@ -625,24 +621,53 @@
             
             submitEntry('set', docId, collectionName, jamiaName, ustazName);
             
-            // Clean up dummy input if created
             if(tempInput.parentNode === document.body) document.body.removeChild(tempInput);
         };
 
+        // ==========================================
+        // UPDATED SEARCH LOGIC (Works for both Cards & Table)
+        // ==========================================
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerms = e.target.value.toLowerCase().trim().split(/\s+/);
+            
+            // 1. Filter Cards
             const cards = document.querySelectorAll('.jamia-card');
-            let anyVisible = false;
+            let anyVisibleCard = false;
             cards.forEach(card => {
-                const cardText = card.getAttribute('data-search');
+                const cardText = card.getAttribute('data-search') || "";
                 const isMatch = searchTerms.every(term => cardText.includes(term));
-                if (isMatch) { card.classList.remove('hidden'); anyVisible = true; } else { card.classList.add('hidden'); }
+                if (isMatch) { card.classList.remove('hidden'); anyVisibleCard = true; } else { card.classList.add('hidden'); }
             });
-            document.getElementById('noResultsState').classList.toggle('hidden', anyVisible || cards.length === 0);
+
+            // 2. Filter Table Rows
+            const tableRows = document.querySelectorAll('.table-row-item');
+            let anyVisibleRow = false;
+            tableRows.forEach(row => {
+                const rowText = row.getAttribute('data-search') || "";
+                const isMatch = searchTerms.every(term => rowText.includes(term));
+                if (isMatch) { row.classList.remove('hidden'); anyVisibleRow = true; } else { row.classList.add('hidden'); }
+            });
+
+            // 3. Handle 'No Results' Message
+            const isCardViewActive = !document.getElementById('jamiaList').classList.contains('hidden');
+            const hasResults = isCardViewActive ? anyVisibleCard : anyVisibleRow;
+            const hasData = isCardViewActive ? cards.length > 0 : tableRows.length > 0;
+            
+            document.getElementById('noResultsState').classList.toggle('hidden', hasResults || !hasData);
+            
+            // Hide table header/wrapper if no match in table view to keep UI clean
+            const reportTable = document.getElementById('reportTable');
+            if (reportTable) {
+                if (!isCardViewActive && !anyVisibleRow && searchTerms[0] !== "") {
+                    reportTable.classList.add('hidden');
+                } else {
+                    reportTable.classList.remove('hidden');
+                }
+            }
         });
 
-      // ==========================================
-        // SUBMIT ENTRY LOGIC (FIXED FOR TOTAL OVERWRITE BUG)
+        // ==========================================
+        // SUBMIT ENTRY LOGIC
         // ==========================================
         window.submitEntry = async function(action, docId, collectionName, jamiaName, ustazName) {
             vibrate(10); 
@@ -693,7 +718,7 @@
                     updatePayload = { 
                         amount: amountVal, 
                         total_amount: amountVal,
-                        daily_amount: amountVal, // or zero depending on logic, keeping it same as amount here
+                        daily_amount: amountVal, 
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
                 } else if (action === 'minus') { 
@@ -722,7 +747,6 @@
                     document.getElementById(`amt_${docId}`).value = "";
                 }
                 
-                // If table is currently open, refresh it after edit
                 if(!document.getElementById('tableView').classList.contains('hidden')) {
                     setTimeout(generateTableView, 1000);
                 }
