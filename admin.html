@@ -150,6 +150,10 @@
                             <option value="active">Active Amount Wala</option>
                             <option value="zero_total">Abhi Tak 0 Hai</option>
                         </select>
+                        <!-- Download CSV Button -->
+                        <button onclick="exportReportsFiltered()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download CSV
+                        </button>
                     </div>
                 </h2>
                 <div class="overflow-x-auto">
@@ -880,6 +884,8 @@
                 return (a.ustazName || "").localeCompare(b.ustazName || "");
             });
 
+            // Filhal jo data table me dikh raha hai usko export function ke liye save karein
+            window.currentReportsFilteredData = processedData;
             let tableHtml = "";
             let srNo = 1;
             processedData.forEach(data => {
@@ -1008,6 +1014,43 @@
         function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); document.getElementById('modalImage').src = ""; }
         function updateDashboardMode(event) { const mode = document.getElementById('dashboardModeSelect').value; const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true; db.collection('settings').doc('dashboard').set({ dashboardMode: mode }, {merge: true}).then(() => alert("✅ Dashboard Mode Live Update Ho Gaya!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; }); }
         async function resetDailyAmounts(event) { if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return; const btn = event.target; const origText = btn.innerText; btn.innerText = "Resetting..."; btn.disabled = true; try { const snapshot = await db.collection('asatiza_details').get(); const batch = db.batch(); snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); }); await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!"); } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; } }
+        // Function for downloading filtered table data as CSV
+function exportReportsFiltered() {
+    if (!window.currentReportsFilteredData || window.currentReportsFilteredData.length === 0) {
+        alert("Download karne ke liye koi data nahi hai!");
+        return;
+    }
+
+    // Data ko CSV/Excel ke liye format karein
+    let exportData = window.currentReportsFilteredData.map((data, index) => {
+        return {
+            "Sr. No": index + 1,
+            "Ustaz Name": data.ustazName || "N/A",
+            "Mobile No": data.mobileNo || "N/A",
+            "Class (Darja)": data.className + (data.section ? ` (${data.section})` : ""),
+            "Jamia Name": data.jamiaName || "N/A",
+            "Aaj Ka (Daily)": data.display_daily,
+            "Total Amount": data.display_total
+        };
+    });
+
+    // SheetJS library ka istemal (Jo aapke code me pehle se shamil hai)
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Reports");
+    
+    // File ka naam dynamically banayein (Class + Date ke hisab se)
+    let classFilter = document.getElementById('reportClassFilter').value;
+    let className = classFilter === 'all' ? 'All_Classes' : classFilter;
+    
+    let dateFilter = document.getElementById('reportDateFilter').value;
+    let dateStr = dateFilter ? dateFilter : new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+    
+    let fileName = `Telethon_Report_${className}_${dateStr}.csv`;
+    
+    // CSV file download karein
+    XLSX.writeFile(workbook, fileName);
+}
     </script>
 </body>
 </html>
