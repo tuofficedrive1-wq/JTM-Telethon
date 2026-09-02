@@ -43,22 +43,19 @@
             const { className, items, isJamiaView, isClassView, isRegionView, isResult, isCustomView, headings, type } = data;
             const dateStr = new Date().toLocaleDateString('en-IN');
 
-           if (isResult) {
+          if (isResult) {
                 const topN = items.slice(0, type);
                 const isTableOnly = type === 10;
                 return (
                     <div id="poster-to-download" style={{ width: '1200px', minHeight: '800px', padding: '40px', background: 'radial-gradient(circle at top, #dbeafe 0%, #e0e7ff 35%, #f3e8ff 70%, #fce7f3 100%)', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
                         
-                        {/* Updated Top Text Layout */}
                         <div style={{ textAlign: 'center', marginBottom: '45px' }}>
                             <h2 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '60px', color: '#059669', letterSpacing: '3px', margin: 0, textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>CONGRATULATIONS!</h2>
                             
-                            {/* Font changed to Bowlby One SC for TELETHON 2026 */}
                             <h1 style={{ fontFamily: "'Bowlby One SC', sans-serif", fontSize: '75px', color: '#1e3a8a', letterSpacing: '2px', margin: '15px 0 10px 0', textShadow: '3px 3px 6px rgba(0,0,0,0.15)' }}>TELETHON 2026</h1>
                             
                             <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
                                 <span style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#475569', letterSpacing: '2px' }}>TOP {type} WINNERS -</span>
-                                {/* Red box removed, Font changed to Poppins */}
                                 <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '36px', fontWeight: '800', color: '#4338ca', letterSpacing: '1px' }}>{className}</span>
                             </div>
                         </div>
@@ -81,6 +78,10 @@
                                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '40px' }}>
                                     {topN.map((it, idx) => {
                                         const photoSrc = typeof getDirectImageUrl === 'function' ? getDirectImageUrl(it.photoUrl) : it.photoUrl;
+                                        
+                                        // SOLVED: CORS Proxy URL use kiya gaya hai taaki Google Drive Canvas ko block na kare
+                                        const proxiedSrc = photoSrc ? `https://api.allorigins.win/raw?url=${encodeURIComponent(photoSrc)}` : null;
+                                        
                                         const rankColors = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#d97706' : '#6366f1';
                                         
                                         return (
@@ -89,8 +90,8 @@
                                             <div style={{ position: 'absolute', top: '-30px', width: '60px', height: '60px', background: rankColors, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 'bold', fontFamily: "'Bowlby One SC', sans-serif", border: '5px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>{idx + 1}</div>
                                             
                                             <div style={{ width: '220px', height: '220px', borderRadius: '16px', border: `8px solid ${rankColors}`, overflow: 'hidden', backgroundColor: '#f1f5f9', marginTop: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-                                                {/* Added referrerPolicy="no-referrer" to fix Google Drive CORS issue during Canvas Download */}
-                                                {photoSrc ? <img src={photoSrc} crossOrigin="anonymous" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Ustaz" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#cbd5e1', fontWeight:'bold', fontSize:'20px'}}>No Image</div>}
+                                                {/* proxiedSrc aur loading="eager" ka istemaal image ko canvas me laane ke liye */}
+                                                {proxiedSrc ? <img src={proxiedSrc} crossOrigin="anonymous" loading="eager" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Ustaz" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#cbd5e1', fontWeight:'bold', fontSize:'20px'}}>No Image</div>}
                                             </div>
                                             
                                             <div style={{ textAlign: 'center', width: '100%', marginTop: '10px' }}>
