@@ -135,6 +135,8 @@
                 <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3">
                     <span>Asatiza Reports & History</span>
                     <div class="flex flex-wrap gap-2 w-full xl:w-auto">
+                        <!-- Teacher / Jamia Search Filter -->
+                        <input type="text" id="reportSearchFilter" onkeyup="renderReportsUI()" placeholder="Search Teacher ya Jamia..." class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto">
                         <!-- Date Filter -->
                         <input type="date" id="reportDateFilter" onchange="renderReportsUI()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none" title="Select Date for History">
                         <!-- Class Filter -->
@@ -832,7 +834,6 @@
                 let historyTotal = 0;
                 let hasHistory = false;
                 
-                // Is teacher ki history nikal kar purane se naye (chronological) ki taraf sort karein
                 let teacherHistory = window.cachedHistory.filter(h => h.asatizaId === t.docId);
                 teacherHistory.sort((a, b) => {
                     let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
@@ -840,25 +841,43 @@
                     return timeA - timeB; 
                 });
 
-                // History loop chala kar accurate total banayein
                 teacherHistory.forEach(h => {
                     hasHistory = true;
                     let amt = Number(h.amountVal) || 0;
                     if (h.actionType === 'set') {
-                        historyTotal = amt; // Agar admin ne manually Update Total kiya ho
+                        historyTotal = amt; 
                     } else if (h.actionType === 'minus') {
                         historyTotal -= amt;
                     } else {
-                        historyTotal += amt; // Default action (Daily Add)
+                        historyTotal += amt; 
                     }
                 });
 
-                // Agar history mojood hai toh history wala accurate total dikhayein, warna normal database wala
                 let totalAmt = hasHistory ? historyTotal : (Number(t.total_amount) || Number(t.grand_total) || Number(t.amount) || 0);
-                
                 let dailyAmt = dateAmounts ? (dateAmounts[t.docId] || 0) : (Number(t.daily_amount) || 0);
                 
                 return { ...t, display_daily: dailyAmt, display_total: totalAmt };
+            });
+
+            // Status Filters
+            if (statusFilter === 'active') processedData = processedData.filter(t => t.display_daily > 0);
+            if (statusFilter === 'zero_total') processedData = processedData.filter(t => t.display_total === 0);
+
+            // NAYA SEARCH FILTER YAHAN ADD KIYA GAYA HAI
+            const searchQuery = document.getElementById('reportSearchFilter') ? document.getElementById('reportSearchFilter').value.toLowerCase().trim() : '';
+            if (searchQuery !== "") {
+                processedData = processedData.filter(t => {
+                    const uName = (t.ustazName || "").toLowerCase();
+                    const jName = (t.jamiaName || "").toLowerCase();
+                    return uName.includes(searchQuery) || jName.includes(searchQuery);
+                });
+            }
+
+            // Sorting (Pehle Daily Amount, Phir Total Amount, Phir Naam)
+            processedData.sort((a,b) => {
+                if (b.display_daily !== a.display_daily) return b.display_daily - a.display_daily;
+                if (b.display_total !== a.display_total) return b.display_total - a.display_total;
+                return (a.ustazName || "").localeCompare(b.ustazName || "");
             });
 
             let tableHtml = "";
