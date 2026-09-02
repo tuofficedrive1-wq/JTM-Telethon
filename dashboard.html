@@ -78,10 +78,7 @@
                                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '40px' }}>
                                     {topN.map((it, idx) => {
                                         const photoSrc = typeof getDirectImageUrl === 'function' ? getDirectImageUrl(it.photoUrl) : it.photoUrl;
-                                        
-                                        // PERFECT CORS FIX: wsrv.nl image proxy ka istemaal
                                         const proxiedSrc = photoSrc ? `https://wsrv.nl/?url=${encodeURIComponent(photoSrc)}&output=png` : null;
-                                        
                                         const rankColors = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#d97706' : '#6366f1';
                                         
                                         return (
@@ -90,7 +87,10 @@
                                             <div style={{ position: 'absolute', top: '-30px', width: '60px', height: '60px', background: rankColors, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 'bold', fontFamily: "'Bowlby One SC', sans-serif", border: '5px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>{idx + 1}</div>
                                             
                                             <div style={{ width: '220px', height: '220px', borderRadius: '16px', border: `8px solid ${rankColors}`, overflow: 'hidden', backgroundColor: '#f1f5f9', marginTop: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-                                                {proxiedSrc ? <img src={proxiedSrc} crossOrigin="anonymous" loading="eager" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Ustaz" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#cbd5e1', fontWeight:'bold', fontSize:'20px'}}>No Image</div>}
+                                                
+                                                {/* UPDATE: objectPosition: 'top center' lagaya gaya hai face ko highlight karne ke liye */}
+                                                {proxiedSrc ? <img src={proxiedSrc} crossOrigin="anonymous" loading="eager" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }} alt="Ustaz" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#cbd5e1', fontWeight:'bold', fontSize:'20px'}}>No Image</div>}
+                                            
                                             </div>
                                             
                                             <div style={{ textAlign: 'center', width: '100%', marginTop: '10px' }}>
