@@ -644,7 +644,7 @@
                 const snapshot = await db.collection('asatiza_details').get(); allAsatizaData = [];
                 snapshot.forEach(doc => {
                     const data = doc.data(); data.docId = doc.id; data.jamiaName = data.jamiaName || "N/A"; data.zimmedarName = zimmedarList[data.jamiaName] || "N/A";
-                    const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase();
+                    const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''} ${data.mobileNo || ''}`.toLowerCase();
                     if(searchString.includes(searchVal)) { allAsatizaData.push(data); }
                 }); renderTableAndFilter(); 
             } catch(e) { alert("Search Error: " + e.message); startAsatizaListener(); }
@@ -698,7 +698,7 @@
 
         function renderTableAndFilter() {
             const tbody = document.getElementById('asatizaTableBody'); const searchInput = document.getElementById("searchInput").value.toLowerCase();
-            currentFilteredData = allAsatizaData.filter(data => { const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''}`.toLowerCase(); return searchString.includes(searchInput); });
+            currentFilteredData = allAsatizaData.filter(data => { const searchString = `${data.ustazName} ${data.jamiaName} ${data.zimmedarName} ${data.region} ${data.state} ${data.className} ${data.section || ''} ${data.mobileNo || ''}`.toLowerCase(); return searchString.includes(searchInput); });
             currentFilteredData.sort((a, b) => a.jamiaName.localeCompare(b.jamiaName));
             const uniqueJamias = new Set(currentFilteredData.map(d => d.jamiaName)).size; const uniqueClasses = new Set(currentFilteredData.map(d => d.className)).size;
             document.getElementById('countEntries').innerText = currentFilteredData.length; document.getElementById('countJamia').innerText = uniqueJamias; document.getElementById('countClass').innerText = uniqueClasses;
