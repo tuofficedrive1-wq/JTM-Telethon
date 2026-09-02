@@ -79,8 +79,8 @@
                                     {topN.map((it, idx) => {
                                         const photoSrc = typeof getDirectImageUrl === 'function' ? getDirectImageUrl(it.photoUrl) : it.photoUrl;
                                         
-                                        // Error Fix: Yahan corsproxy lagaya gaya hai jo bina timeout ke fast kaam karega
-                                        const proxiedSrc = photoSrc ? `https://corsproxy.io/?${encodeURIComponent(photoSrc)}` : null;
+                                        // PERFECT CORS FIX: wsrv.nl image proxy ka istemaal
+                                        const proxiedSrc = photoSrc ? `https://wsrv.nl/?url=${encodeURIComponent(photoSrc)}&output=png` : null;
                                         
                                         const rankColors = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#d97706' : '#6366f1';
                                         
