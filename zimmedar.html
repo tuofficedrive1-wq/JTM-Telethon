@@ -56,14 +56,19 @@
             animation: shimmer 1.6s linear infinite;
         }
 
-        #historyContent::-webkit-scrollbar { width: 5px; }
-        #historyContent::-webkit-scrollbar-thumb { background: #C7CBE0; border-radius: 10px; }
+        #historyContent::-webkit-scrollbar, .table-scroll::-webkit-scrollbar { height: 6px; width: 5px; }
+        #historyContent::-webkit-scrollbar-thumb, .table-scroll::-webkit-scrollbar-thumb { background: #C7CBE0; border-radius: 10px; }
+        
+        table th { position: sticky; top: 0; z-index: 10; background-color: #EEF2FF; }
+        table td, table th { padding: 12px 16px; border-bottom: 1px solid #E2E8F0; }
+        table tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 antialiased">
 
     <!-- 1. LOGIN SECTION -->
     <div id="loginSection" class="relative min-h-screen flex items-center justify-center px-5 py-10 overflow-hidden">
+        <!-- Background Blur shapes... -->
         <div class="pointer-events-none absolute -top-24 -left-20 w-72 h-72 bg-indigo-300/40 rounded-full blur-3xl"></div>
         <div class="pointer-events-none absolute -bottom-28 -right-16 w-72 h-72 bg-violet-300/40 rounded-full blur-3xl"></div>
 
@@ -138,20 +143,51 @@
                 </div>
             </div>
 
+            <!-- TABS -->
+            <div class="flex gap-2 mb-4 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100">
+                <button id="tabCardsBtn" class="flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100">Card View</button>
+                <button id="tabTableBtn" class="flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent">Table Report</button>
+            </div>
+
             <!-- Search Bar -->
-            <div class="mb-4">
+            <div id="searchContainer" class="mb-4">
                 <div class="relative">
                     <input type="text" id="searchInput" placeholder="Search karein..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition text-sm font-semibold text-slate-700 shadow-sm bg-white">
                     <svg class="w-4 h-4 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
             </div>
 
-            <!-- List -->
+            <!-- CARDS LIST -->
             <div id="jamiaList" class="space-y-3.5 pb-2">
                 <!-- Skeleton Loader -->
                 <div class="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4 sm:p-5">
                     <div class="flex items-center gap-3"><div class="w-14 h-14 rounded-full skeleton shrink-0"></div><div class="flex-1 space-y-2"><div class="h-3.5 w-2/3 rounded skeleton"></div><div class="h-3 w-1/2 rounded skeleton"></div></div></div>
                     <div class="h-16 rounded-2xl skeleton mt-4"></div><div class="h-10 rounded-xl skeleton mt-4"></div>
+                </div>
+            </div>
+
+            <!-- TABLE VIEW (NEW) -->
+            <div id="tableView" class="hidden pb-2">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
+                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Date-wise Report</span>
+                        <span class="text-[10px] text-slate-500">Edit karne ke liye amount par click karein</span>
+                    </div>
+                    <div class="table-scroll overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="reportTable">
+                            <thead>
+                                <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider">
+                                    <th>Ustad Name</th>
+                                    <th>Jamia</th>
+                                    <!-- Dynamic Date Columns Will Go Here -->
+                                    <th class="bg-emerald-50 text-emerald-700">Grand Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody" class="text-[13px] font-medium text-slate-700">
+                                <tr><td colspan="4" class="text-center p-8 text-slate-400">Loading data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -163,7 +199,6 @@
                 <p class="text-slate-500 font-semibold text-sm">Koi match nahi mila</p>
                 <p class="text-slate-400 text-xs mt-1">Dusra naam try karein</p>
             </div>
-
         </main>
     </div>
 
@@ -185,13 +220,14 @@
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg", authDomain: "telethon-28c88.firebaseapp.com", projectId: "telethon-28c88", storageBucket: "telethon-28c88.firebasestorage.app", messagingSenderId: "609452116316", appId: "1:609452116316:web:e940fc5dc4537b34551999", measurementId: "G-FYS0PJLQQB" };
-        firebase.initializeApp(firebaseConfig);
+        if(!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
         let currentZimmedar = null;
         let unsubStandard = null;
         let unsubCustom = null;
+        let allCurrentRecords = []; // Store globally for Table View
         const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         function getDirectImageUrl(url) {
@@ -216,6 +252,30 @@
             ripple.style.width = ripple.style.height = size + 'px'; ripple.style.left = (e.clientX - rect.left - size / 2) + 'px'; ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
             el.appendChild(ripple); setTimeout(() => ripple.remove(), 600);
         });
+
+        // Tabs Logic
+        document.getElementById('tabCardsBtn').addEventListener('click', () => {
+            document.getElementById('jamiaList').classList.remove('hidden');
+            document.getElementById('tableView').classList.add('hidden');
+            document.getElementById('searchContainer').classList.remove('hidden');
+            
+            // Tab styling
+            document.getElementById('tabCardsBtn').className = "flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100";
+            document.getElementById('tabTableBtn').className = "flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent";
+        });
+
+        document.getElementById('tabTableBtn').addEventListener('click', () => {
+            document.getElementById('jamiaList').classList.add('hidden');
+            document.getElementById('tableView').classList.remove('hidden');
+            document.getElementById('searchContainer').classList.add('hidden'); // Hide search for table temporarily
+            
+            // Tab styling
+            document.getElementById('tabTableBtn').className = "flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100";
+            document.getElementById('tabCardsBtn').className = "flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent";
+            
+            generateTableView(); // Build table when clicked
+        });
+
 
         window.addEventListener('scroll', () => {
             const bar = document.getElementById('appBar'); if (!bar) return;
@@ -255,7 +315,6 @@
             if (unsubStandard) unsubStandard();
             if (unsubCustom) unsubCustom();
 
-            // Sections aur mix class logic (A, B, C, D)
             let classVariants = [assignedClass, assignedClass + " A", assignedClass + " B", assignedClass + " C", assignedClass + " D"];
             if (assignedClass === "Sale Duwam" || assignedClass === "Sale Duwam Khususi") {
                 classVariants = ["Sale Duwam", "Sale Duwam A", "Sale Duwam B", "Sale Duwam C", "Sale Duwam D", "Sale Duwam Khususi", "Sale Duwam Khususi A", "Sale Duwam Khususi B", "Sale Duwam Khususi C", "Sale Duwam Khususi D"];
@@ -268,6 +327,9 @@
                 const listDiv = document.getElementById('jamiaList');
                 listDiv.innerHTML = "";
                 let records = [...standardRecords, ...customRecordsList];
+                
+                // Store globally for table view access
+                allCurrentRecords = records; 
 
                 if (records.length === 0) {
                     document.getElementById('statTeacherCount').innerText = "0";
@@ -294,6 +356,7 @@
                     const totalSoFar = parseFloat(data.daily_amount) || 0;
                     const totalUnit = (totalSoFar / 7000).toFixed(1);
                     const progressPct = Math.min(100, ((totalSoFar % 7000) / 7000) * 100).toFixed(1);
+                    const grandTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
 
                     const photoSrc = getDirectImageUrl(data.photoUrl);
                     const initials = getInitials(data.ustazName);
@@ -307,7 +370,6 @@
                     card.style.animationDelay = (idx * 45) + "ms";
                     card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()}`);
 
-                    // Section display handling for Zimmedar App view
                     const secText = data.section ? ` (${data.section})` : '';
                     const classDisplay = data.className + secText;
 
@@ -319,10 +381,9 @@
                                     <div class="flex justify-between items-start gap-2">
                                         <h2 class="text-[15px] sm:text-base font-display font-bold text-indigo-700 uppercase tracking-wide truncate mt-0.5">${data.ustazName}</h2>
                                         
-                                        <!-- Yahan Total Amount add kiya gaya hai -->
-                                        <div class="text-right shrink-0 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm">
-                                            <span class="text-[9px] uppercase font-bold text-emerald-500 block leading-none mb-0.5 tracking-wider">Total</span>
-                                            <span class="text-[14px] font-display font-extrabold text-emerald-700 leading-none tabular-nums">₹${(data.total_amount || data.amount || 0).toLocaleString('en-IN')}</span>
+                                        <div class="text-right shrink-0 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm cursor-pointer" onclick="editGrandTotalPrompt('${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}', ${grandTotal})">
+                                            <span class="text-[9px] uppercase font-bold text-emerald-500 block leading-none mb-0.5 tracking-wider">Total <small>(Edit)</small></span>
+                                            <span class="text-[14px] font-display font-extrabold text-emerald-700 leading-none tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</span>
                                         </div>
                                     </div>
                                     <div class="text-[14px] font-bold text-slate-700 mt-1 truncate">${data.jamiaName}</div>
@@ -369,6 +430,11 @@
                     `;
                     listDiv.appendChild(card);
                 });
+                
+                // Refresh table automatically if it's currently visible
+                if(!document.getElementById('tableView').classList.contains('hidden')) {
+                    generateTableView();
+                }
             };
 
             unsubStandard = db.collection('asatiza_details').where("className", "in", classVariants).onSnapshot((snapshot) => {
@@ -383,11 +449,185 @@
                     let data = doc.data(); let recordData = data.recordData || {}; let keys = Object.keys(recordData);
                     let displayUstaz = recordData[keys[0]] || "Custom Record";
                     let displayJamia = recordData[keys[1]] || "";
-                    customRecordsList.push({ id: doc.id, collection: 'custom_records', ustazName: displayUstaz, jamiaName: displayJamia, mobileNo: "-", photoUrl: null, amount: data.amount || 0, daily_amount: data.daily_amount || 0, className: data.className, section: data.section });
+                    customRecordsList.push({ id: doc.id, collection: 'custom_records', ustazName: displayUstaz, jamiaName: displayJamia, mobileNo: "-", photoUrl: null, amount: data.amount || 0, total_amount: data.total_amount || data.amount || 0, daily_amount: data.daily_amount || 0, className: data.className, section: data.section });
                 });
                 renderMerged();
             });
         }
+
+        // ==========================================
+        // NEW TABLE REPORT GENERATOR LOGIC
+        // ==========================================
+        async function generateTableView() {
+            const tableBody = document.getElementById('reportTableBody');
+            const tableHeader = document.getElementById('reportTableHeader');
+            
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div><br><span class="text-slate-500 font-medium">History load ho rahi hai...</span></td></tr>`;
+            
+            try {
+                // Fetch all history for this zimmedar to calculate date-wise columns
+                const historySnap = await db.collection('entries_history').where('zimmedarUid', '==', auth.currentUser.uid).get();
+                
+                let allLogs = [];
+                historySnap.forEach(doc => {
+                    let data = doc.data();
+                    if(data.timestamp) allLogs.push({...data, logId: doc.id});
+                });
+                
+                // Group by Ustad ID -> Date -> Value
+                let ustadDateMap = {};
+                let uniqueDates = new Set();
+                
+                allLogs.forEach(log => {
+                    const dateStr = log.timestamp.toDate().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+                    uniqueDates.add(dateStr);
+                    
+                    if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
+                    if(!ustadDateMap[log.asatizaId][dateStr]) ustadDateMap[log.asatizaId][dateStr] = 0;
+                    
+                    // Note: 'set' in history overrides logic can be complex in a date-wise table. 
+                    // Hum add/minus ki daily aggregate nikalenge basic calculation ke liye.
+                    if(log.actionType === 'add') ustadDateMap[log.asatizaId][dateStr] += log.amountVal;
+                    else if (log.actionType === 'minus') ustadDateMap[log.asatizaId][dateStr] -= log.amountVal;
+                });
+                
+                // Sort dates chronologically
+                let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); // Fake year to sort properly
+                
+                // Build Headers
+                let headerHtml = `<th>Teacher Name</th><th>Jamia</th>`;
+                sortedDates.forEach(date => {
+                    headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
+                });
+                headerHtml += `<th class="bg-emerald-50 text-emerald-700 text-right">Grand Total</th>`;
+                tableHeader.innerHTML = headerHtml;
+                
+                // Build Body Rows
+                let bodyHtml = "";
+                allCurrentRecords.forEach(teacher => {
+                    const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
+                    
+                    bodyHtml += `<tr class="hover:bg-slate-50 transition">
+                        <td class="font-bold text-slate-800">${teacher.ustazName}</td>
+                        <td class="text-slate-500 text-xs truncate max-w-[120px]">${teacher.jamiaName}</td>`;
+                    
+                    // Columns for each date
+                    sortedDates.forEach(date => {
+                        let dateAmount = 0;
+                        if(ustadDateMap[teacher.id] && ustadDateMap[teacher.id][date]) {
+                            dateAmount = ustadDateMap[teacher.id][date];
+                        }
+                        
+                        let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount}`;
+                        let colorClass = dateAmount > 0 ? 'text-indigo-600 font-bold' : (dateAmount < 0 ? 'text-rose-500 font-bold' : 'text-slate-300');
+                        
+                        // Edit function call directly on cell click
+                        bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
+                    });
+                    
+                    // Grand Total Column (Clickable to Edit Grand Total)
+                    bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 cursor-pointer hover:bg-emerald-100 transition" onclick="editGrandTotalPrompt('${teacher.id}', '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}', ${grandTotal})">₹${grandTotal.toLocaleString('en-IN')} <span class="text-[10px] font-normal text-emerald-400 block -mt-1 leading-none">(Edit)</span></td>
+                    </tr>`;
+                });
+                
+                if(allCurrentRecords.length === 0) {
+                    bodyHtml = `<tr><td colspan="${sortedDates.length + 3}" class="text-center p-8 text-slate-400">Koi record nahi mila.</td></tr>`;
+                }
+                
+                tableBody.innerHTML = bodyHtml;
+
+            } catch (err) {
+                console.error(err);
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
+            }
+        }
+
+        // Edit Date Total from Table (Calculates difference and adds a correction entry)
+        window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
+            vibrate(10);
+            let input = prompt(`Ustaz: ${ustazName}\nDate: ${dateStr}\n\nIs date ka naya total amount darj karein:`, oldAmount || 0);
+            if(input === null || input.trim() === "") return;
+            
+            let newAmount = parseFloat(input);
+            if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
+            
+            let diff = newAmount - oldAmount;
+            if(diff === 0) return; // No change
+            
+            // To fix it without breaking firebase timestamp logics, we calculate the difference and process an "add" or "minus" adjustment.
+            let action = diff > 0 ? 'add' : 'minus';
+            let finalDiff = Math.abs(diff);
+            
+            let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
+            if(!confirm(confirmMsg)) return;
+            
+            try {
+                // Update Main Total
+                const docRef = db.collection(collectionName).doc(docId);
+                const docSnap = await docRef.get();
+                if (!docSnap.exists) { alert("Record nahi mila!"); return; }
+                const data = docSnap.data();
+                
+                let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+                let currentDaily = parseFloat(data.daily_amount) || 0;
+                
+                let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
+                let newDaily = action === 'add' ? (currentDaily + finalDiff) : (currentDaily - finalDiff);
+                
+                await docRef.update({
+                    amount: newTotal,
+                    total_amount: newTotal,
+                    daily_amount: newDaily,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Add History Entry (We try to parse the date string back to roughly match the target day for history reports, but use server time so it syncs)
+                let dateObj = new Date(dateStr + " 2026"); 
+                
+                await db.collection('entries_history').add({ 
+                    asatizaId: docId, 
+                    collectionName: collectionName, 
+                    jamiaName: jamiaName, 
+                    ustazName: ustazName, 
+                    actionType: action, 
+                    amountVal: finalDiff, 
+                    zimmedarUid: auth.currentUser.uid, 
+                    note: `Manual Correction for ${dateStr}`,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                
+                // regenerate table automatically
+                setTimeout(generateTableView, 1000);
+                alert("Date Total successfully update ho gaya!");
+                
+            } catch(e) {
+                console.error(e); alert("Update nahi ho saka. Internet check karein.");
+            }
+        };
+
+        // Edit Grand Total Prompter
+        window.editGrandTotalPrompt = function(docId, collectionName, jamiaName, ustazName, currentTotal) {
+            vibrate(10);
+            let input = prompt(`Ustaz: ${ustazName}\n\nInka PURA TOTAL (Grand Total) darj karein. Purana total (₹${currentTotal}) overwrite ho jayega:`, currentTotal);
+            if(input === null || input.trim() === "") return;
+            
+            let newAmount = parseFloat(input);
+            if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
+            
+            // Re-use logic to set amount via DOM element injection (simulating standard submitEntry logic to keep code clean)
+            let tempInput = document.getElementById(`amt_${docId}`);
+            if(!tempInput) { // If card view wasn't rendered yet
+                tempInput = document.createElement('input');
+                tempInput.id = `amt_${docId}`;
+                document.body.appendChild(tempInput);
+            }
+            tempInput.value = newAmount;
+            
+            submitEntry('set', docId, collectionName, jamiaName, ustazName);
+            
+            // Clean up dummy input if created
+            if(tempInput.parentNode === document.body) document.body.removeChild(tempInput);
+        };
 
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerms = e.target.value.toLowerCase().trim().split(/\s+/);
@@ -409,7 +649,7 @@
             const inputField = document.getElementById(`amt_${docId}`); 
             let amountVal = parseFloat(inputField.value);
             
-            if (!amountVal || amountVal <= 0) { 
+            if (isNaN(amountVal) || amountVal < 0) { 
                 alert("Barae Karam box mein sahi amount darj karein!"); 
                 return; 
             }
@@ -427,7 +667,6 @@
             if (!confirm(confirmMsg)) return;
 
             try {
-                // Step 1: Database se sabse taza (latest) amount nikalein (Jo Admin ne set kiya hai)
                 const docRef = db.collection(collectionName).doc(docId);
                 const docSnap = await docRef.get();
                 
@@ -438,7 +677,6 @@
 
                 const data = docSnap.data();
                 
-                // Step 2: Purane figure ko mathematically theek karein taaki overwrite ka masla na aaye
                 let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
                 let currentDaily = parseFloat(data.daily_amount) || 0;
                 
@@ -455,7 +693,7 @@
                     updatePayload = { 
                         amount: amountVal, 
                         total_amount: amountVal,
-                        daily_amount: amountVal,
+                        daily_amount: amountVal, // or zero depending on logic, keeping it same as amount here
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
                 } else if (action === 'minus') { 
@@ -467,10 +705,8 @@
                     }; 
                 }
 
-                // Step 3: Calculation ke baad Database me Sahi amount save karein
                 await docRef.update(updatePayload);
                 
-                // Step 4: Zimmedar ki entry ko History ledger me mehfooz karein
                 await db.collection('entries_history').add({ 
                     asatizaId: docId, 
                     collectionName: collectionName, 
@@ -482,7 +718,14 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp() 
                 });
                 
-                document.getElementById(`amt_${docId}`).value = "";
+                if(document.getElementById(`amt_${docId}`)) {
+                    document.getElementById(`amt_${docId}`).value = "";
+                }
+                
+                // If table is currently open, refresh it after edit
+                if(!document.getElementById('tableView').classList.contains('hidden')) {
+                    setTimeout(generateTableView, 1000);
+                }
                 
             } catch (error) { 
                 console.error(error); 
