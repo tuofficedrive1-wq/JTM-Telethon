@@ -16,6 +16,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         * { -webkit-tap-highlight-color: transparent; }
@@ -192,8 +195,13 @@
             <div id="myTeachersList" class="hidden pb-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Aapke Asatiza Report</span>
-                        <span class="text-[10px] text-slate-500">Edit karne ke liye amount par click karein</span>
+                        <div>
+                            <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Aapke Asatiza Report</span>
+                            <span class="text-[10px] text-slate-500 block">Edit karne ke liye date amount par click karein</span>
+                        </div>
+                        <button id="pdfBtn" onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-[11px] font-bold shadow-sm transition flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> PDF
+                        </button>
                     </div>
                     <div class="table-scroll overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="myTeachersReportTable">
@@ -281,6 +289,33 @@
             return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
         }
         function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 8); } catch (e) {} }
+
+        // PDF Download Function
+        function downloadPDF() {
+            vibrate(10);
+            const btn = document.getElementById('pdfBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> WAIT...`;
+            btn.disabled = true;
+
+            const element = document.getElementById('myTeachersReportTable');
+            const opt = {
+                margin:       0.3,
+                filename:     'Mere_Asatiza_Report.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'a3', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                alert("PDF Download nahi ho saka: " + err.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
 
         document.addEventListener('click', function (e) {
             const el = e.target.closest('.ripple-container');
@@ -386,8 +421,8 @@
                         <div class="flex-1 leading-tight min-w-0">
                             <div class="flex justify-between items-start gap-2">
                                 <h2 class="text-[15px] sm:text-base font-display font-bold text-indigo-700 uppercase tracking-wide truncate mt-0.5">${data.ustazName}</h2>
-                                <div class="text-right shrink-0 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm cursor-pointer" onclick="editGrandTotalPrompt('${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}', ${grandTotal})">
-                                    <span class="text-[9px] uppercase font-bold text-emerald-500 block leading-none mb-0.5 tracking-wider">Total <small>(Edit)</small></span>
+                                <div class="text-right shrink-0 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm">
+                                    <span class="text-[9px] uppercase font-bold text-emerald-500 block leading-none mb-0.5 tracking-wider">Total</span>
                                     <span class="text-[14px] font-display font-extrabold text-emerald-700 leading-none tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</span>
                                 </div>
                             </div>
@@ -423,9 +458,6 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> History
                         </button>
                         <div class="flex items-center gap-1.5">
-                            <button onclick="submitEntry('set', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-sky-600 flex items-center gap-1 bg-sky-50 px-2.5 py-1.5 rounded-lg border border-sky-100 active:scale-95 transition">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Set
-                            </button>
                             <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
                             </button>
@@ -533,7 +565,6 @@
                 records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
                 
                 try {
-                    // YAHAN FIX HAI: Poori history fetch ki ja rahi hai taaki kisi ne bhi entry ki ho, wo show ho.
                     const historySnap = await db.collection('entries_history').get();
                     
                     let allLogs = [];
@@ -592,7 +623,7 @@
                             bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                         });
                         
-                        bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 cursor-pointer hover:bg-emerald-100 transition" onclick="editGrandTotalPrompt('${teacher.id}', '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}', ${grandTotal})">₹${grandTotal.toLocaleString('en-IN')} <span class="text-[10px] font-normal text-emerald-400 block -mt-1 leading-none">(Edit)</span></td>
+                        bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20">₹${grandTotal.toLocaleString('en-IN')}</td>
                         </tr>`;
                     });
                     
@@ -605,6 +636,7 @@
             });
         }
 
+
         // ==========================================
         // TABLE REPORT GENERATOR LOGIC (Class Tab)
         // ==========================================
@@ -615,7 +647,6 @@
             tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div><br><span class="text-slate-500 font-medium">History load ho rahi hai...</span></td></tr>`;
             
             try {
-                // YAHAN FIX HAI: Poori history fetch ki ja rahi hai
                 const historySnap = await db.collection('entries_history').get();
                 
                 let allLogs = [];
@@ -674,7 +705,7 @@
                         bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                     });
                     
-                    bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 cursor-pointer hover:bg-emerald-100 transition" onclick="editGrandTotalPrompt('${teacher.id}', '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}', ${grandTotal})">₹${grandTotal.toLocaleString('en-IN')} <span class="text-[10px] font-normal text-emerald-400 block -mt-1 leading-none">(Edit)</span></td>
+                    bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20">₹${grandTotal.toLocaleString('en-IN')}</td>
                     </tr>`;
                 });
                 
@@ -756,31 +787,6 @@
             } catch(e) {
                 console.error(e); alert("Update nahi ho saka. Internet check karein.");
             }
-        };
-
-        window.editGrandTotalPrompt = function(docId, collectionName, jamiaName, ustazName, currentTotal) {
-            vibrate(10);
-            let input = prompt(`Ustaz: ${ustazName}\n\nInka PURA TOTAL (Grand Total) darj karein. Purana total (₹${currentTotal}) overwrite ho jayega:`, currentTotal);
-            if(input === null || input.trim() === "") return;
-            
-            let newAmount = parseFloat(input);
-            if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
-            
-            let tempInput = document.getElementById(`amt_${docId}`);
-            let isTemp = false;
-            if(!tempInput) { 
-                tempInput = document.createElement('input');
-                tempInput.id = `amt_${docId}`;
-                document.body.appendChild(tempInput);
-                isTemp = true;
-            }
-            tempInput.value = newAmount;
-            
-            submitEntry('set', docId, collectionName, jamiaName, ustazName).then(() => {
-                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
-            }).catch(() => {
-                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
-            });
         };
 
         // ==========================================
