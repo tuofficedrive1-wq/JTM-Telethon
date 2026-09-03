@@ -261,6 +261,24 @@
         let allCurrentRecords = []; 
         const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
+        // DATABASE MAPPING: Taaki Jamia Name se pata chale Zimmedar kon hai
+        const zimmedarList = {
+            "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
+            "BALAGHAT": "Akmal Kamal Madani", "BHOPAL": "Akmal Kamal Madani", "DEWAS": "Akmal Kamal Madani", "INDORE": "Akmal Kamal Madani", "JABALPUR": "Akmal Kamal Madani", "JABALPUR BYPASS": "Akmal Kamal Madani", "KATNI": "Akmal Kamal Madani", "MANDSAUR": "Akmal Kamal Madani",
+            "LUDHIANA": "Junaid Madani", "BIKANER": "Junaid Madani", "DAMOLAI": "Junaid Madani", "FATAHPUR": "Junaid Madani", "JAIPUR": "Junaid Madani", "KOTA CITY": "Junaid Madani", "KOTA STATION": "Junaid Madani", "NIMBAHERA": "Junaid Madani", "RAJNAGAR": "Junaid Madani", "UDAIPUR": "Junaid Madani",
+            "BADMER": "Said Madani", "BANDHEWA": "Said Madani", "BHILWADA": "Said Madani", "JODHPUR": "Said Madani", "KUCHAMAN": "Said Madani", "KUCHEEL": "Said Madani", "MAKRANA": "Said Madani", "NAGAUR": "Said Madani", "PALI": "Said Madani", "SHERANIABAD": "Said Madani",
+            "ANNIGERI": "Sohail Madani", "BANGALORE": "Sohail Madani", "BELGAUM": "Sohail Madani", "DHARWAD": "Sohail Madani", "MYSORE": "Sohail Madani", "SIRSI": "Sohail Madani", "TABIB LAND HUBLI": "Sohail Madani",
+            "ARRAH": "Azad Misbahi", "AURANGABAD": "Azad Misbahi", "BHAGALPUR": "Azad Misbahi", "PATNA": "Azad Misbahi", "PURNIA": "Azad Misbahi", "SALMARI": "Azad Misbahi", "SASARAM": "Azad Misbahi", "SIWAN CITY": "Azad Misbahi",
+            "BADGAM": "Nisar Madani", "JAMMU": "Nisar Madani", "KULGAM": "Nisar Madani", "MONGHAMA": "Nisar Madani", "PUNCHH": "Nisar Madani", "RAJORI": "Nisar Madani", "RIYASI": "Nisar Madani", "SANGAM": "Nisar Madani", "SOPORE": "Nisar Madani", "UCCHAD": "Nisar Madani",
+            "BANARAS": "Nasim Misbahi", "FAIZABAD": "Nasim Misbahi", "FARRUKHABAD": "Nasim Misbahi", "JHANSI": "Nasim Misbahi", "KANPUR": "Nasim Misbahi", "LUCKNOW": "Nasim Misbahi", "MAHOBA": "Nasim Misbahi", "UNNAO": "Nasim Misbahi", "AGRA": "Nasim Misbahi", "SHAHJAHANPUR": "Nasim Misbahi",
+            "ALLAHABAD": "Dilkash Madani", "COLONELGANJ": "Dilkash Madani", "GOPIGANJ": "Dilkash Madani", "GORAKHPUR": "Dilkash Madani", "JAGDISHPUR": "Dilkash Madani", "JONPUR": "Dilkash Madani", "MIRZAPUR": "Dilkash Madani", "NANPARA": "Dilkash Madani", "PADAW": "Dilkash Madani", "TANDA": "Dilkash Madani", "UTRAULA": "Dilkash Madani",
+            "ALIGARH": "Owais Madani", "BAREILLY SHARIF": "Owais Madani", "BILARI": "Owais Madani", "DELHI": "Owais Madani", "GAZIYABAD": "Owais Madani", "MAHUAKHEDA": "Owais Madani", "RAMPUR": "Owais Madani", "SHISHGADH": "Owais Madani", "THAKURDWARA": "Owais Madani", "TIGRI DEOBAND": "Owais Madani", "HALDWANI": "Owais Madani",
+            "ADONI": "Abu Sufiyan Misbahi", "MACHILIPATNAM": "Abu Sufiyan Misbahi", "BALLARI": "Abu Sufiyan Misbahi", "GULBARGA SHARIF": "Abu Sufiyan Misbahi", "CHENNAI": "Abu Sufiyan Misbahi", "FALAKNUMA": "Abu Sufiyan Misbahi", "HYDERABAD": "Abu Sufiyan Misbahi", "JANGAON": "Abu Sufiyan Misbahi",
+            "MANGALDOI ASSAM": "Shabbir Madani", "SILCHAR": "Shabbir Madani", "DHANBAD": "Shabbir Madani", "JAMSHEDPUR": "Shabbir Madani", "RANCHI": "Shabbir Madani", "RANCHI ILAHI NAGAR": "Shabbir Madani", "BHADRAK": "Shabbir Madani", "SORO": "Shabbir Madani", "ASANSOL": "Shabbir Madani", "KHIDIRPUR": "Shabbir Madani", "METIABRUZ": "Shabbir Madani",
+            "BILASPUR": "Sarfaraz Madani", "RAIPUR": "Sarfaraz Madani", "AKOLA": "Sarfaraz Madani", "BHANDARA": "Sarfaraz Madani", "JALGAON": "Sarfaraz Madani", "KAMPTEE": "Sarfaraz Madani", "KARANJA": "Sarfaraz Madani", "KORADI": "Sarfaraz Madani", "MODEL JAMIA": "Sarfaraz Madani", "NAGPUR": "Sarfaraz Madani", "RAVER": "Sarfaraz Madani",
+            "AHMEDNAGAR": "Irfan Misbahi", "BHANDUP": "Irfan Misbahi", "KALYAN": "Irfan Misbahi", "KARBALA MASJID GOVANDI": "Irfan Misbahi", "KHULDABAD": "Irfan Misbahi", "LATUR": "Irfan Misbahi", "MAHIM": "Irfan Misbahi", "MALEGAON": "Irfan Misbahi", "MITTI MASJID GOVANDI": "Irfan Misbahi", "MUMBAI": "Irfan Misbahi", "PUNE": "Irfan Misbahi", "SHAHADA": "Irfan Misbahi"
+        };
+
         function getDirectImageUrl(url) {
             if (!url) return "";
             const match = url.match(/[-\w]{25,}/); 
@@ -343,7 +361,7 @@
                     document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
                     
                     loadJamias(currentZimmedar.assignedClass);
-                    loadMyTeachers(currentZimmedar.ustazName);
+                    loadMyTeachers(currentZimmedar.ustazName); // Load My Teachers across all classes
                 } else { auth.signOut(); }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden');
@@ -509,13 +527,18 @@
         function loadMyTeachers(zimmedarName) {
             if(unsubMyStandard) unsubMyStandard();
             
-            unsubMyStandard = db.collection('asatiza_details').where("zimmedar", "==", zimmedarName).onSnapshot((snapshot) => {
+            // Database se sabhi records fetch karke client side par map check karenge
+            unsubMyStandard = db.collection('asatiza_details').onSnapshot((snapshot) => {
                 const tbody = document.getElementById('myTeachersTableBody');
                 if(!tbody) return;
                 
                 let records = [];
                 snapshot.forEach(doc => { 
-                    records.push({ id: doc.id, collection: 'asatiza_details', ...doc.data() }); 
+                    let data = doc.data();
+                    let mappedZimmedar = zimmedarList[data.jamiaName];
+                    if (mappedZimmedar === zimmedarName) {
+                        records.push({ id: doc.id, collection: 'asatiza_details', ...data }); 
+                    }
                 });
                 
                 if (records.length === 0) {
