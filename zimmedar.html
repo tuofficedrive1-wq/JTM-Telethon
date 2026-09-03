@@ -68,7 +68,6 @@
 
     <!-- 1. LOGIN SECTION -->
     <div id="loginSection" class="relative min-h-screen flex items-center justify-center px-5 py-10 overflow-hidden">
-        <!-- Background Blur shapes... -->
         <div class="pointer-events-none absolute -top-24 -left-20 w-72 h-72 bg-indigo-300/40 rounded-full blur-3xl"></div>
         <div class="pointer-events-none absolute -bottom-28 -right-16 w-72 h-72 bg-violet-300/40 rounded-full blur-3xl"></div>
 
@@ -144,12 +143,13 @@
             </div>
 
             <!-- TABS -->
-            <div class="flex gap-2 mb-4 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100">
-                <button id="tabCardsBtn" class="flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100">Card View</button>
-                <button id="tabTableBtn" class="flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent">Table Report</button>
+            <div class="flex gap-1.5 mb-4 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100 overflow-x-auto text-[13px] font-bold">
+                <button id="tabCardsBtn" class="flex-1 px-2 py-2 rounded-lg bg-indigo-50 text-indigo-700 transition shadow-sm border border-indigo-100 whitespace-nowrap">Class (Cards)</button>
+                <button id="tabTableBtn" class="flex-1 px-2 py-2 rounded-lg text-slate-500 hover:bg-slate-50 transition border border-transparent whitespace-nowrap">Class (Table)</button>
+                <button id="tabMyTeachersBtn" class="flex-1 px-2 py-2 rounded-lg text-slate-500 hover:bg-slate-50 transition border border-transparent whitespace-nowrap">Mere Asatiza</button>
             </div>
 
-            <!-- Search Bar (Now visible for both tabs) -->
+            <!-- Search Bar -->
             <div id="searchContainer" class="mb-4">
                 <div class="relative">
                     <input type="text" id="searchInput" placeholder="Search Ustaz ya Jamia..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition text-sm font-semibold text-slate-700 shadow-sm bg-white">
@@ -157,7 +157,7 @@
                 </div>
             </div>
 
-            <!-- CARDS LIST -->
+            <!-- TAB 1: CARDS LIST (Class Wise) -->
             <div id="jamiaList" class="space-y-3.5 pb-2">
                 <!-- Skeleton Loader -->
                 <div class="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4 sm:p-5">
@@ -166,7 +166,7 @@
                 </div>
             </div>
 
-            <!-- TABLE VIEW (NEW) -->
+            <!-- TAB 2: TABLE VIEW (Class Wise) -->
             <div id="tableView" class="hidden pb-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
@@ -188,6 +188,15 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: MERE ASATIZA (Zimmedar Wise) -->
+            <div id="myTeachersList" class="hidden space-y-3.5 pb-2">
+                <!-- Skeleton Loader -->
+                <div class="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4 sm:p-5">
+                    <div class="flex items-center gap-3"><div class="w-14 h-14 rounded-full skeleton shrink-0"></div><div class="flex-1 space-y-2"><div class="h-3.5 w-2/3 rounded skeleton"></div><div class="h-3 w-1/2 rounded skeleton"></div></div></div>
+                    <div class="h-16 rounded-2xl skeleton mt-4"></div><div class="h-10 rounded-xl skeleton mt-4"></div>
                 </div>
             </div>
 
@@ -227,7 +236,8 @@
         let currentZimmedar = null;
         let unsubStandard = null;
         let unsubCustom = null;
-        let allCurrentRecords = []; // Store globally for Table View
+        let unsubMyStandard = null;
+        let allCurrentRecords = []; 
         const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         function getDirectImageUrl(url) {
@@ -254,29 +264,35 @@
         });
 
         // Tabs Logic
-        document.getElementById('tabCardsBtn').addEventListener('click', () => {
-            document.getElementById('jamiaList').classList.remove('hidden');
-            document.getElementById('tableView').classList.add('hidden');
+        function switchTab(activeTabId) {
+            const tabs = ['tabCardsBtn', 'tabTableBtn', 'tabMyTeachersBtn'];
+            const views = ['jamiaList', 'tableView', 'myTeachersList'];
             
-            document.getElementById('tabCardsBtn').className = "flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100";
-            document.getElementById('tabTableBtn').className = "flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent";
+            tabs.forEach((id, index) => {
+                const btn = document.getElementById(id);
+                const view = document.getElementById(views[index]);
+                
+                if(id === activeTabId) {
+                    btn.className = "flex-1 px-2 py-2 rounded-lg bg-indigo-50 text-indigo-700 transition shadow-sm border border-indigo-100 whitespace-nowrap";
+                    view.classList.remove('hidden');
+                } else {
+                    btn.className = "flex-1 px-2 py-2 rounded-lg text-slate-500 hover:bg-slate-50 transition border border-transparent whitespace-nowrap";
+                    view.classList.add('hidden');
+                }
+            });
             
-            // Re-trigger search to update view
-            document.getElementById('searchInput').dispatchEvent(new Event('input'));
-        });
-
-        document.getElementById('tabTableBtn').addEventListener('click', () => {
-            document.getElementById('jamiaList').classList.add('hidden');
-            document.getElementById('tableView').classList.remove('hidden');
-            
-            document.getElementById('tabTableBtn').className = "flex-1 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-[13px] transition shadow-sm border border-indigo-100";
-            document.getElementById('tabCardsBtn').className = "flex-1 py-2 rounded-lg text-slate-500 font-bold text-[13px] hover:bg-slate-50 transition border border-transparent";
-            
-            generateTableView().then(() => {
-                // Re-trigger search to apply any existing typed text to the newly generated table
+            if(activeTabId === 'tabTableBtn') {
+                generateTableView().then(() => {
+                    document.getElementById('searchInput').dispatchEvent(new Event('input'));
+                });
+            } else {
                 document.getElementById('searchInput').dispatchEvent(new Event('input'));
-            }); 
-        });
+            }
+        }
+
+        document.getElementById('tabCardsBtn').addEventListener('click', () => switchTab('tabCardsBtn'));
+        document.getElementById('tabTableBtn').addEventListener('click', () => switchTab('tabTableBtn'));
+        document.getElementById('tabMyTeachersBtn').addEventListener('click', () => switchTab('tabMyTeachersBtn'));
 
         window.addEventListener('scroll', () => {
             const bar = document.getElementById('appBar'); if (!bar) return;
@@ -304,7 +320,10 @@
                     document.getElementById('displayClass').innerText = currentZimmedar.assignedClass;
                     document.getElementById('avatarInitials').innerText = getInitials(currentZimmedar.ustazName);
                     document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
+                    
+                    // Load data for both Class Tab and "Mere Asatiza" Tab
                     loadJamias(currentZimmedar.assignedClass);
+                    loadMyTeachers(currentZimmedar.ustazName);
                 } else { auth.signOut(); }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden');
@@ -312,6 +331,92 @@
             }
         });
 
+        // ==========================================
+        // CARD GENERATOR HELPER FUNCTION
+        // ==========================================
+        function createCardElement(data, idx) {
+            const docId = data.id;
+            const collectionName = data.collection;
+            const totalSoFar = parseFloat(data.daily_amount) || 0;
+            const totalUnit = (totalSoFar / 7000).toFixed(1);
+            const progressPct = Math.min(100, ((totalSoFar % 7000) / 7000) * 100).toFixed(1);
+            const grandTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+
+            const photoSrc = getDirectImageUrl(data.photoUrl);
+            const initials = getInitials(data.ustazName);
+            const avatarFallback = `<div class="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold font-display text-sm ring-2 ring-white shadow-sm">${initials}</div>`;
+            const photoHtml = photoSrc
+                ? `<div class="relative w-14 h-14 shrink-0">${avatarFallback}<img src="${photoSrc}" referrerpolicy="no-referrer" loading="lazy" class="relative w-14 h-14 rounded-full object-cover ring-2 ring-white shadow-sm" onerror="this.style.display='none'"></div>`
+                : `<div class="relative w-14 h-14 shrink-0">${avatarFallback}</div>`;
+
+            const card = document.createElement('div');
+            card.className = "jamia-card bg-white rounded-[22px] shadow-sm border border-slate-100 overflow-hidden animate-cardIn";
+            card.style.animationDelay = (idx * 45) + "ms";
+            card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()}`);
+
+            const secText = data.section ? ` (${data.section})` : '';
+            const classDisplay = data.className + secText;
+
+            card.innerHTML = `
+                <div class="p-4 sm:p-5 flex flex-col gap-4">
+                    <div class="flex items-center gap-3.5">
+                        ${photoHtml}
+                        <div class="flex-1 leading-tight min-w-0">
+                            <div class="flex justify-between items-start gap-2">
+                                <h2 class="text-[15px] sm:text-base font-display font-bold text-indigo-700 uppercase tracking-wide truncate mt-0.5">${data.ustazName}</h2>
+                                <div class="text-right shrink-0 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm cursor-pointer" onclick="editGrandTotalPrompt('${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}', ${grandTotal})">
+                                    <span class="text-[9px] uppercase font-bold text-emerald-500 block leading-none mb-0.5 tracking-wider">Total <small>(Edit)</small></span>
+                                    <span class="text-[14px] font-display font-extrabold text-emerald-700 leading-none tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</span>
+                                </div>
+                            </div>
+                            <div class="text-[14px] font-bold text-slate-700 mt-1 truncate">${data.jamiaName}</div>
+                            <div class="text-[11px] font-semibold text-slate-400 mt-1 flex items-center gap-2">
+                                <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">${classDisplay}</span>
+                                <span>&bull;</span>
+                                <span>${data.mobileNo || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100/70 px-4 py-3.5">
+                        <div class="flex items-end justify-between gap-2">
+                            <div>
+                               <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Aaj Ki Jama Raqam (Daily)</div>
+                                <div class="text-[26px] sm:text-3xl font-display font-extrabold text-emerald-600 mt-0.5 leading-none tabular-nums">₹${totalSoFar.toLocaleString('en-IN')}</div>
+                            </div>
+                            <span class="text-[11px] font-bold text-sky-600 bg-white px-2 py-1 rounded-lg border border-sky-100 shrink-0 whitespace-nowrap">${totalUnit} Units</span>
+                        </div>
+                        <div class="mt-2.5 h-1.5 w-full rounded-full bg-white/80 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-emerald-500" style="width:${progressPct}%"></div></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">₹</span>
+                            <input type="number" inputmode="decimal" id="amt_${docId}" placeholder="Amount" class="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none font-bold text-slate-700 text-sm bg-slate-50 transition">
+                        </div>
+                        <button onclick="submitEntry('add', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add
+                        </button>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+                        <button onclick="openTeacherHistory('${docId}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100 active:scale-95 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> History
+                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="submitEntry('set', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-sky-600 flex items-center gap-1 bg-sky-50 px-2.5 py-1.5 rounded-lg border border-sky-100 active:scale-95 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Set
+                            </button>
+                            <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // ==========================================
+        // LOAD CLASS WISE DATA
+        // ==========================================
         function loadJamias(assignedClass) {
             if (unsubStandard) unsubStandard();
             if (unsubCustom) unsubCustom();
@@ -328,13 +433,13 @@
                 const listDiv = document.getElementById('jamiaList');
                 listDiv.innerHTML = "";
                 let records = [...standardRecords, ...customRecordsList];
-                
-                // Store globally for table view access
                 allCurrentRecords = records; 
 
                 if (records.length === 0) {
+                    // Update stats to 0 if nothing found
                     document.getElementById('statTeacherCount').innerText = "0";
                     document.getElementById('statTotalAmount').innerText = "₹0";
+                    
                     listDiv.innerHTML = `
                         <div class="text-center p-10 bg-white rounded-2xl shadow-sm border border-slate-200">
                             <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
@@ -352,87 +457,10 @@
                 document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
 
                 records.forEach((data, idx) => {
-                    const docId = data.id;
-                    const collectionName = data.collection;
-                    const totalSoFar = parseFloat(data.daily_amount) || 0;
-                    const totalUnit = (totalSoFar / 7000).toFixed(1);
-                    const progressPct = Math.min(100, ((totalSoFar % 7000) / 7000) * 100).toFixed(1);
-                    const grandTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
-
-                    const photoSrc = getDirectImageUrl(data.photoUrl);
-                    const initials = getInitials(data.ustazName);
-                    const avatarFallback = `<div class="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold font-display text-sm ring-2 ring-white shadow-sm">${initials}</div>`;
-                    const photoHtml = photoSrc
-                        ? `<div class="relative w-14 h-14 shrink-0">${avatarFallback}<img src="${photoSrc}" referrerpolicy="no-referrer" loading="lazy" class="relative w-14 h-14 rounded-full object-cover ring-2 ring-white shadow-sm" onerror="this.style.display='none'"></div>`
-                        : `<div class="relative w-14 h-14 shrink-0">${avatarFallback}</div>`;
-
-                    const card = document.createElement('div');
-                    card.className = "jamia-card bg-white rounded-[22px] shadow-sm border border-slate-100 overflow-hidden animate-cardIn";
-                    card.style.animationDelay = (idx * 45) + "ms";
-                    card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()}`);
-
-                    const secText = data.section ? ` (${data.section})` : '';
-                    const classDisplay = data.className + secText;
-
-                    card.innerHTML = `
-                        <div class="p-4 sm:p-5 flex flex-col gap-4">
-                            <div class="flex items-center gap-3.5">
-                                ${photoHtml}
-                                <div class="flex-1 leading-tight min-w-0">
-                                    <div class="flex justify-between items-start gap-2">
-                                        <h2 class="text-[15px] sm:text-base font-display font-bold text-indigo-700 uppercase tracking-wide truncate mt-0.5">${data.ustazName}</h2>
-                                        
-                                        <div class="text-right shrink-0 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm cursor-pointer" onclick="editGrandTotalPrompt('${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}', ${grandTotal})">
-                                            <span class="text-[9px] uppercase font-bold text-emerald-500 block leading-none mb-0.5 tracking-wider">Total <small>(Edit)</small></span>
-                                            <span class="text-[14px] font-display font-extrabold text-emerald-700 leading-none tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-[14px] font-bold text-slate-700 mt-1 truncate">${data.jamiaName}</div>
-                                    <div class="text-[11px] font-semibold text-slate-400 mt-1 flex items-center gap-2">
-                                        <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">${classDisplay}</span>
-                                        <span>&bull;</span>
-                                        <span>${data.mobileNo || '-'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100/70 px-4 py-3.5">
-                                <div class="flex items-end justify-between gap-2">
-                                    <div>
-                                       <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Aaj Ki Jama Raqam (Daily)</div>
-                                        <div class="text-[26px] sm:text-3xl font-display font-extrabold text-emerald-600 mt-0.5 leading-none tabular-nums">₹${totalSoFar.toLocaleString('en-IN')}</div>
-                                    </div>
-                                    <span class="text-[11px] font-bold text-sky-600 bg-white px-2 py-1 rounded-lg border border-sky-100 shrink-0 whitespace-nowrap">${totalUnit} Units</span>
-                                </div>
-                                <div class="mt-2.5 h-1.5 w-full rounded-full bg-white/80 overflow-hidden"><div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-emerald-500" style="width:${progressPct}%"></div></div>
-                            </div>
-                            <div class="flex gap-2">
-                                <div class="relative flex-1">
-                                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm pointer-events-none">₹</span>
-                                    <input type="number" inputmode="decimal" id="amt_${docId}" placeholder="Amount" class="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none font-bold text-slate-700 text-sm bg-slate-50 transition">
-                                </div>
-                                <button onclick="submitEntry('add', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container shrink-0 bg-gradient-to-br from-indigo-600 to-violet-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 active:scale-95 transition flex items-center gap-1.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg> Add
-                                </button>
-                            </div>
-                            <div class="flex justify-between items-center pt-3 border-t border-slate-100">
-                                <button onclick="openTeacherHistory('${docId}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100 active:scale-95 transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> History
-                                </button>
-                                <div class="flex items-center gap-1.5">
-                                    <button onclick="submitEntry('set', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-sky-600 flex items-center gap-1 bg-sky-50 px-2.5 py-1.5 rounded-lg border border-sky-100 active:scale-95 transition">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> Set
-                                    </button>
-                                    <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    const card = createCardElement(data, idx);
                     listDiv.appendChild(card);
                 });
                 
-                // Refresh table automatically if it's currently visible
                 if(!document.getElementById('tableView').classList.contains('hidden')) {
                     generateTableView();
                 }
@@ -457,7 +485,43 @@
         }
 
         // ==========================================
-        // NEW TABLE REPORT GENERATOR LOGIC
+        // LOAD MERE ASATIZA (ZIMMEDAR WISE DATA)
+        // ==========================================
+        function loadMyTeachers(zimmedarName) {
+            if(unsubMyStandard) unsubMyStandard();
+            
+            // Note: Assuming 'zimmedar' is the exact field name in your Firestore collection based on your table screenshot.
+            unsubMyStandard = db.collection('asatiza_details').where("zimmedar", "==", zimmedarName).onSnapshot((snapshot) => {
+                const listDiv = document.getElementById('myTeachersList');
+                listDiv.innerHTML = "";
+                let records = [];
+                
+                snapshot.forEach(doc => { 
+                    records.push({ id: doc.id, collection: 'asatiza_details', ...doc.data() }); 
+                });
+                
+                if (records.length === 0) {
+                    listDiv.innerHTML = `
+                        <div class="text-center p-10 bg-white rounded-2xl shadow-sm border border-slate-200">
+                            <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            </div>
+                            <p class="text-slate-500 text-sm font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</p>
+                        </div>`;
+                    return;
+                }
+
+                records.sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
+
+                records.forEach((data, idx) => {
+                    const card = createCardElement(data, idx);
+                    listDiv.appendChild(card);
+                });
+            });
+        }
+
+        // ==========================================
+        // TABLE REPORT GENERATOR LOGIC
         // ==========================================
         async function generateTableView() {
             const tableBody = document.getElementById('reportTableBody');
@@ -466,7 +530,6 @@
             tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div><br><span class="text-slate-500 font-medium">History load ho rahi hai...</span></td></tr>`;
             
             try {
-                // Fetch all history for this zimmedar to calculate date-wise columns
                 const historySnap = await db.collection('entries_history').where('zimmedarUid', '==', auth.currentUser.uid).get();
                 
                 let allLogs = [];
@@ -475,7 +538,6 @@
                     if(data.timestamp) allLogs.push({...data, logId: doc.id});
                 });
                 
-                // Group by Ustad ID -> Date -> Value
                 let ustadDateMap = {};
                 let uniqueDates = new Set();
                 
@@ -490,10 +552,8 @@
                     else if (log.actionType === 'minus') ustadDateMap[log.asatizaId][dateStr] -= log.amountVal;
                 });
                 
-                // Sort dates chronologically
                 let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
                 
-                // Build Headers
                 let headerHtml = `<th>Teacher Name</th><th>Jamia</th>`;
                 sortedDates.forEach(date => {
                     headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
@@ -501,19 +561,15 @@
                 headerHtml += `<th class="bg-emerald-50 text-emerald-700 text-right">Grand Total</th>`;
                 tableHeader.innerHTML = headerHtml;
                 
-                // Build Body Rows
                 let bodyHtml = "";
                 allCurrentRecords.forEach(teacher => {
                     const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
-                    
-                    // Added data-search for filtering
                     const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()}`;
                     
                     bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
                         <td class="text-slate-500 text-xs truncate max-w-[120px]">${teacher.jamiaName}</td>`;
                     
-                    // Columns for each date
                     sortedDates.forEach(date => {
                         let dateAmount = 0;
                         if(ustadDateMap[teacher.id] && ustadDateMap[teacher.id][date]) {
@@ -526,7 +582,6 @@
                         bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                     });
                     
-                    // Grand Total Column
                     bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 cursor-pointer hover:bg-emerald-100 transition" onclick="editGrandTotalPrompt('${teacher.id}', '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}', ${grandTotal})">₹${grandTotal.toLocaleString('en-IN')} <span class="text-[10px] font-normal text-emerald-400 block -mt-1 leading-none">(Edit)</span></td>
                     </tr>`;
                 });
@@ -543,76 +598,72 @@
             }
         }
 
-       // Edit Date Total from Table (Calculates difference and adds a correction entry)
-window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
-    vibrate(10);
-    let input = prompt(`Ustaz: ${ustazName}\nDate: ${dateStr}\n\nIs date ka naya total amount darj karein:`, oldAmount || 0);
-    if(input === null || input.trim() === "") return;
-    
-    let newAmount = parseFloat(input);
-    if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
-    
-    let diff = newAmount - oldAmount;
-    if(diff === 0) return; // No change
-    
-    let action = diff > 0 ? 'add' : 'minus';
-    let finalDiff = Math.abs(diff);
-    
-    let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
-    if(!confirm(confirmMsg)) return;
-    
-    try {
-        // Update Main Total
-        const docRef = db.collection(collectionName).doc(docId);
-        const docSnap = await docRef.get();
-        if (!docSnap.exists) { alert("Record nahi mila!"); return; }
-        const data = docSnap.data();
-        
-        let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
-        let currentDaily = parseFloat(data.daily_amount) || 0;
-        
-        let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
-        
-        // Agar edit ki jane wali date aaj ki hai, sirf tabhi 'Daily Amount' update hoga
-        let todayStr = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
-        let newDaily = currentDaily; 
-        if (dateStr === todayStr) {
-            newDaily = action === 'add' ? (currentDaily + finalDiff) : (currentDaily - finalDiff);
-        }
-        
-        await docRef.update({
-            amount: newTotal,
-            total_amount: newTotal,
-            daily_amount: newDaily,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // YAHAN FIX HAI: Purani date ko calculate karke history mein wohi date save karein
-        // Time 12:00:00 set kiya gaya hai taaki timezone ki wajah se din piche na chala jaye
-        let dateObj = new Date(dateStr + " 2026 12:00:00"); 
-        
-        await db.collection('entries_history').add({ 
-            asatizaId: docId, 
-            collectionName: collectionName, 
-            jamiaName: jamiaName, 
-            ustazName: ustazName, 
-            actionType: action, 
-            amountVal: finalDiff, 
-            zimmedarUid: auth.currentUser.uid, 
-            note: `Manual Correction for ${dateStr}`,
-            timestamp: dateObj // Ab aaj ka time nahi jayega, balki wo specific date save hogi
-        });
-        
-        // Regenerate table automatically
-        setTimeout(generateTableView, 1000);
-        alert("Date Total successfully update ho gaya!");
-        
-    } catch(e) {
-        console.error(e); alert("Update nahi ho saka. Internet check karein.");
-    }
-};
+        // ==========================================
+        // EDIT SPECIFIC DATE (FIXED)
+        // ==========================================
+        window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
+            vibrate(10);
+            let input = prompt(`Ustaz: ${ustazName}\nDate: ${dateStr}\n\nIs date ka naya total amount darj karein:`, oldAmount || 0);
+            if(input === null || input.trim() === "") return;
+            
+            let newAmount = parseFloat(input);
+            if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
+            
+            let diff = newAmount - oldAmount;
+            if(diff === 0) return; 
+            
+            let action = diff > 0 ? 'add' : 'minus';
+            let finalDiff = Math.abs(diff);
+            
+            let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
+            if(!confirm(confirmMsg)) return;
+            
+            try {
+                const docRef = db.collection(collectionName).doc(docId);
+                const docSnap = await docRef.get();
+                if (!docSnap.exists) { alert("Record nahi mila!"); return; }
+                const data = docSnap.data();
+                
+                let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+                let currentDaily = parseFloat(data.daily_amount) || 0;
+                
+                let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
+                
+                let todayStr = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+                let newDaily = currentDaily; 
+                if (dateStr === todayStr) {
+                    newDaily = action === 'add' ? (currentDaily + finalDiff) : (currentDaily - finalDiff);
+                }
+                
+                await docRef.update({
+                    amount: newTotal,
+                    total_amount: newTotal,
+                    daily_amount: newDaily,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                let dateObj = new Date(dateStr + " 2026 12:00:00"); 
+                
+                await db.collection('entries_history').add({ 
+                    asatizaId: docId, 
+                    collectionName: collectionName, 
+                    jamiaName: jamiaName, 
+                    ustazName: ustazName, 
+                    actionType: action, 
+                    amountVal: finalDiff, 
+                    zimmedarUid: auth.currentUser.uid, 
+                    note: `Manual Correction for ${dateStr}`,
+                    timestamp: dateObj 
+                });
+                
+                setTimeout(generateTableView, 1000);
+                alert("Date Total successfully update ho gaya!");
+                
+            } catch(e) {
+                console.error(e); alert("Update nahi ho saka. Internet check karein.");
+            }
+        };
 
-        // Edit Grand Total Prompter
         window.editGrandTotalPrompt = function(docId, collectionName, jamiaName, ustazName, currentTotal) {
             vibrate(10);
             let input = prompt(`Ustaz: ${ustazName}\n\nInka PURA TOTAL (Grand Total) darj karein. Purana total (₹${currentTotal}) overwrite ho jayega:`, currentTotal);
@@ -635,12 +686,12 @@ window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collect
         };
 
         // ==========================================
-        // UPDATED SEARCH LOGIC (Works for both Cards & Table)
+        // GLOBAL SEARCH LOGIC
         // ==========================================
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerms = e.target.value.toLowerCase().trim().split(/\s+/);
             
-            // 1. Filter Cards
+            // Search in Cards (both views)
             const cards = document.querySelectorAll('.jamia-card');
             let anyVisibleCard = false;
             cards.forEach(card => {
@@ -649,7 +700,7 @@ window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collect
                 if (isMatch) { card.classList.remove('hidden'); anyVisibleCard = true; } else { card.classList.add('hidden'); }
             });
 
-            // 2. Filter Table Rows
+            // Search in Table Rows
             const tableRows = document.querySelectorAll('.table-row-item');
             let anyVisibleRow = false;
             tableRows.forEach(row => {
@@ -658,17 +709,33 @@ window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collect
                 if (isMatch) { row.classList.remove('hidden'); anyVisibleRow = true; } else { row.classList.add('hidden'); }
             });
 
-            // 3. Handle 'No Results' Message
-            const isCardViewActive = !document.getElementById('jamiaList').classList.contains('hidden');
-            const hasResults = isCardViewActive ? anyVisibleCard : anyVisibleRow;
-            const hasData = isCardViewActive ? cards.length > 0 : tableRows.length > 0;
+            // Show/Hide No Results State Based on Active View
+            const isTableView = !document.getElementById('tableView').classList.contains('hidden');
+            const isMyTeachersView = !document.getElementById('myTeachersList').classList.contains('hidden');
+            
+            let hasResults = false;
+            let hasData = false;
+            
+            if(isTableView) {
+                hasResults = anyVisibleRow;
+                hasData = tableRows.length > 0;
+            } else if (isMyTeachersView) {
+                // Look only at cards inside myTeachersList
+                const myCards = document.querySelectorAll('#myTeachersList .jamia-card');
+                hasData = myCards.length > 0;
+                hasResults = Array.from(myCards).some(c => !c.classList.contains('hidden'));
+            } else {
+                // Class Cards View
+                const classCards = document.querySelectorAll('#jamiaList .jamia-card');
+                hasData = classCards.length > 0;
+                hasResults = Array.from(classCards).some(c => !c.classList.contains('hidden'));
+            }
             
             document.getElementById('noResultsState').classList.toggle('hidden', hasResults || !hasData);
             
-            // Hide table header/wrapper if no match in table view to keep UI clean
             const reportTable = document.getElementById('reportTable');
             if (reportTable) {
-                if (!isCardViewActive && !anyVisibleRow && searchTerms[0] !== "") {
+                if (isTableView && !anyVisibleRow && searchTerms[0] !== "") {
                     reportTable.classList.add('hidden');
                 } else {
                     reportTable.classList.remove('hidden');
@@ -753,9 +820,9 @@ window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collect
                     timestamp: firebase.firestore.FieldValue.serverTimestamp() 
                 });
                 
-                if(document.getElementById(`amt_${docId}`)) {
-                    document.getElementById(`amt_${docId}`).value = "";
-                }
+                // Clear all input fields for this docId (since it might exist in both Class and MyTeachers tabs)
+                const inputs = document.querySelectorAll(`input[id="amt_${docId}"]`);
+                inputs.forEach(inp => inp.value = "");
                 
                 if(!document.getElementById('tableView').classList.contains('hidden')) {
                     setTimeout(generateTableView, 1000);
