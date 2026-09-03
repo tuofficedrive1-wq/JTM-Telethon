@@ -152,7 +152,7 @@
             <!-- Search Bar -->
             <div id="searchContainer" class="mb-4">
                 <div class="relative">
-                    <input type="text" id="searchInput" placeholder="Search Ustaz ya Jamia..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition text-sm font-semibold text-slate-700 shadow-sm bg-white">
+                    <input type="text" id="searchInput" placeholder="Search Ustaz, Jamia ya Class..." class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition text-sm font-semibold text-slate-700 shadow-sm bg-white">
                     <svg class="w-4 h-4 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
             </div>
@@ -170,17 +170,14 @@
             <div id="tableView" class="hidden pb-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Date-wise Report</span>
+                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Class Date-wise Report</span>
                         <span class="text-[10px] text-slate-500">Edit karne ke liye amount par click karein</span>
                     </div>
                     <div class="table-scroll overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="reportTable">
                             <thead>
                                 <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100">
-                                    <th>Ustad Name</th>
-                                    <th>Jamia</th>
-                                    <!-- Dynamic Date Columns Will Go Here -->
-                                    <th class="bg-emerald-50 text-emerald-700">Grand Total</th>
+                                    <!-- Dynamic Columns -->
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody" class="text-[13px] font-medium text-slate-700">
@@ -191,30 +188,22 @@
                 </div>
             </div>
 
-            <!-- TAB 3: MERE ASATIZA (Zimmedar Wise Detailed Table) -->
+            <!-- TAB 3: MERE ASATIZA (Zimmedar Wise Date Table) -->
             <div id="myTeachersList" class="hidden pb-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Aapke Asatiza Ki List</span>
+                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Aapke Asatiza Report</span>
+                        <span class="text-[10px] text-slate-500">Edit karne ke liye amount par click karein</span>
                     </div>
                     <div class="table-scroll overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[950px]">
+                        <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="myTeachersReportTable">
                             <thead>
-                                <tr class="bg-slate-100 text-slate-600 text-[11px] uppercase tracking-wider">
-                                    <th class="p-3 border-b font-bold text-center">Sr.</th>
-                                    <th class="p-3 border-b font-semibold">Photo</th>
-                                    <th class="p-3 border-b font-semibold">Ustaz Name</th>
-                                    <th class="p-3 border-b font-semibold">Jamia Name</th>
-                                    <th class="p-3 border-b font-bold text-indigo-700">Zimmedar</th>
-                                    <th class="p-3 border-b font-semibold">Region & State</th>
-                                    <th class="p-3 border-b font-semibold">Mobile No.</th>
-                                    <th class="p-3 border-b font-semibold">Darja (Class)</th>
-                                    <th class="p-3 border-b font-semibold">Date</th>
-                                    <th class="p-3 border-b font-semibold text-center">Action</th>
+                                <tr id="myTeachersTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100">
+                                    <!-- Dynamic Columns -->
                                 </tr>
                             </thead>
-                            <tbody id="myTeachersTableBody" class="text-sm">
-                                <tr><td colspan="10" class="text-center p-8 text-slate-400">Loading...</td></tr>
+                            <tbody id="myTeachersTableBody" class="text-[13px] font-medium text-slate-700">
+                                <tr><td colspan="4" class="text-center p-8 text-slate-400">Loading data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -320,13 +309,8 @@
                 }
             });
             
-            if(activeTabId === 'tabTableBtn') {
-                generateTableView().then(() => {
-                    document.getElementById('searchInput').dispatchEvent(new Event('input'));
-                });
-            } else {
-                document.getElementById('searchInput').dispatchEvent(new Event('input'));
-            }
+            // Re-trigger search to keep filters applied
+            document.getElementById('searchInput').dispatchEvent(new Event('input'));
         }
 
         document.getElementById('tabCardsBtn').addEventListener('click', () => switchTab('tabCardsBtn'));
@@ -361,7 +345,7 @@
                     document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
                     
                     loadJamias(currentZimmedar.assignedClass);
-                    loadMyTeachers(currentZimmedar.ustazName); // Load My Teachers across all classes
+                    loadMyTeachers(currentZimmedar.ustazName); // Load My Teachers List
                 } else { auth.signOut(); }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden');
@@ -390,7 +374,7 @@
             const card = document.createElement('div');
             card.className = "jamia-card bg-white rounded-[22px] shadow-sm border border-slate-100 overflow-hidden animate-cardIn";
             card.style.animationDelay = (idx * 45) + "ms";
-            card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()} ${(data.mobileNo||'').toLowerCase()}`);
+            card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()} ${(data.className||'').toLowerCase()}`);
 
             const secText = data.section ? ` (${data.section})` : '';
             const classDisplay = data.className + secText;
@@ -498,9 +482,8 @@
                     listDiv.appendChild(card);
                 });
                 
-                if(!document.getElementById('tableView').classList.contains('hidden')) {
-                    generateTableView();
-                }
+                // Regenerate the Class Table Data
+                generateTableView();
             };
 
             unsubStandard = db.collection('asatiza_details').where("className", "in", classVariants).onSnapshot((snapshot) => {
@@ -522,15 +505,15 @@
         }
 
         // ==========================================
-        // LOAD MERE ASATIZA (ZIMMEDAR WISE DETAILED TABLE)
+        // LOAD MERE ASATIZA (ZIMMEDAR WISE DATE TABLE)
         // ==========================================
         function loadMyTeachers(zimmedarName) {
             if(unsubMyStandard) unsubMyStandard();
             
-            // Database se sabhi records fetch karke client side par map check karenge
-            unsubMyStandard = db.collection('asatiza_details').onSnapshot((snapshot) => {
-                const tbody = document.getElementById('myTeachersTableBody');
-                if(!tbody) return;
+            unsubMyStandard = db.collection('asatiza_details').onSnapshot(async (snapshot) => {
+                const tableBody = document.getElementById('myTeachersTableBody');
+                const tableHeader = document.getElementById('myTeachersTableHeader');
+                if(!tableBody) return;
                 
                 let records = [];
                 snapshot.forEach(doc => { 
@@ -542,94 +525,82 @@
                 });
                 
                 if (records.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="10" class="text-center p-10 text-slate-500 font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</td></tr>`;
+                    tableHeader.innerHTML = `<tr><th class="p-3 border-b text-center text-slate-400">Koi record nahi mila</th></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="10" class="text-center p-10 text-slate-500 font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</td></tr>`;
                     return;
                 }
 
                 records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
                 
-                let html = "";
-                records.forEach((data, idx) => {
-                    const docId = data.id;
-                    const collectionName = data.collection;
+                try {
+                    // Fetch History for dates mapping
+                    const historySnap = await db.collection('entries_history').where('zimmedarUid', '==', auth.currentUser.uid).get();
                     
-                    const directUrl = getDirectImageUrl(data.photoUrl); 
-                    const initials = getInitials(data.ustazName);
-                    const photoHtml = directUrl 
-                        ? `<img src="${directUrl}" referrerpolicy="no-referrer" class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm">` 
-                        : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs shadow-sm">${initials}</div>`;
+                    let allLogs = [];
+                    historySnap.forEach(doc => {
+                        let data = doc.data();
+                        if(data.timestamp) allLogs.push({...data, logId: doc.id});
+                    });
                     
-                    const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
-                    const dateStr = data.timestamp ? data.timestamp.toDate().toLocaleDateString('en-IN') : '-';
+                    let ustadDateMap = {};
+                    let uniqueDates = new Set();
+                    
+                    allLogs.forEach(log => {
+                        const dateStr = log.timestamp.toDate().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+                        uniqueDates.add(dateStr);
+                        
+                        if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
+                        if(!ustadDateMap[log.asatizaId][dateStr]) ustadDateMap[log.asatizaId][dateStr] = 0;
+                        
+                        if(log.actionType === 'add') ustadDateMap[log.asatizaId][dateStr] += log.amountVal;
+                        else if (log.actionType === 'minus') ustadDateMap[log.asatizaId][dateStr] -= log.amountVal;
+                    });
+                    
+                    let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
+                    
+                    let headerHtml = `<th>Ustad Name</th><th>Jamia</th><th>Class</th>`;
+                    sortedDates.forEach(date => {
+                        headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
+                    });
+                    headerHtml += `<th class="bg-emerald-50 text-emerald-700 text-right">Grand Total</th>`;
+                    tableHeader.innerHTML = headerHtml;
+                    
+                    let bodyHtml = "";
+                    records.forEach(teacher => {
+                        const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
+                        const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
+                        const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
+                        
+                        bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
+                            <td class="font-bold text-slate-800">${teacher.ustazName || '-'}</td>
+                            <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase">${teacher.jamiaName || '-'}</td>
+                            <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap">${classWithSection || '-'}</td>`;
+                        
+                        sortedDates.forEach(date => {
+                            let dateAmount = 0;
+                            if(ustadDateMap[teacher.id] && ustadDateMap[teacher.id][date]) {
+                                dateAmount = ustadDateMap[teacher.id][date];
+                            }
+                            
+                            let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount}`;
+                            let colorClass = dateAmount > 0 ? 'text-indigo-600 font-bold' : (dateAmount < 0 ? 'text-rose-500 font-bold' : 'text-slate-300');
+                            
+                            bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
+                        });
+                        
+                        bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 cursor-pointer hover:bg-emerald-100 transition" onclick="editGrandTotalPrompt('${teacher.id}', '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}', ${grandTotal})">₹${grandTotal.toLocaleString('en-IN')} <span class="text-[10px] font-normal text-emerald-400 block -mt-1 leading-none">(Edit)</span></td>
+                        </tr>`;
+                    });
+                    
+                    tableBody.innerHTML = bodyHtml;
 
-                    const searchString = `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()} ${(data.mobileNo||'').toLowerCase()}`;
-
-                    html += `
-                    <tr class="border-b hover:bg-slate-50 transition jamia-card" data-search="${searchString}">
-                        <td class="p-3 font-bold text-slate-500 text-xs text-center">${idx + 1}</td>
-                        <td class="p-2">${photoHtml}</td>
-                        <td class="p-3 font-semibold text-slate-800">${data.ustazName || '-'}</td>
-                        <td class="p-3 font-bold text-indigo-700 uppercase">${data.jamiaName || '-'}</td>
-                        <td class="p-3 text-sm font-bold text-slate-800">${zimmedarName}</td>
-                        <td class="p-3">
-                            <div class="font-bold text-slate-800 text-[13px]">${data.region || '-'}</div>
-                            <div class="text-[10px] text-slate-400 uppercase tracking-wider">${data.state || '-'}</div>
-                        </td>
-                        <td class="p-3 font-bold text-emerald-600">${data.mobileNo || '-'}</td>
-                        <td class="p-3">
-                            <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">${classWithSection || '-'}</span>
-                        </td>
-                        <td class="p-3 text-slate-500 text-xs">${dateStr}</td>
-                        <td class="p-3 text-center">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <button onclick="quickActionPrompt('add', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="text-emerald-600 bg-emerald-50 hover:bg-emerald-100 p-1.5 rounded-md transition border border-emerald-100" title="Add Amount">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                                </button>
-                                <button onclick="quickActionPrompt('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="text-rose-600 bg-rose-50 hover:bg-rose-100 p-1.5 rounded-md transition border border-rose-100" title="Minus Amount">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg>
-                                </button>
-                                <button onclick="openTeacherHistory('${docId}', '${escapeStr(data.ustazName)}')" class="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded-md transition border border-indigo-100" title="History">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    `;
-                });
-                tbody.innerHTML = html;
+                } catch (err) {
+                    console.error(err);
+                    tableBody.innerHTML = `<tr><td colspan="10" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
+                }
             });
         }
 
-        // Wrapper function so Zimmedar can easily add/minus money from Table UI
-        window.quickActionPrompt = function(action, docId, collectionName, jamiaName, ustazName) {
-            vibrate(10);
-            let actionText = action === 'add' ? 'ADD (+)' : 'MINUS (-)';
-            let val = prompt(`Ustaz: ${ustazName} (${jamiaName})\n\nKitni raqam ${actionText} karni hai?`);
-            
-            if(val === null || val.trim() === "") return;
-            let amountVal = parseFloat(val);
-            if (isNaN(amountVal) || amountVal <= 0) { 
-                alert("Barae Karam sahi amount darj karein!"); 
-                return; 
-            }
-            
-            // Generate invisible input to reuse submitEntry safe logic
-            let tempInput = document.getElementById(`amt_${docId}`);
-            let isTemp = false;
-            if(!tempInput) { 
-                tempInput = document.createElement('input');
-                tempInput.id = `amt_${docId}`;
-                document.body.appendChild(tempInput);
-                isTemp = true;
-            }
-            tempInput.value = amountVal;
-            
-            submitEntry(action, docId, collectionName, jamiaName, ustazName).then(() => {
-                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
-            }).catch(() => {
-                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
-            });
-        }
 
         // ==========================================
         // TABLE REPORT GENERATOR LOGIC (Class Tab)
@@ -665,7 +636,7 @@
                 
                 let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
                 
-                let headerHtml = `<th>Teacher Name</th><th>Jamia</th>`;
+                let headerHtml = `<th>Ustad Name</th><th>Jamia</th><th>Class</th>`;
                 sortedDates.forEach(date => {
                     headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
                 });
@@ -675,11 +646,13 @@
                 let bodyHtml = "";
                 allCurrentRecords.forEach(teacher => {
                     const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
-                    const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.mobileNo||'').toLowerCase()}`;
+                    const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
+                    const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
                     
                     bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
-                        <td class="text-slate-500 text-xs truncate max-w-[120px]">${teacher.jamiaName}</td>`;
+                        <td class="text-slate-500 text-xs truncate max-w-[120px]">${teacher.jamiaName}</td>
+                        <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap">${classWithSection || '-'}</td>`;
                     
                     sortedDates.forEach(date => {
                         let dateAmount = 0;
@@ -767,7 +740,9 @@
                     timestamp: dateObj 
                 });
                 
-                setTimeout(generateTableView, 1000);
+                // Refresh views
+                if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
+                
                 alert("Date Total successfully update ho gaya!");
                 
             } catch(e) {
@@ -806,22 +781,20 @@
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerms = e.target.value.toLowerCase().trim().split(/\s+/);
             
-            // Search in Cards and Mere Asatiza Table Row
+            // Search in Cards
             const cards = document.querySelectorAll('.jamia-card');
-            let anyVisibleCard = false;
             cards.forEach(card => {
                 const cardText = card.getAttribute('data-search') || "";
                 const isMatch = searchTerms.every(term => cardText.includes(term));
-                if (isMatch) { card.classList.remove('hidden'); anyVisibleCard = true; } else { card.classList.add('hidden'); }
+                if (isMatch) card.classList.remove('hidden'); else card.classList.add('hidden');
             });
 
-            // Search in Class Table Rows
+            // Search in All Table Rows
             const tableRows = document.querySelectorAll('.table-row-item');
-            let anyVisibleRow = false;
             tableRows.forEach(row => {
                 const rowText = row.getAttribute('data-search') || "";
                 const isMatch = searchTerms.every(term => rowText.includes(term));
-                if (isMatch) { row.classList.remove('hidden'); anyVisibleRow = true; } else { row.classList.add('hidden'); }
+                if (isMatch) row.classList.remove('hidden'); else row.classList.add('hidden');
             });
 
             // Show/Hide No Results State Based on Active View
@@ -832,28 +805,32 @@
             let hasData = false;
             
             if(isTableView) {
-                hasResults = anyVisibleRow;
-                hasData = tableRows.length > 0;
+                const visibleRows = document.querySelectorAll('#reportTableBody .table-row-item:not(.hidden)');
+                hasResults = visibleRows.length > 0;
+                hasData = document.querySelectorAll('#reportTableBody .table-row-item').length > 0;
+                
+                const reportTable = document.getElementById('reportTable');
+                if (reportTable) {
+                    if (!hasResults && searchTerms[0] !== "") reportTable.classList.add('hidden');
+                    else reportTable.classList.remove('hidden');
+                }
             } else if (isMyTeachersView) {
-                const myCards = document.querySelectorAll('#myTeachersList .jamia-card');
-                hasData = myCards.length > 0;
-                hasResults = Array.from(myCards).some(c => !c.classList.contains('hidden'));
+                const visibleRows = document.querySelectorAll('#myTeachersTableBody .table-row-item:not(.hidden)');
+                hasResults = visibleRows.length > 0;
+                hasData = document.querySelectorAll('#myTeachersTableBody .table-row-item').length > 0;
+                
+                const reportTable = document.getElementById('myTeachersReportTable');
+                if (reportTable) {
+                    if (!hasResults && searchTerms[0] !== "") reportTable.classList.add('hidden');
+                    else reportTable.classList.remove('hidden');
+                }
             } else {
-                const classCards = document.querySelectorAll('#jamiaList .jamia-card');
-                hasData = classCards.length > 0;
-                hasResults = Array.from(classCards).some(c => !c.classList.contains('hidden'));
+                const visibleCards = document.querySelectorAll('#jamiaList .jamia-card:not(.hidden)');
+                hasData = document.querySelectorAll('#jamiaList .jamia-card').length > 0;
+                hasResults = visibleCards.length > 0;
             }
             
             document.getElementById('noResultsState').classList.toggle('hidden', hasResults || !hasData);
-            
-            const reportTable = document.getElementById('reportTable');
-            if (reportTable) {
-                if (isTableView && !anyVisibleRow && searchTerms[0] !== "") {
-                    reportTable.classList.add('hidden');
-                } else {
-                    reportTable.classList.remove('hidden');
-                }
-            }
         });
 
         // ==========================================
