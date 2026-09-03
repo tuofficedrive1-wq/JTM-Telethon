@@ -63,7 +63,7 @@
         #historyContent::-webkit-scrollbar-thumb, .table-scroll::-webkit-scrollbar-thumb { background: #C7CBE0; border-radius: 10px; }
         
         table th { position: sticky; top: 0; z-index: 10; background-color: #F8FAFC; }
-        table td, table th { padding: 12px 16px; border-bottom: 1px solid #E2E8F0; }
+        table td, table th { padding: 12px 14px; border-bottom: 1px solid #E2E8F0; }
         table tr:last-child td { border-bottom: none; }
     </style>
 </head>
@@ -179,12 +179,10 @@
                     <div class="table-scroll overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="reportTable">
                             <thead>
-                                <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100">
-                                    <!-- Dynamic Columns -->
-                                </tr>
+                                <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100"></tr>
                             </thead>
                             <tbody id="reportTableBody" class="text-[13px] font-medium text-slate-700">
-                                <tr><td colspan="4" class="text-center p-8 text-slate-400">Loading data...</td></tr>
+                                <tr><td colspan="5" class="text-center p-8 text-slate-400">Loading data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -194,24 +192,26 @@
             <!-- TAB 3: MERE ASATIZA (Zimmedar Wise Date Table) -->
             <div id="myTeachersList" class="hidden pb-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
+                    
+                    <!-- Header with Title, Region & State, and PDF Download Button -->
+                    <div class="bg-indigo-50/70 p-4 border-b border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                            <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Aapke Asatiza Report</span>
-                            <span class="text-[10px] text-slate-500 block">Edit karne ke liye date amount par click karein</span>
+                            <h2 class="text-base sm:text-lg font-bold font-display text-indigo-900 uppercase tracking-wide">Telethon 2026 Report</h2>
+                            <p class="text-xs font-semibold text-slate-600 mt-0.5" id="myTeachersRegionStateText">Region & State: Loading...</p>
                         </div>
-                        <button id="pdfBtn" onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-[11px] font-bold shadow-sm transition flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> PDF
+                        <button id="pdfBtn" onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition flex items-center gap-1.5 self-end sm:self-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download PDF
                         </button>
                     </div>
+
                     <div class="table-scroll overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="myTeachersReportTable">
                             <thead>
-                                <tr id="myTeachersTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100">
-                                    <!-- Dynamic Columns -->
-                                </tr>
+                                <tr id="myTeachersTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100"></tr>
                             </thead>
                             <tbody id="myTeachersTableBody" class="text-[13px] font-medium text-slate-700">
-                                <tr><td colspan="4" class="text-center p-8 text-slate-400">Loading data...</td></tr>
+                                <tr><td colspan="5" class="text-center p-8 text-slate-400">Loading data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -256,9 +256,16 @@
         let unsubCustom = null;
         let unsubMyStandard = null;
         let allCurrentRecords = []; 
+
+        // PDF Data Cache
+        let globalMyTeachersRecords = [];
+        let globalSortedDates = [];
+        let globalUstadDateMap = {};
+        let globalRegionStateStr = "";
+
         const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-        // DATABASE MAPPING: Taaki Jamia Name se pata chale Zimmedar kon hai
+        // DATABASE MAPPING: Jamia se Zimmedar Mapping[cite: 2]
         const zimmedarList = {
             "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
             "BALAGHAT": "Akmal Kamal Madani", "BHOPAL": "Akmal Kamal Madani", "DEWAS": "Akmal Kamal Madani", "INDORE": "Akmal Kamal Madani", "JABALPUR": "Akmal Kamal Madani", "JABALPUR BYPASS": "Akmal Kamal Madani", "KATNI": "Akmal Kamal Madani", "MANDSAUR": "Akmal Kamal Madani",
@@ -290,28 +297,109 @@
         }
         function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 8); } catch (e) {} }
 
-        // PDF Download Function
+        // ==========================================
+        // PDF DOWNLOAD WITH REPEATING HEADER ON EVERY PAGE
+        // ==========================================
         function downloadPDF() {
+            if (!globalMyTeachersRecords || globalMyTeachersRecords.length === 0) {
+                alert("Download karne ke liye koi data nahi hai!");
+                return;
+            }
             vibrate(10);
             const btn = document.getElementById('pdfBtn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> WAIT...`;
+            btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Generating PDF...`;
             btn.disabled = true;
 
-            const element = document.getElementById('myTeachersReportTable');
+            const printContainer = document.createElement('div');
+            printContainer.id = 'printContainerWrapper';
+            printContainer.style.background = '#ffffff';
+            printContainer.style.color = '#0f172a';
+            printContainer.style.fontFamily = "'Roboto', sans-serif";
+
+            // Rows per page (landscape mode ke liye perfect count)
+            const rowsPerPage = 17;
+            const totalPages = Math.ceil(globalMyTeachersRecords.length / rowsPerPage) || 1;
+
+            let fullHtml = "";
+
+            for (let p = 0; p < totalPages; p++) {
+                const chunk = globalMyTeachersRecords.slice(p * rowsPerPage, (p + 1) * rowsPerPage);
+                const isLast = p === totalPages - 1;
+
+                fullHtml += `
+                <div style="padding: 22px 24px; background: #fff; ${!isLast ? 'page-break-after: always;' : ''}">
+                    <!-- Title & Header on Every Page -->
+                    <div style="text-align: center; margin-bottom: 14px; border-bottom: 2px solid #4f46e5; padding-bottom: 8px;">
+                        <h1 style="font-size: 19px; font-weight: 800; color: #312e81; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Telethon 2026 Report</h1>
+                        <div style="font-size: 11px; font-weight: 700; color: #475569; margin-top: 4px;">
+                            ${globalRegionStateStr ? globalRegionStateStr : 'All Regions & States'}
+                        </div>
+                        <div style="font-size: 10px; font-weight: 600; color: #4f46e5; margin-top: 2px;">
+                            Zimmedar: ${currentZimmedar ? currentZimmedar.ustazName : 'Zimmedar'} &bull; Page ${p + 1} of ${totalPages}
+                        </div>
+                    </div>
+
+                    <!-- Table with Heading on Every Page -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: left;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9; color: #334155; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; border-bottom: 2px solid #cbd5e1;">
+                                <th style="padding: 6px 8px; text-align: center; border: 1px solid #cbd5e1; width: 35px;">Sr.</th>
+                                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Jamia</th>
+                                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Ustad Name</th>
+                                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Class</th>
+                                ${globalSortedDates.map(d => `<th style="padding: 6px 8px; text-align: center; border: 1px solid #cbd5e1; background-color: #eef2ff; color: #3730a3;">${d}</th>`).join('')}
+                                <th style="padding: 6px 8px; text-align: right; border: 1px solid #cbd5e1; background-color: #ecfdf5; color: #047857;">Grand Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${chunk.map((teacher, idx) => {
+                                const srNum = (p * rowsPerPage) + idx + 1;
+                                const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
+                                const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
+
+                                return `
+                                <tr style="border-bottom: 1px solid #e2e8f0; ${idx % 2 === 1 ? 'background-color: #f8fafc;' : ''}">
+                                    <td style="padding: 6px 8px; text-align: center; font-weight: bold; color: #64748b; border: 1px solid #cbd5e1;">${srNum}</td>
+                                    <td style="padding: 6px 8px; font-weight: 700; color: #1e293b; border: 1px solid #cbd5e1; text-transform: uppercase;">${teacher.jamiaName || '-'}</td>
+                                    <td style="padding: 6px 8px; font-weight: 600; color: #334155; border: 1px solid #cbd5e1;">${teacher.ustazName || '-'}</td>
+                                    <td style="padding: 6px 8px; font-weight: 600; color: #4f46e5; border: 1px solid #cbd5e1; white-space: nowrap;">${classWithSection || '-'}</td>
+                                    ${globalSortedDates.map(date => {
+                                        let dateAmt = (globalUstadDateMap[teacher.id] && globalUstadDateMap[teacher.id][date]) || 0;
+                                        let display = dateAmt === 0 ? '-' : `₹${dateAmt.toLocaleString('en-IN')}`;
+                                        let color = dateAmt > 0 ? '#4338ca' : (dateAmt < 0 ? '#e11d48' : '#94a3b8');
+                                        return `<td style="padding: 6px 8px; text-align: center; font-weight: ${dateAmt !== 0 ? '700' : 'normal'}; color: ${color}; border: 1px solid #cbd5e1;">${display}</td>`;
+                                    }).join('')}
+                                    <td style="padding: 6px 8px; text-align: right; font-weight: 800; color: #059669; background-color: #f0fdf4; border: 1px solid #cbd5e1;">₹${grandTotal.toLocaleString('en-IN')}</td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                `;
+            }
+
+            printContainer.innerHTML = fullHtml;
+            document.body.appendChild(printContainer);
+
+            const zName = (currentZimmedar ? currentZimmedar.ustazName : 'Zimmedar').replace(/\s+/g, '_');
             const opt = {
-                margin:       0.3,
-                filename:     'Mere_Asatiza_Report.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'a3', orientation: 'landscape' }
+                margin: 0.2,
+                filename: `Telethon_2026_Report_${zName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
+                pagebreak: { mode: ['css', 'legacy'] }
             };
 
-            html2pdf().set(opt).from(element).save().then(() => {
+            html2pdf().set(opt).from(printContainer).save().then(() => {
+                document.body.removeChild(printContainer);
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }).catch(err => {
-                alert("PDF Download nahi ho saka: " + err.message);
+                alert("PDF Generate nahi ho saka: " + err.message);
+                if (document.body.contains(printContainer)) document.body.removeChild(printContainer);
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             });
@@ -344,7 +432,6 @@
                 }
             });
             
-            // Re-trigger search to keep filters applied
             document.getElementById('searchInput').dispatchEvent(new Event('input'));
         }
 
@@ -380,7 +467,7 @@
                     document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
                     
                     loadJamias(currentZimmedar.assignedClass);
-                    loadMyTeachers(currentZimmedar.ustazName); // Load My Teachers List
+                    loadMyTeachers(currentZimmedar.ustazName);
                 } else { auth.signOut(); }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden');
@@ -421,7 +508,7 @@
                         <div class="flex-1 leading-tight min-w-0">
                             <div class="flex justify-between items-start gap-2">
                                 <h2 class="text-[15px] sm:text-base font-display font-bold text-indigo-700 uppercase tracking-wide truncate mt-0.5">${data.ustazName}</h2>
-                                <div class="text-right shrink-0 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 shadow-sm">
+                                <div class="text-right shrink-0 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 shadow-sm">
                                     <span class="text-[9px] uppercase font-bold text-emerald-500 block leading-none mb-0.5 tracking-wider">Total</span>
                                     <span class="text-[14px] font-display font-extrabold text-emerald-700 leading-none tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</span>
                                 </div>
@@ -457,11 +544,9 @@
                         <button onclick="openTeacherHistory('${docId}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100 active:scale-95 transition">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> History
                         </button>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
-                            </button>
-                        </div>
+                        <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
+                        </button>
                     </div>
                 </div>
             `;
@@ -514,7 +599,6 @@
                     listDiv.appendChild(card);
                 });
                 
-                // Regenerate the Class Table Data
                 generateTableView();
             };
 
@@ -537,7 +621,7 @@
         }
 
         // ==========================================
-        // LOAD MERE ASATIZA (ZIMMEDAR WISE DATE TABLE)
+        // LOAD MERE ASATIZA (SORTED BY JAMIA NAME)
         // ==========================================
         function loadMyTeachers(zimmedarName) {
             if(unsubMyStandard) unsubMyStandard();
@@ -558,11 +642,34 @@
                 
                 if (records.length === 0) {
                     tableHeader.innerHTML = `<tr><th class="p-3 border-b text-center text-slate-400">Koi record nahi mila</th></tr>`;
-                    tableBody.innerHTML = `<tr><td colspan="10" class="text-center p-10 text-slate-500 font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-10 text-slate-500 font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</td></tr>`;
+                    document.getElementById('myTeachersRegionStateText').innerText = "Region & State: -";
                     return;
                 }
 
-                records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
+                // SORT BY JAMIA NAME (Alphabetically)
+                records.sort((a, b) => {
+                    let jCompare = (a.jamiaName || "").localeCompare(b.jamiaName || "");
+                    if (jCompare !== 0) return jCompare;
+                    return (a.ustazName || "").localeCompare(b.ustazName || "");
+                });
+
+                // Extract Unique Region & State for Subtitle
+                let regions = [...new Set(records.map(r => r.region).filter(Boolean))];
+                let states = [...new Set(records.map(r => r.state).filter(Boolean))];
+                let regionStateStr = "";
+                if (regions.length > 0 && states.length > 0) {
+                    regionStateStr = `Region: ${regions.join(', ')} | State: ${states.join(', ')}`;
+                } else if (regions.length > 0) {
+                    regionStateStr = `Region: ${regions.join(', ')}`;
+                } else if (states.length > 0) {
+                    regionStateStr = `State: ${states.join(', ')}`;
+                } else {
+                    regionStateStr = "Region & State: -";
+                }
+                
+                globalRegionStateStr = regionStateStr;
+                document.getElementById('myTeachersRegionStateText').innerText = regionStateStr;
                 
                 try {
                     const historySnap = await db.collection('entries_history').get();
@@ -593,7 +700,13 @@
                     
                     let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
                     
-                    let headerHtml = `<th>Ustad Name</th><th>Jamia</th><th>Class</th>`;
+                    // Cache global variables for PDF Generator
+                    globalMyTeachersRecords = records;
+                    globalSortedDates = sortedDates;
+                    globalUstadDateMap = ustadDateMap;
+
+                    // Table Header: Sr. -> Jamia -> Ustad Name -> Class -> Dates -> Total
+                    let headerHtml = `<th class="text-center w-12">Sr.</th><th>Jamia</th><th>Ustad Name</th><th>Class</th>`;
                     sortedDates.forEach(date => {
                         headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
                     });
@@ -601,15 +714,16 @@
                     tableHeader.innerHTML = headerHtml;
                     
                     let bodyHtml = "";
-                    records.forEach(teacher => {
+                    records.forEach((teacher, idx) => {
                         const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
                         const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
                         const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
                         
                         bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
-                            <td class="font-bold text-slate-800">${teacher.ustazName || '-'}</td>
-                            <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase">${teacher.jamiaName || '-'}</td>
-                            <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap">${classWithSection || '-'}</td>`;
+                            <td class="text-center font-bold text-slate-400 text-xs">${idx + 1}</td>
+                            <td class="font-bold text-slate-800 uppercase">${teacher.jamiaName || '-'}</td>
+                            <td class="font-semibold text-slate-700">${teacher.ustazName || '-'}</td>
+                            <td class="text-indigo-600 text-xs font-bold bg-indigo-50/50 whitespace-nowrap px-2">${classWithSection || '-'}</td>`;
                         
                         sortedDates.forEach(date => {
                             let dateAmount = 0;
@@ -617,13 +731,14 @@
                                 dateAmount = ustadDateMap[teacher.id][date];
                             }
                             
-                            let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount}`;
+                            let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount.toLocaleString('en-IN')}`;
                             let colorClass = dateAmount > 0 ? 'text-indigo-600 font-bold' : (dateAmount < 0 ? 'text-rose-500 font-bold' : 'text-slate-300');
                             
-                            bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
+                            bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                         });
                         
-                        bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20">₹${grandTotal.toLocaleString('en-IN')}</td>
+                        // Grand Total: Locked (No edit prompt)
+                        bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</td>
                         </tr>`;
                     });
                     
@@ -631,11 +746,10 @@
 
                 } catch (err) {
                     console.error(err);
-                    tableBody.innerHTML = `<tr><td colspan="10" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
                 }
             });
         }
-
 
         // ==========================================
         // TABLE REPORT GENERATOR LOGIC (Class Tab)
@@ -644,7 +758,7 @@
             const tableBody = document.getElementById('reportTableBody');
             const tableHeader = document.getElementById('reportTableHeader');
             
-            tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div><br><span class="text-slate-500 font-medium">History load ho rahi hai...</span></td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8"><div class="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div><br><span class="text-slate-500 font-medium">History load ho rahi hai...</span></td></tr>`;
             
             try {
                 const historySnap = await db.collection('entries_history').get();
@@ -675,7 +789,7 @@
                 
                 let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
                 
-                let headerHtml = `<th>Ustad Name</th><th>Jamia</th><th>Class</th>`;
+                let headerHtml = `<th class="text-center w-12">Sr.</th><th>Ustad Name</th><th>Jamia</th><th>Class</th>`;
                 sortedDates.forEach(date => {
                     headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
                 });
@@ -683,12 +797,13 @@
                 tableHeader.innerHTML = headerHtml;
                 
                 let bodyHtml = "";
-                allCurrentRecords.forEach(teacher => {
+                allCurrentRecords.forEach((teacher, idx) => {
                     const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
                     const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
                     const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
                     
                     bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
+                        <td class="text-center font-bold text-slate-400 text-xs">${idx + 1}</td>
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
                         <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase">${teacher.jamiaName}</td>
                         <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap">${classWithSection || '-'}</td>`;
@@ -699,30 +814,31 @@
                             dateAmount = ustadDateMap[teacher.id][date];
                         }
                         
-                        let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount}`;
+                        let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount.toLocaleString('en-IN')}`;
                         let colorClass = dateAmount > 0 ? 'text-indigo-600 font-bold' : (dateAmount < 0 ? 'text-rose-500 font-bold' : 'text-slate-300');
                         
                         bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                     });
                     
-                    bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20">₹${grandTotal.toLocaleString('en-IN')}</td>
+                    // Grand Total: Locked (No edit prompt)
+                    bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</td>
                     </tr>`;
                 });
                 
                 if(allCurrentRecords.length === 0) {
-                    bodyHtml = `<tr><td colspan="${sortedDates.length + 3}" class="text-center p-8 text-slate-400">Koi record nahi mila.</td></tr>`;
+                    bodyHtml = `<tr><td colspan="${sortedDates.length + 4}" class="text-center p-8 text-slate-400">Koi record nahi mila.</td></tr>`;
                 }
                 
                 tableBody.innerHTML = bodyHtml;
 
             } catch (err) {
                 console.error(err);
-                tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
             }
         }
 
         // ==========================================
-        // EDIT SPECIFIC DATE
+        // EDIT SPECIFIC DATE ONLY (AUTO UPDATES TOTAL)
         // ==========================================
         window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
             vibrate(10);
@@ -779,9 +895,7 @@
                     timestamp: dateObj 
                 });
                 
-                // Refresh views
                 if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
-                
                 alert("Date Total successfully update ho gaya!");
                 
             } catch(e) {
@@ -795,7 +909,6 @@
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerms = e.target.value.toLowerCase().trim().split(/\s+/);
             
-            // Search in Cards
             const cards = document.querySelectorAll('.jamia-card');
             cards.forEach(card => {
                 const cardText = card.getAttribute('data-search') || "";
@@ -803,7 +916,6 @@
                 if (isMatch) card.classList.remove('hidden'); else card.classList.add('hidden');
             });
 
-            // Search in All Table Rows
             const tableRows = document.querySelectorAll('.table-row-item');
             tableRows.forEach(row => {
                 const rowText = row.getAttribute('data-search') || "";
@@ -811,7 +923,6 @@
                 if (isMatch) row.classList.remove('hidden'); else row.classList.add('hidden');
             });
 
-            // Show/Hide No Results State Based on Active View
             const isTableView = !document.getElementById('tableView').classList.contains('hidden');
             const isMyTeachersView = !document.getElementById('myTeachersList').classList.contains('hidden');
             
@@ -848,7 +959,7 @@
         });
 
         // ==========================================
-        // SUBMIT ENTRY LOGIC
+        // SUBMIT ENTRY LOGIC (Locked Grand Total overwrite)
         // ==========================================
         window.submitEntry = async function(action, docId, collectionName, jamiaName, ustazName) {
             vibrate(10); 
@@ -861,11 +972,8 @@
             }
 
             let confirmMsg = ""; 
-            
             if (action === 'add') { 
                 confirmMsg = `Kya aap ${ustazName} (${jamiaName}) ke account mein ₹${amountVal} PLUS (+) karna chahte hain?`; 
-            } else if (action === 'set') { 
-                confirmMsg = `Kya aap ${ustazName} ka TOTAL amount ₹${amountVal} fix karna chahte hain?\n(Purana amount overwrite ho jayega)`; 
             } else if (action === 'minus') { 
                 confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`; 
             }
@@ -895,13 +1003,6 @@
                         daily_amount: currentDaily + amountVal,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp() 
                     };
-                } else if (action === 'set') { 
-                    updatePayload = { 
-                        amount: amountVal, 
-                        total_amount: amountVal,
-                        daily_amount: amountVal, 
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    };
                 } else if (action === 'minus') { 
                     updatePayload = { 
                         amount: currentTotal - amountVal, 
@@ -924,7 +1025,6 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp() 
                 });
                 
-                // Clear all input fields for this docId
                 const inputs = document.querySelectorAll(`input[id="amt_${docId}"]`);
                 inputs.forEach(inp => inp.value = "");
                 
@@ -947,7 +1047,6 @@
             content.innerHTML = `<div class="space-y-3"><div class="h-20 rounded-2xl skeleton"></div><div class="h-20 rounded-2xl skeleton"></div><div class="h-20 rounded-2xl skeleton"></div></div>`;
 
             try {
-                // YAHAN FIX HAI: sirf asatizaId se query kiya
                 const snapshot = await db.collection('entries_history').where('asatizaId', '==', docId).get();
                 let records = []; snapshot.forEach(doc => { const data = doc.data(); if(data.timestamp) records.push(data); });
                 records.sort((a,b) => b.timestamp.toDate() - a.timestamp.toDate());
@@ -970,9 +1069,8 @@
                     groupedByDate[date].items.forEach(item => {
                         const timeStr = item.timestamp.toDate().toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'});
                         let actionText = ""; let iconBg = ""; let iconPath = ""; let textColor = ""; const amt = item.amountVal || 0;
-                        if(item.actionType === 'add') { actionText = `+₹${amt}`; iconBg = "bg-emerald-100 text-emerald-600"; textColor = "text-emerald-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>'; } 
-                        else if(item.actionType === 'set') { actionText = `Set ₹${amt}`; iconBg = "bg-sky-100 text-sky-600"; textColor = "text-sky-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>'; } 
-                        else if(item.actionType === 'minus') { actionText = `-₹${amt}`; iconBg = "bg-rose-100 text-rose-600"; textColor = "text-rose-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/>'; }
+                        if(item.actionType === 'add') { actionText = `+₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-emerald-100 text-emerald-600"; textColor = "text-emerald-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>'; } 
+                        else if(item.actionType === 'minus') { actionText = `-₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-rose-100 text-rose-600"; textColor = "text-rose-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/>'; }
                         html += `<div class="flex items-center gap-3 text-xs p-2.5 hover:bg-slate-50 rounded-xl transition"><div class="w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg></div><div class="leading-tight flex-1 min-w-0"><div class="font-bold text-slate-800 text-[13px] truncate">${item.ustazName}</div><div class="text-slate-400 font-semibold mt-0.5">${timeStr} &bull; ${item.jamiaName}</div></div><div class="font-bold ${textColor} shrink-0 tabular-nums">${actionText}</div></div>`;
                     });
                     html += `</div></div>`;
