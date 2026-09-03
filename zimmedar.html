@@ -59,7 +59,7 @@
         #historyContent::-webkit-scrollbar, .table-scroll::-webkit-scrollbar { height: 6px; width: 5px; }
         #historyContent::-webkit-scrollbar-thumb, .table-scroll::-webkit-scrollbar-thumb { background: #C7CBE0; border-radius: 10px; }
         
-        table th { position: sticky; top: 0; z-index: 10; background-color: #EEF2FF; }
+        table th { position: sticky; top: 0; z-index: 10; background-color: #F8FAFC; }
         table td, table th { padding: 12px 16px; border-bottom: 1px solid #E2E8F0; }
         table tr:last-child td { border-bottom: none; }
     </style>
@@ -176,7 +176,7 @@
                     <div class="table-scroll overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="reportTable">
                             <thead>
-                                <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider">
+                                <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100">
                                     <th>Ustad Name</th>
                                     <th>Jamia</th>
                                     <!-- Dynamic Date Columns Will Go Here -->
@@ -191,12 +191,33 @@
                 </div>
             </div>
 
-            <!-- TAB 3: MERE ASATIZA (Zimmedar Wise) -->
-            <div id="myTeachersList" class="hidden space-y-3.5 pb-2">
-                <!-- Skeleton Loader -->
-                <div class="bg-white rounded-[22px] border border-slate-100 shadow-sm p-4 sm:p-5">
-                    <div class="flex items-center gap-3"><div class="w-14 h-14 rounded-full skeleton shrink-0"></div><div class="flex-1 space-y-2"><div class="h-3.5 w-2/3 rounded skeleton"></div><div class="h-3 w-1/2 rounded skeleton"></div></div></div>
-                    <div class="h-16 rounded-2xl skeleton mt-4"></div><div class="h-10 rounded-xl skeleton mt-4"></div>
+            <!-- TAB 3: MERE ASATIZA (Zimmedar Wise Detailed Table) -->
+            <div id="myTeachersList" class="hidden pb-2">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
+                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Aapke Asatiza Ki List</span>
+                    </div>
+                    <div class="table-scroll overflow-x-auto">
+                        <table class="w-full text-left border-collapse whitespace-nowrap min-w-[950px]">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-[11px] uppercase tracking-wider">
+                                    <th class="p-3 border-b font-bold text-center">Sr.</th>
+                                    <th class="p-3 border-b font-semibold">Photo</th>
+                                    <th class="p-3 border-b font-semibold">Ustaz Name</th>
+                                    <th class="p-3 border-b font-semibold">Jamia Name</th>
+                                    <th class="p-3 border-b font-bold text-indigo-700">Zimmedar</th>
+                                    <th class="p-3 border-b font-semibold">Region & State</th>
+                                    <th class="p-3 border-b font-semibold">Mobile No.</th>
+                                    <th class="p-3 border-b font-semibold">Darja (Class)</th>
+                                    <th class="p-3 border-b font-semibold">Date</th>
+                                    <th class="p-3 border-b font-semibold text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myTeachersTableBody" class="text-sm">
+                                <tr><td colspan="10" class="text-center p-8 text-slate-400">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -321,7 +342,6 @@
                     document.getElementById('avatarInitials').innerText = getInitials(currentZimmedar.ustazName);
                     document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
                     
-                    // Load data for both Class Tab and "Mere Asatiza" Tab
                     loadJamias(currentZimmedar.assignedClass);
                     loadMyTeachers(currentZimmedar.ustazName);
                 } else { auth.signOut(); }
@@ -332,7 +352,7 @@
         });
 
         // ==========================================
-        // CARD GENERATOR HELPER FUNCTION
+        // CARD GENERATOR HELPER FUNCTION (Class Tab)
         // ==========================================
         function createCardElement(data, idx) {
             const docId = data.id;
@@ -352,7 +372,7 @@
             const card = document.createElement('div');
             card.className = "jamia-card bg-white rounded-[22px] shadow-sm border border-slate-100 overflow-hidden animate-cardIn";
             card.style.animationDelay = (idx * 45) + "ms";
-            card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()}`);
+            card.setAttribute('data-search', `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()} ${(data.mobileNo||'').toLowerCase()}`);
 
             const secText = data.section ? ` (${data.section})` : '';
             const classDisplay = data.className + secText;
@@ -436,7 +456,6 @@
                 allCurrentRecords = records; 
 
                 if (records.length === 0) {
-                    // Update stats to 0 if nothing found
                     document.getElementById('statTeacherCount').innerText = "0";
                     document.getElementById('statTotalAmount').innerText = "₹0";
                     
@@ -485,43 +504,112 @@
         }
 
         // ==========================================
-        // LOAD MERE ASATIZA (ZIMMEDAR WISE DATA)
+        // LOAD MERE ASATIZA (ZIMMEDAR WISE DETAILED TABLE)
         // ==========================================
         function loadMyTeachers(zimmedarName) {
             if(unsubMyStandard) unsubMyStandard();
             
-            // Note: Assuming 'zimmedar' is the exact field name in your Firestore collection based on your table screenshot.
             unsubMyStandard = db.collection('asatiza_details').where("zimmedar", "==", zimmedarName).onSnapshot((snapshot) => {
-                const listDiv = document.getElementById('myTeachersList');
-                listDiv.innerHTML = "";
-                let records = [];
+                const tbody = document.getElementById('myTeachersTableBody');
+                if(!tbody) return;
                 
+                let records = [];
                 snapshot.forEach(doc => { 
                     records.push({ id: doc.id, collection: 'asatiza_details', ...doc.data() }); 
                 });
                 
                 if (records.length === 0) {
-                    listDiv.innerHTML = `
-                        <div class="text-center p-10 bg-white rounded-2xl shadow-sm border border-slate-200">
-                            <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            </div>
-                            <p class="text-slate-500 text-sm font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</p>
-                        </div>`;
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center p-10 text-slate-500 font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</td></tr>`;
                     return;
                 }
 
-                records.sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
-
+                records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
+                
+                let html = "";
                 records.forEach((data, idx) => {
-                    const card = createCardElement(data, idx);
-                    listDiv.appendChild(card);
+                    const docId = data.id;
+                    const collectionName = data.collection;
+                    
+                    const directUrl = getDirectImageUrl(data.photoUrl); 
+                    const initials = getInitials(data.ustazName);
+                    const photoHtml = directUrl 
+                        ? `<img src="${directUrl}" referrerpolicy="no-referrer" class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm">` 
+                        : `<div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs shadow-sm">${initials}</div>`;
+                    
+                    const classWithSection = data.section ? `${data.className} (${data.section})` : data.className;
+                    const dateStr = data.timestamp ? data.timestamp.toDate().toLocaleDateString('en-IN') : '-';
+
+                    const searchString = `${(data.jamiaName||'').toLowerCase()} ${(data.ustazName||'').toLowerCase()} ${(data.mobileNo||'').toLowerCase()}`;
+
+                    html += `
+                    <tr class="border-b hover:bg-slate-50 transition jamia-card" data-search="${searchString}">
+                        <td class="p-3 font-bold text-slate-500 text-xs text-center">${idx + 1}</td>
+                        <td class="p-2">${photoHtml}</td>
+                        <td class="p-3 font-semibold text-slate-800">${data.ustazName || '-'}</td>
+                        <td class="p-3 font-bold text-indigo-700 uppercase">${data.jamiaName || '-'}</td>
+                        <td class="p-3 text-sm font-bold text-slate-800">${zimmedarName}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-slate-800 text-[13px]">${data.region || '-'}</div>
+                            <div class="text-[10px] text-slate-400 uppercase tracking-wider">${data.state || '-'}</div>
+                        </td>
+                        <td class="p-3 font-bold text-emerald-600">${data.mobileNo || '-'}</td>
+                        <td class="p-3">
+                            <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap">${classWithSection || '-'}</span>
+                        </td>
+                        <td class="p-3 text-slate-500 text-xs">${dateStr}</td>
+                        <td class="p-3 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="quickActionPrompt('add', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="text-emerald-600 bg-emerald-50 hover:bg-emerald-100 p-1.5 rounded-md transition border border-emerald-100" title="Add Amount">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                </button>
+                                <button onclick="quickActionPrompt('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="text-rose-600 bg-rose-50 hover:bg-rose-100 p-1.5 rounded-md transition border border-rose-100" title="Minus Amount">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg>
+                                </button>
+                                <button onclick="openTeacherHistory('${docId}', '${escapeStr(data.ustazName)}')" class="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded-md transition border border-indigo-100" title="History">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    `;
                 });
+                tbody.innerHTML = html;
+            });
+        }
+
+        // Wrapper function so Zimmedar can easily add/minus money from Table UI
+        window.quickActionPrompt = function(action, docId, collectionName, jamiaName, ustazName) {
+            vibrate(10);
+            let actionText = action === 'add' ? 'ADD (+)' : 'MINUS (-)';
+            let val = prompt(`Ustaz: ${ustazName} (${jamiaName})\n\nKitni raqam ${actionText} karni hai?`);
+            
+            if(val === null || val.trim() === "") return;
+            let amountVal = parseFloat(val);
+            if (isNaN(amountVal) || amountVal <= 0) { 
+                alert("Barae Karam sahi amount darj karein!"); 
+                return; 
+            }
+            
+            // Generate invisible input to reuse submitEntry safe logic
+            let tempInput = document.getElementById(`amt_${docId}`);
+            let isTemp = false;
+            if(!tempInput) { 
+                tempInput = document.createElement('input');
+                tempInput.id = `amt_${docId}`;
+                document.body.appendChild(tempInput);
+                isTemp = true;
+            }
+            tempInput.value = amountVal;
+            
+            submitEntry(action, docId, collectionName, jamiaName, ustazName).then(() => {
+                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
+            }).catch(() => {
+                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
             });
         }
 
         // ==========================================
-        // TABLE REPORT GENERATOR LOGIC
+        // TABLE REPORT GENERATOR LOGIC (Class Tab)
         // ==========================================
         async function generateTableView() {
             const tableBody = document.getElementById('reportTableBody');
@@ -564,7 +652,7 @@
                 let bodyHtml = "";
                 allCurrentRecords.forEach(teacher => {
                     const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
-                    const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()}`;
+                    const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.mobileNo||'').toLowerCase()}`;
                     
                     bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
@@ -599,7 +687,7 @@
         }
 
         // ==========================================
-        // EDIT SPECIFIC DATE (FIXED)
+        // EDIT SPECIFIC DATE
         // ==========================================
         window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
             vibrate(10);
@@ -673,16 +761,20 @@
             if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
             
             let tempInput = document.getElementById(`amt_${docId}`);
+            let isTemp = false;
             if(!tempInput) { 
                 tempInput = document.createElement('input');
                 tempInput.id = `amt_${docId}`;
                 document.body.appendChild(tempInput);
+                isTemp = true;
             }
             tempInput.value = newAmount;
             
-            submitEntry('set', docId, collectionName, jamiaName, ustazName);
-            
-            if(tempInput.parentNode === document.body) document.body.removeChild(tempInput);
+            submitEntry('set', docId, collectionName, jamiaName, ustazName).then(() => {
+                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
+            }).catch(() => {
+                if(isTemp && tempInput.parentNode) document.body.removeChild(tempInput);
+            });
         };
 
         // ==========================================
@@ -691,7 +783,7 @@
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerms = e.target.value.toLowerCase().trim().split(/\s+/);
             
-            // Search in Cards (both views)
+            // Search in Cards and Mere Asatiza Table Row
             const cards = document.querySelectorAll('.jamia-card');
             let anyVisibleCard = false;
             cards.forEach(card => {
@@ -700,7 +792,7 @@
                 if (isMatch) { card.classList.remove('hidden'); anyVisibleCard = true; } else { card.classList.add('hidden'); }
             });
 
-            // Search in Table Rows
+            // Search in Class Table Rows
             const tableRows = document.querySelectorAll('.table-row-item');
             let anyVisibleRow = false;
             tableRows.forEach(row => {
@@ -720,12 +812,10 @@
                 hasResults = anyVisibleRow;
                 hasData = tableRows.length > 0;
             } else if (isMyTeachersView) {
-                // Look only at cards inside myTeachersList
                 const myCards = document.querySelectorAll('#myTeachersList .jamia-card');
                 hasData = myCards.length > 0;
                 hasResults = Array.from(myCards).some(c => !c.classList.contains('hidden'));
             } else {
-                // Class Cards View
                 const classCards = document.querySelectorAll('#jamiaList .jamia-card');
                 hasData = classCards.length > 0;
                 hasResults = Array.from(classCards).some(c => !c.classList.contains('hidden'));
@@ -766,7 +856,7 @@
                 confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`; 
             }
 
-            if (!confirm(confirmMsg)) return;
+            if (!confirm(confirmMsg)) throw new Error("User Cancelled");
 
             try {
                 const docRef = db.collection(collectionName).doc(docId);
@@ -820,7 +910,7 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp() 
                 });
                 
-                // Clear all input fields for this docId (since it might exist in both Class and MyTeachers tabs)
+                // Clear all input fields for this docId
                 const inputs = document.querySelectorAll(`input[id="amt_${docId}"]`);
                 inputs.forEach(inp => inp.value = "");
                 
@@ -828,9 +918,11 @@
                     setTimeout(generateTableView, 1000);
                 }
                 
+                return true;
             } catch (error) { 
                 console.error(error); 
                 alert("Entry save nahi hui, Barae Karam internet check karein."); 
+                throw error;
             }
         };
 
