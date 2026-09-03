@@ -543,64 +543,74 @@
             }
         }
 
-        // Edit Date Total from Table (Calculates difference and adds a correction entry)
-        window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
-            vibrate(10);
-            let input = prompt(`Ustaz: ${ustazName}\nDate: ${dateStr}\n\nIs date ka naya total amount darj karein:`, oldAmount || 0);
-            if(input === null || input.trim() === "") return;
-            
-            let newAmount = parseFloat(input);
-            if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
-            
-            let diff = newAmount - oldAmount;
-            if(diff === 0) return; // No change
-            
-            let action = diff > 0 ? 'add' : 'minus';
-            let finalDiff = Math.abs(diff);
-            
-            let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
-            if(!confirm(confirmMsg)) return;
-            
-            try {
-                // Update Main Total
-                const docRef = db.collection(collectionName).doc(docId);
-                const docSnap = await docRef.get();
-                if (!docSnap.exists) { alert("Record nahi mila!"); return; }
-                const data = docSnap.data();
-                
-                let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
-                let currentDaily = parseFloat(data.daily_amount) || 0;
-                
-                let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
-                let newDaily = action === 'add' ? (currentDaily + finalDiff) : (currentDaily - finalDiff);
-                
-                await docRef.update({
-                    amount: newTotal,
-                    total_amount: newTotal,
-                    daily_amount: newDaily,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                await db.collection('entries_history').add({ 
-                    asatizaId: docId, 
-                    collectionName: collectionName, 
-                    jamiaName: jamiaName, 
-                    ustazName: ustazName, 
-                    actionType: action, 
-                    amountVal: finalDiff, 
-                    zimmedarUid: auth.currentUser.uid, 
-                    note: `Manual Correction for ${dateStr}`,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-                });
-                
-                // regenerate table automatically
-                setTimeout(generateTableView, 1000);
-                alert("Date Total successfully update ho gaya!");
-                
-            } catch(e) {
-                console.error(e); alert("Update nahi ho saka. Internet check karein.");
-            }
-        };
+       // Edit Date Total from Table (Calculates difference and adds a correction entry)
+window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
+    vibrate(10);
+    let input = prompt(`Ustaz: ${ustazName}\nDate: ${dateStr}\n\nIs date ka naya total amount darj karein:`, oldAmount || 0);
+    if(input === null || input.trim() === "") return;
+    
+    let newAmount = parseFloat(input);
+    if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
+    
+    let diff = newAmount - oldAmount;
+    if(diff === 0) return; // No change
+    
+    let action = diff > 0 ? 'add' : 'minus';
+    let finalDiff = Math.abs(diff);
+    
+    let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
+    if(!confirm(confirmMsg)) return;
+    
+    try {
+        // Update Main Total
+        const docRef = db.collection(collectionName).doc(docId);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) { alert("Record nahi mila!"); return; }
+        const data = docSnap.data();
+        
+        let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+        let currentDaily = parseFloat(data.daily_amount) || 0;
+        
+        let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
+        
+        // Agar edit ki jane wali date aaj ki hai, sirf tabhi 'Daily Amount' update hoga
+        let todayStr = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+        let newDaily = currentDaily; 
+        if (dateStr === todayStr) {
+            newDaily = action === 'add' ? (currentDaily + finalDiff) : (currentDaily - finalDiff);
+        }
+        
+        await docRef.update({
+            amount: newTotal,
+            total_amount: newTotal,
+            daily_amount: newDaily,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // YAHAN FIX HAI: Purani date ko calculate karke history mein wohi date save karein
+        // Time 12:00:00 set kiya gaya hai taaki timezone ki wajah se din piche na chala jaye
+        let dateObj = new Date(dateStr + " 2026 12:00:00"); 
+        
+        await db.collection('entries_history').add({ 
+            asatizaId: docId, 
+            collectionName: collectionName, 
+            jamiaName: jamiaName, 
+            ustazName: ustazName, 
+            actionType: action, 
+            amountVal: finalDiff, 
+            zimmedarUid: auth.currentUser.uid, 
+            note: `Manual Correction for ${dateStr}`,
+            timestamp: dateObj // Ab aaj ka time nahi jayega, balki wo specific date save hogi
+        });
+        
+        // Regenerate table automatically
+        setTimeout(generateTableView, 1000);
+        alert("Date Total successfully update ho gaya!");
+        
+    } catch(e) {
+        console.error(e); alert("Update nahi ho saka. Internet check karein.");
+    }
+};
 
         // Edit Grand Total Prompter
         window.editGrandTotalPrompt = function(docId, collectionName, jamiaName, ustazName, currentTotal) {
