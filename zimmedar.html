@@ -533,13 +533,17 @@
                 records.sort((a, b) => (a.ustazName || "").localeCompare(b.ustazName || ""));
                 
                 try {
-                    // Fetch History for dates mapping
-                    const historySnap = await db.collection('entries_history').where('zimmedarUid', '==', auth.currentUser.uid).get();
+                    // YAHAN FIX HAI: Poori history fetch ki ja rahi hai taaki kisi ne bhi entry ki ho, wo show ho.
+                    const historySnap = await db.collection('entries_history').get();
                     
                     let allLogs = [];
+                    let validIds = new Set(records.map(r => r.id));
+                    
                     historySnap.forEach(doc => {
                         let data = doc.data();
-                        if(data.timestamp) allLogs.push({...data, logId: doc.id});
+                        if(data.timestamp && validIds.has(data.asatizaId)) {
+                            allLogs.push({...data, logId: doc.id});
+                        }
                     });
                     
                     let ustadDateMap = {};
@@ -601,7 +605,6 @@
             });
         }
 
-
         // ==========================================
         // TABLE REPORT GENERATOR LOGIC (Class Tab)
         // ==========================================
@@ -612,12 +615,17 @@
             tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8"><div class="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></div><br><span class="text-slate-500 font-medium">History load ho rahi hai...</span></td></tr>`;
             
             try {
-                const historySnap = await db.collection('entries_history').where('zimmedarUid', '==', auth.currentUser.uid).get();
+                // YAHAN FIX HAI: Poori history fetch ki ja rahi hai
+                const historySnap = await db.collection('entries_history').get();
                 
                 let allLogs = [];
+                let validIds = new Set(allCurrentRecords.map(r => r.id));
+                
                 historySnap.forEach(doc => {
                     let data = doc.data();
-                    if(data.timestamp) allLogs.push({...data, logId: doc.id});
+                    if(data.timestamp && validIds.has(data.asatizaId)) {
+                        allLogs.push({...data, logId: doc.id});
+                    }
                 });
                 
                 let ustadDateMap = {};
@@ -651,7 +659,7 @@
                     
                     bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
-                        <td class="text-slate-500 text-xs truncate max-w-[120px]">${teacher.jamiaName}</td>
+                        <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase">${teacher.jamiaName}</td>
                         <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap">${classWithSection || '-'}</td>`;
                     
                     sortedDates.forEach(date => {
@@ -933,7 +941,8 @@
             content.innerHTML = `<div class="space-y-3"><div class="h-20 rounded-2xl skeleton"></div><div class="h-20 rounded-2xl skeleton"></div><div class="h-20 rounded-2xl skeleton"></div></div>`;
 
             try {
-                const snapshot = await db.collection('entries_history').where('zimmedarUid', '==', auth.currentUser.uid).where('asatizaId', '==', docId).get();
+                // YAHAN FIX HAI: sirf asatizaId se query kiya
+                const snapshot = await db.collection('entries_history').where('asatizaId', '==', docId).get();
                 let records = []; snapshot.forEach(doc => { const data = doc.data(); if(data.timestamp) records.push(data); });
                 records.sort((a,b) => b.timestamp.toDate() - a.timestamp.toDate());
 
