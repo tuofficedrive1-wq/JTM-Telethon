@@ -379,7 +379,10 @@
                         <tbody>
                             ${chunk.map((teacher, idx) => {
                                 const srNum = (p * rowsPerPage) + idx + 1;
-                                const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
+                                let grandTotal = 0;
+if (globalUstadDateMap && globalUstadDateMap[teacher.id]) {
+    Object.values(globalUstadDateMap[teacher.id]).forEach(amt => grandTotal += amt);
+}
                                 const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
 
                                 return `
@@ -809,7 +812,10 @@
             
             let bodyHtml = "";
             globalMyTeachersRecords.forEach((teacher, idx) => {
-                const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
+                let grandTotal = 0;
+if (ustadDateMap && ustadDateMap[teacher.id]) {
+    Object.values(ustadDateMap[teacher.id]).forEach(amt => grandTotal += amt);
+}
                 const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
                 const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
                 
@@ -888,7 +894,10 @@
                 
                 let bodyHtml = "";
                 allCurrentRecords.forEach((teacher, idx) => {
-                    const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
+                   let grandTotal = 0;
+if (ustadDateMap && ustadDateMap[teacher.id]) {
+    Object.values(ustadDateMap[teacher.id]).forEach(amt => grandTotal += amt);
+}
                     const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
                     const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
                     
