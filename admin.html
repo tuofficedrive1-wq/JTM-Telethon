@@ -136,7 +136,7 @@
                     <span>Asatiza Reports & History</span>
                     <div class="flex flex-wrap gap-2 w-full xl:w-auto">
                         <!-- Teacher / Jamia Search Filter -->
-                        <input type="text" id="reportSearchFilter" onkeyup="renderReportsUI()" placeholder="Search Teacher ya Jamia..." class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto">
+                        <input type="text" id="reportSearchFilter" onkeyup="renderReportsUI()" placeholder="Search Teacher, Jamia ya Zimmedar..." class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto">
                         <!-- Date Filter -->
                         <input type="date" id="reportDateFilter" onchange="renderReportsUI()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none" title="Select Date for History">
                         <!-- Class Filter -->
@@ -869,12 +869,13 @@
             if (statusFilter === 'zero_total') processedData = processedData.filter(t => t.display_total === 0);
 
             // NAYA SEARCH FILTER YAHAN ADD KIYA GAYA HAI
-            const searchQuery = document.getElementById('reportSearchFilter') ? document.getElementById('reportSearchFilter').value.toLowerCase().trim() : '';
+                      const searchQuery = document.getElementById('reportSearchFilter') ? document.getElementById('reportSearchFilter').value.toLowerCase().trim() : '';
             if (searchQuery !== "") {
                 processedData = processedData.filter(t => {
                     const uName = (t.ustazName || "").toLowerCase();
                     const jName = (t.jamiaName || "").toLowerCase();
-                    return uName.includes(searchQuery) || jName.includes(searchQuery);
+                    const zName = (zimmedarList[t.jamiaName] || "").toLowerCase();
+                    return uName.includes(searchQuery) || jName.includes(searchQuery) || zName.includes(searchQuery);
                 });
             }
 
