@@ -637,7 +637,7 @@
         }
 
         // ==========================================
-        // LOAD MERE ASATIZA (ZIMMEDAR WISE DATE TABLE)
+        // LOAD MERE ASATIZA (SORTED BY JAMIA NAME)
         // ==========================================
         function loadMyTeachers(zimmedarName) {
             if(unsubMyStandard) unsubMyStandard();
@@ -766,7 +766,6 @@
             });
         }
 
-
         // ==========================================
         // TABLE REPORT GENERATOR LOGIC (Class Tab)
         // ==========================================
@@ -865,13 +864,6 @@
             if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
             
             let diff = newAmount - oldAmount;
-            if(diff === 0) return; 
-            
-            let action = diff > 0 ? 'add' : 'minus';
-            let finalDiff = Math.abs(diff);
-            
-            let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
-            if(!confirm(confirmMsg)) return;
             
             try {
                 const docRef = db.collection(collectionName).doc(docId);
@@ -882,13 +874,29 @@
                 let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
                 let currentDaily = parseFloat(data.daily_amount) || 0;
                 
+                let todayStrLocal = formatDateShort(new Date());
+                
+                if (diff === 0) { 
+                    // Self-healing: agar value same hai par DB mein daily_amount out-of-sync hai, toh fix karo.
+                    if (dateStr === todayStrLocal && currentDaily !== newAmount) {
+                        await docRef.update({ daily_amount: newAmount });
+                        alert("Card Sync Fix Applied!");
+                    }
+                    return; 
+                }
+                
+                let action = diff > 0 ? 'add' : 'minus';
+                let finalDiff = Math.abs(diff);
+                
+                let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
+                if(!confirm(confirmMsg)) return;
+
                 let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
                 
-                // Bulletproof Sync with Card's Daily Amount
-                let todayStr = formatDateShort(new Date());
+                // BULLETPROOF SYNC: If editing today's date, strictly force daily_amount to exactly newAmount
                 let newDaily = currentDaily; 
-                if (dateStr === todayStr) {
-                    newDaily = action === 'add' ? (currentDaily + finalDiff) : (currentDaily - finalDiff);
+                if (dateStr === todayStrLocal) {
+                    newDaily = newAmount;
                 }
                 
                 await docRef.update({
@@ -898,7 +906,6 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Robust history timestamp generation based on parsed string
                 let monthNames = {"jan":0,"feb":1,"mar":2,"apr":3,"may":4,"jun":5,"jul":6,"aug":7,"sept":8,"sep":8,"oct":9,"nov":10,"dec":11};
                 let parts = dateStr.trim().split(/\s+/);
                 let dayNum = parseInt(parts[0]) || new Date().getDate();
@@ -918,6 +925,9 @@
                     note: `Manual Correction for ${dateStr}`,
                     timestamp: dateObj 
                 });
+                
+                // Refresh views
+                if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
                 
                 alert("Date Total successfully update ho gaya!");
                 
@@ -1091,7 +1101,6 @@
                         if(item.actionType === 'add') { actionText = `+₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-emerald-100 text-emerald-600"; textColor = "text-emerald-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>'; } 
                         else if(item.actionType === 'minus') { actionText = `-₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-rose-100 text-rose-600"; textColor = "text-rose-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/>'; }
                         
-                        // Ignore 'set' items or skip showing them if they exist
                         if (actionText !== "") {
                             html += `<div class="flex items-center gap-3 text-xs p-2.5 hover:bg-slate-50 rounded-xl transition"><div class="w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg></div><div class="leading-tight flex-1 min-w-0"><div class="font-bold text-slate-800 text-[13px] truncate">${item.ustazName}</div><div class="text-slate-400 font-semibold mt-0.5">${timeStr} &bull; ${item.jamiaName}</div></div><div class="font-bold ${textColor} shrink-0 tabular-nums">${actionText}</div></div>`;
                         }
