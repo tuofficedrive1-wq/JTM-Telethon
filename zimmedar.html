@@ -506,13 +506,15 @@
         // ==========================================
         // CARD GENERATOR HELPER FUNCTION (Class Tab)
         // ==========================================
-        function createCardElement(data, idx) {
+      function createCardElement(data, idx) {
             const docId = data.id;
             const collectionName = data.collection;
-            const totalSoFar = parseFloat(data.daily_amount) || 0;
+            
+            // Yahan ab direct History ka daily aur grand total set hoga
+            const totalSoFar = data.history_daily_total !== undefined ? data.history_daily_total : (parseFloat(data.daily_amount) || 0);
             const totalUnit = (totalSoFar / 7000).toFixed(1);
             const progressPct = Math.min(100, ((totalSoFar % 7000) / 7000) * 100).toFixed(1);
-            const grandTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+            const grandTotal = data.history_grand_total !== undefined ? data.history_grand_total : (parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0);
 
             const photoSrc = getDirectImageUrl(data.photoUrl);
             const initials = getInitials(data.ustazName);
@@ -596,9 +598,8 @@
             let standardRecords = [];
             let customRecordsList = [];
 
-            const renderMerged = () => {
+           const renderMerged = async () => {
                 const listDiv = document.getElementById('jamiaList');
-                listDiv.innerHTML = "";
                 let records = [...standardRecords, ...customRecordsList];
                 allCurrentRecords = records; 
 
@@ -616,18 +617,61 @@
                     return;
                 }
 
-                records.sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
+                // Loading indicator jab tak history fetch ho
+                if (!document.querySelector('.jamia-card')) {
+                    listDiv.innerHTML = `<div class="text-center p-8 text-indigo-500 font-bold animate-pulse">Cards aur History load ho rahi hai...</div>`;
+                }
 
-                const totalCollected = records.reduce((sum, r) => sum + (parseFloat(r.daily_amount) || 0), 0);
-                document.getElementById('statTeacherCount').innerText = records.length;
-                document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
+                try {
+                    // History Database se total calculate karein
+                    const historySnap = await db.collection('entries_history').get();
+                    let todayStrLocal = formatDateShort(new Date());
+                    let historyTotals = {};
+                    
+                    records.forEach(r => { historyTotals[r.id] = { grandTotal: 0, dailyTotal: 0 }; });
 
-                records.forEach((data, idx) => {
-                    const card = createCardElement(data, idx);
-                    listDiv.appendChild(card);
-                });
-                
-                generateTableView();
+                    historySnap.forEach(doc => {
+                        let data = doc.data();
+                        if (data.timestamp && historyTotals[data.asatizaId]) {
+                            let amt = parseFloat(data.amountVal) || 0;
+                            let dateStr = data.targetDate || formatDateShort(data.timestamp.toDate());
+                            
+                            if (data.actionType === 'add') {
+                                historyTotals[data.asatizaId].grandTotal += amt;
+                                if (dateStr === todayStrLocal) historyTotals[data.asatizaId].dailyTotal += amt;
+                            } else if (data.actionType === 'minus') {
+                                historyTotals[data.asatizaId].grandTotal -= amt;
+                                if (dateStr === todayStrLocal) historyTotals[data.asatizaId].dailyTotal -= amt;
+                            }
+                        }
+                    });
+
+                    // Cards me history wale totals set karein
+                    records.forEach(r => {
+                        r.history_grand_total = historyTotals[r.id].grandTotal;
+                        r.history_daily_total = historyTotals[r.id].dailyTotal;
+                    });
+
+                    // Sorting based on History Grand Total
+                    records.sort((a, b) => b.history_grand_total - a.history_grand_total);
+
+                    // Stats Dashboard me bhi History ka Today's Total dikhayein
+                    const totalCollected = records.reduce((sum, r) => sum + r.history_daily_total, 0);
+                    document.getElementById('statTeacherCount').innerText = records.length;
+                    document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
+
+                    listDiv.innerHTML = "";
+                    records.forEach((data, idx) => {
+                        const card = createCardElement(data, idx);
+                        listDiv.appendChild(card);
+                    });
+                    
+                    generateTableView();
+
+                } catch (error) {
+                    console.error("History loading error:", error);
+                    listDiv.innerHTML = `<div class="text-center p-8 text-rose-500 font-bold">Error loading history!</div>`;
+                }
             };
 
             unsubStandard = db.collection('asatiza_details').where("className", "in", classVariants).onSnapshot((snapshot) => {
