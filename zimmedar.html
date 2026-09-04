@@ -174,15 +174,17 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="bg-indigo-50/50 p-3 border-b border-indigo-100 flex justify-between items-center">
                         <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Class Date-wise Report</span>
-                        <span class="text-[10px] text-slate-500">Edit karne ke liye amount par click karein</span>
+                        <span class="text-[10px] text-slate-500">Edit karne ke liye date amount par click karein</span>
                     </div>
                     <div class="table-scroll overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="reportTable">
                             <thead>
-                                <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100"></tr>
+                                <tr id="reportTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100">
+                                    <!-- Dynamic Columns -->
+                                </tr>
                             </thead>
                             <tbody id="reportTableBody" class="text-[13px] font-medium text-slate-700">
-                                <tr><td colspan="5" class="text-center p-8 text-slate-400">Loading data...</td></tr>
+                                <tr><td colspan="4" class="text-center p-8 text-slate-400">Loading data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -192,7 +194,6 @@
             <!-- TAB 3: MERE ASATIZA (Zimmedar Wise Date Table) -->
             <div id="myTeachersList" class="hidden pb-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    
                     <!-- Header with Title, Region & State, and PDF Download Button -->
                     <div class="bg-indigo-50/70 p-4 border-b border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
@@ -208,10 +209,12 @@
                     <div class="table-scroll overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm whitespace-nowrap min-w-[600px]" id="myTeachersReportTable">
                             <thead>
-                                <tr id="myTeachersTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100"></tr>
+                                <tr id="myTeachersTableHeader" class="text-xs text-indigo-800 uppercase font-bold tracking-wider bg-slate-100">
+                                    <!-- Dynamic Columns -->
+                                </tr>
                             </thead>
                             <tbody id="myTeachersTableBody" class="text-[13px] font-medium text-slate-700">
-                                <tr><td colspan="5" class="text-center p-8 text-slate-400">Loading data...</td></tr>
+                                <tr><td colspan="4" class="text-center p-8 text-slate-400">Loading data...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -265,7 +268,17 @@
 
         const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-        // DATABASE MAPPING: Jamia se Zimmedar Mapping[cite: 2]
+        // Date Formatter Helper: Ensure accurate standard formatting (e.g. "04 Sept")
+        function formatDateShort(dateObj) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
+            return `${dateObj.getDate().toString().padStart(2, '0')} ${months[dateObj.getMonth()]}`;
+        }
+        function formatDateLong(dateObj) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
+            return `${dateObj.getDate().toString().padStart(2, '0')} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+        }
+
+        // DATABASE MAPPING: Jamia se Zimmedar Mapping
         const zimmedarList = {
             "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
             "BALAGHAT": "Akmal Kamal Madani", "BHOPAL": "Akmal Kamal Madani", "DEWAS": "Akmal Kamal Madani", "INDORE": "Akmal Kamal Madani", "JABALPUR": "Akmal Kamal Madani", "JABALPUR BYPASS": "Akmal Kamal Madani", "KATNI": "Akmal Kamal Madani", "MANDSAUR": "Akmal Kamal Madani",
@@ -318,7 +331,7 @@
             printContainer.style.fontFamily = "'Roboto', sans-serif";
 
             // Rows per page (landscape mode ke liye perfect count)
-            const rowsPerPage = 17;
+            const rowsPerPage = 18;
             const totalPages = Math.ceil(globalMyTeachersRecords.length / rowsPerPage) || 1;
 
             let fullHtml = "";
@@ -432,6 +445,7 @@
                 }
             });
             
+            // Re-trigger search to keep filters applied
             document.getElementById('searchInput').dispatchEvent(new Event('input'));
         }
 
@@ -467,7 +481,7 @@
                     document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
                     
                     loadJamias(currentZimmedar.assignedClass);
-                    loadMyTeachers(currentZimmedar.ustazName);
+                    loadMyTeachers(currentZimmedar.ustazName); // Load My Teachers List
                 } else { auth.signOut(); }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden');
@@ -544,9 +558,11 @@
                         <button onclick="openTeacherHistory('${docId}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100 active:scale-95 transition">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> History
                         </button>
-                        <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
-                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -621,7 +637,7 @@
         }
 
         // ==========================================
-        // LOAD MERE ASATIZA (SORTED BY JAMIA NAME)
+        // LOAD MERE ASATIZA (ZIMMEDAR WISE DATE TABLE)
         // ==========================================
         function loadMyTeachers(zimmedarName) {
             if(unsubMyStandard) unsubMyStandard();
@@ -688,7 +704,7 @@
                     let uniqueDates = new Set();
                     
                     allLogs.forEach(log => {
-                        const dateStr = log.timestamp.toDate().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+                        const dateStr = formatDateShort(log.timestamp.toDate());
                         uniqueDates.add(dateStr);
                         
                         if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
@@ -705,7 +721,6 @@
                     globalSortedDates = sortedDates;
                     globalUstadDateMap = ustadDateMap;
 
-                    // Table Header: Sr. -> Jamia -> Ustad Name -> Class -> Dates -> Total
                     let headerHtml = `<th class="text-center w-12">Sr.</th><th>Jamia</th><th>Ustad Name</th><th>Class</th>`;
                     sortedDates.forEach(date => {
                         headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
@@ -737,7 +752,7 @@
                             bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                         });
                         
-                        // Grand Total: Locked (No edit prompt)
+                        // Grand Total: Locked
                         bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</td>
                         </tr>`;
                     });
@@ -750,6 +765,7 @@
                 }
             });
         }
+
 
         // ==========================================
         // TABLE REPORT GENERATOR LOGIC (Class Tab)
@@ -777,7 +793,7 @@
                 let uniqueDates = new Set();
                 
                 allLogs.forEach(log => {
-                    const dateStr = log.timestamp.toDate().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+                    const dateStr = formatDateShort(log.timestamp.toDate());
                     uniqueDates.add(dateStr);
                     
                     if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
@@ -789,7 +805,7 @@
                 
                 let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
                 
-                let headerHtml = `<th class="text-center w-12">Sr.</th><th>Ustad Name</th><th>Jamia</th><th>Class</th>`;
+                let headerHtml = `<th class="text-center w-12">Sr.</th><th>Jamia</th><th>Ustad Name</th><th>Class</th>`;
                 sortedDates.forEach(date => {
                     headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
                 });
@@ -804,9 +820,9 @@
                     
                     bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
                         <td class="text-center font-bold text-slate-400 text-xs">${idx + 1}</td>
+                        <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase font-bold">${teacher.jamiaName}</td>
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
-                        <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase">${teacher.jamiaName}</td>
-                        <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap">${classWithSection || '-'}</td>`;
+                        <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap px-2">${classWithSection || '-'}</td>`;
                     
                     sortedDates.forEach(date => {
                         let dateAmount = 0;
@@ -820,13 +836,13 @@
                         bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50/50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
                     });
                     
-                    // Grand Total: Locked (No edit prompt)
+                    // Grand Total: Locked
                     bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</td>
                     </tr>`;
                 });
                 
                 if(allCurrentRecords.length === 0) {
-                    bodyHtml = `<tr><td colspan="${sortedDates.length + 4}" class="text-center p-8 text-slate-400">Koi record nahi mila.</td></tr>`;
+                    bodyHtml = `<tr><td colspan="${sortedDates.length + 5}" class="text-center p-8 text-slate-400">Koi record nahi mila.</td></tr>`;
                 }
                 
                 tableBody.innerHTML = bodyHtml;
@@ -838,7 +854,7 @@
         }
 
         // ==========================================
-        // EDIT SPECIFIC DATE ONLY (AUTO UPDATES TOTAL)
+        // EDIT SPECIFIC DATE ONLY (AUTO UPDATES TOTAL & DAILY_AMOUNT)
         // ==========================================
         window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
             vibrate(10);
@@ -868,7 +884,8 @@
                 
                 let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
                 
-                let todayStr = new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'short'});
+                // Bulletproof Sync with Card's Daily Amount
+                let todayStr = formatDateShort(new Date());
                 let newDaily = currentDaily; 
                 if (dateStr === todayStr) {
                     newDaily = action === 'add' ? (currentDaily + finalDiff) : (currentDaily - finalDiff);
@@ -881,7 +898,14 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                let dateObj = new Date(dateStr + " 2026 12:00:00"); 
+                // Robust history timestamp generation based on parsed string
+                let monthNames = {"jan":0,"feb":1,"mar":2,"apr":3,"may":4,"jun":5,"jul":6,"aug":7,"sept":8,"sep":8,"oct":9,"nov":10,"dec":11};
+                let parts = dateStr.trim().split(/\s+/);
+                let dayNum = parseInt(parts[0]) || new Date().getDate();
+                let mStr = parts[1] ? parts[1].toLowerCase() : "";
+                let monthNum = monthNames[mStr] !== undefined ? monthNames[mStr] : new Date().getMonth();
+                
+                let dateObj = new Date(2026, monthNum, dayNum, 12, 0, 0); 
                 
                 await db.collection('entries_history').add({ 
                     asatizaId: docId, 
@@ -895,7 +919,6 @@
                     timestamp: dateObj 
                 });
                 
-                if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
                 alert("Date Total successfully update ho gaya!");
                 
             } catch(e) {
@@ -959,14 +982,14 @@
         });
 
         // ==========================================
-        // SUBMIT ENTRY LOGIC (Locked Grand Total overwrite)
+        // SUBMIT ENTRY LOGIC (Locked Grand Total)
         // ==========================================
         window.submitEntry = async function(action, docId, collectionName, jamiaName, ustazName) {
             vibrate(10); 
             const inputField = document.getElementById(`amt_${docId}`); 
             let amountVal = parseFloat(inputField.value);
             
-            if (isNaN(amountVal) || amountVal < 0) { 
+            if (isNaN(amountVal) || amountVal <= 0) { 
                 alert("Barae Karam box mein sahi amount darj karein!"); 
                 return; 
             }
@@ -1028,10 +1051,6 @@
                 const inputs = document.querySelectorAll(`input[id="amt_${docId}"]`);
                 inputs.forEach(inp => inp.value = "");
                 
-                if(!document.getElementById('tableView').classList.contains('hidden')) {
-                    setTimeout(generateTableView, 1000);
-                }
-                
                 return true;
             } catch (error) { 
                 console.error(error); 
@@ -1053,7 +1072,7 @@
 
                 let groupedByDate = {};
                 records.forEach(r => {
-                    const dateStr = r.timestamp.toDate().toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+                    const dateStr = formatDateLong(r.timestamp.toDate());
                     if(!groupedByDate[dateStr]) groupedByDate[dateStr] = { dailyTotal: 0, items: [] };
                     groupedByDate[dateStr].items.push(r);
                     if(r.actionType === 'add') groupedByDate[dateStr].dailyTotal += r.amountVal; else if (r.actionType === 'minus') groupedByDate[dateStr].dailyTotal -= r.amountVal;
@@ -1071,7 +1090,11 @@
                         let actionText = ""; let iconBg = ""; let iconPath = ""; let textColor = ""; const amt = item.amountVal || 0;
                         if(item.actionType === 'add') { actionText = `+₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-emerald-100 text-emerald-600"; textColor = "text-emerald-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>'; } 
                         else if(item.actionType === 'minus') { actionText = `-₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-rose-100 text-rose-600"; textColor = "text-rose-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/>'; }
-                        html += `<div class="flex items-center gap-3 text-xs p-2.5 hover:bg-slate-50 rounded-xl transition"><div class="w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg></div><div class="leading-tight flex-1 min-w-0"><div class="font-bold text-slate-800 text-[13px] truncate">${item.ustazName}</div><div class="text-slate-400 font-semibold mt-0.5">${timeStr} &bull; ${item.jamiaName}</div></div><div class="font-bold ${textColor} shrink-0 tabular-nums">${actionText}</div></div>`;
+                        
+                        // Ignore 'set' items or skip showing them if they exist
+                        if (actionText !== "") {
+                            html += `<div class="flex items-center gap-3 text-xs p-2.5 hover:bg-slate-50 rounded-xl transition"><div class="w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg></div><div class="leading-tight flex-1 min-w-0"><div class="font-bold text-slate-800 text-[13px] truncate">${item.ustazName}</div><div class="text-slate-400 font-semibold mt-0.5">${timeStr} &bull; ${item.jamiaName}</div></div><div class="font-bold ${textColor} shrink-0 tabular-nums">${actionText}</div></div>`;
+                        }
                     });
                     html += `</div></div>`;
                 }
