@@ -194,16 +194,21 @@
             <!-- TAB 3: MERE ASATIZA (Zimmedar Wise Date Table) -->
             <div id="myTeachersList" class="hidden pb-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <!-- Header with Title, Region & State, and PDF Download Button -->
+                    <!-- Header with Title, Region & State, Date Filter and PDF Button -->
                     <div class="bg-indigo-50/70 p-4 border-b border-indigo-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
                             <h2 class="text-base sm:text-lg font-bold font-display text-indigo-900 uppercase tracking-wide">Telethon 2026 Report</h2>
                             <p class="text-xs font-semibold text-slate-600 mt-0.5" id="myTeachersRegionStateText">Region & State: Loading...</p>
                         </div>
-                        <button id="pdfBtn" onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition flex items-center gap-1.5 self-end sm:self-auto">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Download PDF
-                        </button>
+                        <div class="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+                            <!-- NEW DATE FILTER -->
+                            <input type="date" id="myTeachersDateFilter" onchange="renderMyTeachersTable()" class="px-3 py-1.5 border border-indigo-200 rounded-lg text-xs font-semibold text-indigo-700 bg-white focus:ring-2 focus:ring-indigo-500 outline-none h-8 cursor-pointer">
+                            
+                            <button id="pdfBtn" onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-md shadow-indigo-200 transition flex items-center gap-1.5 h-8">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                PDF
+                            </button>
+                        </div>
                     </div>
 
                     <div class="table-scroll overflow-x-auto">
@@ -260,8 +265,9 @@
         let unsubMyStandard = null;
         let allCurrentRecords = []; 
 
-        // PDF Data Cache
+        // GLOBALS FOR 'MERE ASATIZA' TAB
         let globalMyTeachersRecords = [];
+        let globalAllLogs = [];
         let globalSortedDates = [];
         let globalUstadDateMap = {};
         let globalRegionStateStr = "";
@@ -276,6 +282,11 @@
         function formatDateLong(dateObj) {
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
             return `${dateObj.getDate().toString().padStart(2, '0')} ${months[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+        }
+        function parseInputDate(dateStr) {
+            if(!dateStr) return null;
+            const d = new Date(dateStr);
+            return formatDateShort(d);
         }
 
         // DATABASE MAPPING: Jamia se Zimmedar Mapping
@@ -396,10 +407,14 @@
             printContainer.innerHTML = fullHtml;
             document.body.appendChild(printContainer);
 
+            let selectedDate = document.getElementById('myTeachersDateFilter').value;
+            let targetDateStr = parseInputDate(selectedDate);
+            let dateNameStr = targetDateStr ? "_" + targetDateStr.replace(/\s+/g, '_') : "";
+
             const zName = (currentZimmedar ? currentZimmedar.ustazName : 'Zimmedar').replace(/\s+/g, '_');
             const opt = {
                 margin: 0.2,
-                filename: `Telethon_2026_Report_${zName}.pdf`,
+                filename: `Telethon_2026_Report_${zName}${dateNameStr}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' },
@@ -445,7 +460,6 @@
                 }
             });
             
-            // Re-trigger search to keep filters applied
             document.getElementById('searchInput').dispatchEvent(new Event('input'));
         }
 
@@ -481,7 +495,7 @@
                     document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
                     
                     loadJamias(currentZimmedar.assignedClass);
-                    loadMyTeachers(currentZimmedar.ustazName); // Load My Teachers List
+                    loadMyTeachers(currentZimmedar.ustazName); 
                 } else { auth.signOut(); }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden'); document.getElementById('dashboardSection').classList.add('hidden');
@@ -558,11 +572,9 @@
                         <button onclick="openTeacherHistory('${docId}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100 active:scale-95 transition">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> History
                         </button>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
-                            </button>
-                        </div>
+                        <button onclick="submitEntry('minus', '${docId}', '${collectionName}', '${escapeStr(data.jamiaName)}', '${escapeStr(data.ustazName)}')" class="ripple-container text-[11px] font-bold text-rose-600 flex items-center gap-1 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 active:scale-95 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg> Minus
+                        </button>
                     </div>
                 </div>
             `;
@@ -637,16 +649,12 @@
         }
 
         // ==========================================
-        // LOAD MERE ASATIZA (SORTED BY JAMIA NAME)
+        // LOAD MERE ASATIZA & RENDER DATE WISE TABLE
         // ==========================================
         function loadMyTeachers(zimmedarName) {
             if(unsubMyStandard) unsubMyStandard();
             
             unsubMyStandard = db.collection('asatiza_details').onSnapshot(async (snapshot) => {
-                const tableBody = document.getElementById('myTeachersTableBody');
-                const tableHeader = document.getElementById('myTeachersTableHeader');
-                if(!tableBody) return;
-                
                 let records = [];
                 snapshot.forEach(doc => { 
                     let data = doc.data();
@@ -656,23 +664,18 @@
                     }
                 });
                 
-                if (records.length === 0) {
-                    tableHeader.innerHTML = `<tr><th class="p-3 border-b text-center text-slate-400">Koi record nahi mila</th></tr>`;
-                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-10 text-slate-500 font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</td></tr>`;
-                    document.getElementById('myTeachersRegionStateText').innerText = "Region & State: -";
-                    return;
-                }
-
+                globalMyTeachersRecords = records;
+                
                 // SORT BY JAMIA NAME (Alphabetically)
-                records.sort((a, b) => {
+                globalMyTeachersRecords.sort((a, b) => {
                     let jCompare = (a.jamiaName || "").localeCompare(b.jamiaName || "");
                     if (jCompare !== 0) return jCompare;
                     return (a.ustazName || "").localeCompare(b.ustazName || "");
                 });
 
                 // Extract Unique Region & State for Subtitle
-                let regions = [...new Set(records.map(r => r.region).filter(Boolean))];
-                let states = [...new Set(records.map(r => r.state).filter(Boolean))];
+                let regions = [...new Set(globalMyTeachersRecords.map(r => r.region).filter(Boolean))];
+                let states = [...new Set(globalMyTeachersRecords.map(r => r.state).filter(Boolean))];
                 let regionStateStr = "";
                 if (regions.length > 0 && states.length > 0) {
                     regionStateStr = `Region: ${regions.join(', ')} | State: ${states.join(', ')}`;
@@ -691,7 +694,7 @@
                     const historySnap = await db.collection('entries_history').get();
                     
                     let allLogs = [];
-                    let validIds = new Set(records.map(r => r.id));
+                    let validIds = new Set(globalMyTeachersRecords.map(r => r.id));
                     
                     historySnap.forEach(doc => {
                         let data = doc.data();
@@ -700,70 +703,96 @@
                         }
                     });
                     
-                    let ustadDateMap = {};
-                    let uniqueDates = new Set();
+                    globalAllLogs = allLogs;
                     
-                    allLogs.forEach(log => {
-                        const dateStr = formatDateShort(log.timestamp.toDate());
-                        uniqueDates.add(dateStr);
-                        
-                        if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
-                        if(!ustadDateMap[log.asatizaId][dateStr]) ustadDateMap[log.asatizaId][dateStr] = 0;
-                        
-                        if(log.actionType === 'add') ustadDateMap[log.asatizaId][dateStr] += log.amountVal;
-                        else if (log.actionType === 'minus') ustadDateMap[log.asatizaId][dateStr] -= log.amountVal;
-                    });
-                    
-                    let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
-                    
-                    // Cache global variables for PDF Generator
-                    globalMyTeachersRecords = records;
-                    globalSortedDates = sortedDates;
-                    globalUstadDateMap = ustadDateMap;
-
-                    let headerHtml = `<th class="text-center w-12">Sr.</th><th>Jamia</th><th>Ustad Name</th><th>Class</th>`;
-                    sortedDates.forEach(date => {
-                        headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
-                    });
-                    headerHtml += `<th class="bg-emerald-50 text-emerald-700 text-right">Grand Total</th>`;
-                    tableHeader.innerHTML = headerHtml;
-                    
-                    let bodyHtml = "";
-                    records.forEach((teacher, idx) => {
-                        const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
-                        const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
-                        const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
-                        
-                        bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
-                            <td class="text-center font-bold text-slate-400 text-xs">${idx + 1}</td>
-                            <td class="font-bold text-slate-800 uppercase">${teacher.jamiaName || '-'}</td>
-                            <td class="font-semibold text-slate-700">${teacher.ustazName || '-'}</td>
-                            <td class="text-indigo-600 text-xs font-bold bg-indigo-50/50 whitespace-nowrap px-2">${classWithSection || '-'}</td>`;
-                        
-                        sortedDates.forEach(date => {
-                            let dateAmount = 0;
-                            if(ustadDateMap[teacher.id] && ustadDateMap[teacher.id][date]) {
-                                dateAmount = ustadDateMap[teacher.id][date];
-                            }
-                            
-                            let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount.toLocaleString('en-IN')}`;
-                            let colorClass = dateAmount > 0 ? 'text-indigo-600 font-bold' : (dateAmount < 0 ? 'text-rose-500 font-bold' : 'text-slate-300');
-                            
-                            bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
-                        });
-                        
-                        // Grand Total: Locked
-                        bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</td>
-                        </tr>`;
-                    });
-                    
-                    tableBody.innerHTML = bodyHtml;
+                    renderMyTeachersTable();
 
                 } catch (err) {
                     console.error(err);
-                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
+                    document.getElementById('myTeachersTableBody').innerHTML = `<tr><td colspan="5" class="text-center p-8 text-rose-500 font-bold">Error loading table. Refresh karein.</td></tr>`;
                 }
             });
+        }
+
+        // ==========================================
+        // RENDER 'MERE ASATIZA' (Supports Date Filtering)
+        // ==========================================
+        function renderMyTeachersTable() {
+            const tableBody = document.getElementById('myTeachersTableBody');
+            const tableHeader = document.getElementById('myTeachersTableHeader');
+            if(!tableBody) return;
+
+            if (globalMyTeachersRecords.length === 0) {
+                tableHeader.innerHTML = `<tr><th class="p-3 border-b text-center text-slate-400">Koi record nahi mila</th></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-10 text-slate-500 font-semibold">Aapke assigned Asatiza ka koi record nahi mila.</td></tr>`;
+                return;
+            }
+
+            let selectedDate = document.getElementById('myTeachersDateFilter').value;
+            let targetDateStr = parseInputDate(selectedDate); // Converts to "04 Sept" format
+
+            let ustadDateMap = {};
+            let uniqueDates = new Set();
+            
+            globalAllLogs.forEach(log => {
+                const dateStr = log.targetDate || (log.timestamp ? formatDateShort(log.timestamp.toDate()) : null);
+                if(!dateStr) return;
+                
+                uniqueDates.add(dateStr);
+                
+                if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
+                if(!ustadDateMap[log.asatizaId][dateStr]) ustadDateMap[log.asatizaId][dateStr] = 0;
+                
+                if(log.actionType === 'add') ustadDateMap[log.asatizaId][dateStr] += log.amountVal;
+                else if (log.actionType === 'minus') ustadDateMap[log.asatizaId][dateStr] -= log.amountVal;
+            });
+            
+            let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
+            
+            if (targetDateStr) {
+                sortedDates = [targetDateStr];
+            }
+
+            globalSortedDates = sortedDates;
+            globalUstadDateMap = ustadDateMap;
+
+            let headerHtml = `<th class="text-center w-12">Sr.</th><th>Jamia</th><th>Ustad Name</th><th>Class</th>`;
+            sortedDates.forEach(date => {
+                headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
+            });
+            headerHtml += `<th class="bg-emerald-50 text-emerald-700 text-right">Grand Total</th>`;
+            tableHeader.innerHTML = headerHtml;
+            
+            let bodyHtml = "";
+            globalMyTeachersRecords.forEach((teacher, idx) => {
+                const grandTotal = parseFloat(teacher.total_amount) || parseFloat(teacher.amount) || parseFloat(teacher.grand_total) || 0;
+                const classWithSection = teacher.section ? `${teacher.className} (${teacher.section})` : teacher.className;
+                const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
+                
+                bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
+                    <td class="text-center font-bold text-slate-400 text-xs border-r border-slate-100">${idx + 1}</td>
+                    <td class="font-bold text-slate-800 uppercase">${teacher.jamiaName || '-'}</td>
+                    <td class="font-semibold text-slate-700">${teacher.ustazName || '-'}</td>
+                    <td class="text-indigo-600 text-xs font-bold bg-indigo-50/50 whitespace-nowrap px-2">${classWithSection || '-'}</td>`;
+                
+                sortedDates.forEach(date => {
+                    let dateAmount = 0;
+                    if(ustadDateMap[teacher.id] && ustadDateMap[teacher.id][date]) {
+                        dateAmount = ustadDateMap[teacher.id][date];
+                    }
+                    
+                    let displayAmt = dateAmount === 0 ? "-" : `₹${dateAmount.toLocaleString('en-IN')}`;
+                    let colorClass = dateAmount > 0 ? 'text-indigo-600 font-bold' : (dateAmount < 0 ? 'text-rose-500 font-bold' : 'text-slate-300');
+                    
+                    bodyHtml += `<td class="text-center ${colorClass} cursor-pointer hover:bg-indigo-50" onclick="editSpecificDateEntry('${teacher.id}', '${date}', ${dateAmount}, '${teacher.collection}', '${escapeStr(teacher.jamiaName)}', '${escapeStr(teacher.ustazName)}')">${displayAmt}</td>`;
+                });
+                
+                // Grand Total: Locked
+                bodyHtml += `<td class="text-right font-extrabold text-emerald-600 bg-emerald-50/20 tabular-nums">₹${grandTotal.toLocaleString('en-IN')}</td>
+                </tr>`;
+            });
+            
+            tableBody.innerHTML = bodyHtml;
         }
 
         // ==========================================
@@ -792,7 +821,9 @@
                 let uniqueDates = new Set();
                 
                 allLogs.forEach(log => {
-                    const dateStr = formatDateShort(log.timestamp.toDate());
+                    const dateStr = log.targetDate || (log.timestamp ? formatDateShort(log.timestamp.toDate()) : null);
+                    if(!dateStr) return;
+                    
                     uniqueDates.add(dateStr);
                     
                     if(!ustadDateMap[log.asatizaId]) ustadDateMap[log.asatizaId] = {};
@@ -804,7 +835,7 @@
                 
                 let sortedDates = Array.from(uniqueDates).sort((a, b) => new Date(a + ' 2026') - new Date(b + ' 2026')); 
                 
-                let headerHtml = `<th class="text-center w-12">Sr.</th><th>Jamia</th><th>Ustad Name</th><th>Class</th>`;
+                let headerHtml = `<th class="text-center w-12">Sr.</th><th>Ustad Name</th><th>Jamia</th><th>Class</th>`;
                 sortedDates.forEach(date => {
                     headerHtml += `<th class="text-center bg-indigo-50/50">${date}</th>`;
                 });
@@ -818,9 +849,9 @@
                     const searchString = `${(teacher.jamiaName||'').toLowerCase()} ${(teacher.ustazName||'').toLowerCase()} ${(teacher.className||'').toLowerCase()}`;
                     
                     bodyHtml += `<tr class="table-row-item hover:bg-slate-50 transition" data-search="${searchString}">
-                        <td class="text-center font-bold text-slate-400 text-xs">${idx + 1}</td>
-                        <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase font-bold">${teacher.jamiaName}</td>
+                        <td class="text-center font-bold text-slate-400 text-xs border-r border-slate-100">${idx + 1}</td>
                         <td class="font-bold text-slate-800">${teacher.ustazName}</td>
+                        <td class="text-slate-500 text-xs truncate max-w-[120px] uppercase font-bold">${teacher.jamiaName}</td>
                         <td class="text-slate-600 text-xs font-bold bg-slate-50 whitespace-nowrap px-2">${classWithSection || '-'}</td>`;
                     
                     sortedDates.forEach(date => {
@@ -877,7 +908,7 @@
                 let todayStrLocal = formatDateShort(new Date());
                 
                 if (diff === 0) { 
-                    // Self-healing: agar value same hai par DB mein daily_amount out-of-sync hai, toh fix karo.
+                    // Self-healing check if DB daily_amount is out of sync with Table's today amount
                     if (dateStr === todayStrLocal && currentDaily !== newAmount) {
                         await docRef.update({ daily_amount: newAmount });
                         alert("Card Sync Fix Applied!");
@@ -893,7 +924,7 @@
 
                 let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
                 
-                // BULLETPROOF SYNC: If editing today's date, strictly force daily_amount to exactly newAmount
+                // BULLETPROOF SYNC: Force exact today's amount into Card View (daily_amount)
                 let newDaily = currentDaily; 
                 if (dateStr === todayStrLocal) {
                     newDaily = newAmount;
@@ -906,14 +937,6 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                let monthNames = {"jan":0,"feb":1,"mar":2,"apr":3,"may":4,"jun":5,"jul":6,"aug":7,"sept":8,"sep":8,"oct":9,"nov":10,"dec":11};
-                let parts = dateStr.trim().split(/\s+/);
-                let dayNum = parseInt(parts[0]) || new Date().getDate();
-                let mStr = parts[1] ? parts[1].toLowerCase() : "";
-                let monthNum = monthNames[mStr] !== undefined ? monthNames[mStr] : new Date().getMonth();
-                
-                let dateObj = new Date(2026, monthNum, dayNum, 12, 0, 0); 
-                
                 await db.collection('entries_history').add({ 
                     asatizaId: docId, 
                     collectionName: collectionName, 
@@ -923,11 +946,14 @@
                     amountVal: finalDiff, 
                     zimmedarUid: auth.currentUser.uid, 
                     note: `Manual Correction for ${dateStr}`,
-                    timestamp: dateObj 
+                    source: 'Table',
+                    targetDate: dateStr, 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp() // Accurate time insertion
                 });
                 
                 // Refresh views
                 if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
+                if(!document.getElementById('myTeachersList').classList.contains('hidden')) loadMyTeachers(currentZimmedar.ustazName);
                 
                 alert("Date Total successfully update ho gaya!");
                 
@@ -992,7 +1018,7 @@
         });
 
         // ==========================================
-        // SUBMIT ENTRY LOGIC (Locked Grand Total)
+        // SUBMIT ENTRY LOGIC (Card Action)
         // ==========================================
         window.submitEntry = async function(action, docId, collectionName, jamiaName, ustazName) {
             vibrate(10); 
@@ -1055,11 +1081,16 @@
                     actionType: action, 
                     amountVal: amountVal, 
                     zimmedarUid: auth.currentUser.uid, 
+                    source: 'Card',
+                    targetDate: formatDateShort(new Date()), // Assumes Today
                     timestamp: firebase.firestore.FieldValue.serverTimestamp() 
                 });
                 
                 const inputs = document.querySelectorAll(`input[id="amt_${docId}"]`);
                 inputs.forEach(inp => inp.value = "");
+                
+                if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
+                if(!document.getElementById('myTeachersList').classList.contains('hidden')) loadMyTeachers(currentZimmedar.ustazName);
                 
                 return true;
             } catch (error) { 
@@ -1082,31 +1113,36 @@
 
                 let groupedByDate = {};
                 records.forEach(r => {
-                    const dateStr = formatDateLong(r.timestamp.toDate());
-                    if(!groupedByDate[dateStr]) groupedByDate[dateStr] = { dailyTotal: 0, items: [] };
-                    groupedByDate[dateStr].items.push(r);
-                    if(r.actionType === 'add') groupedByDate[dateStr].dailyTotal += r.amountVal; else if (r.actionType === 'minus') groupedByDate[dateStr].dailyTotal -= r.amountVal;
+                    const groupDateStr = r.targetDate ? `${r.targetDate} 2026` : (r.timestamp ? formatDateLong(r.timestamp.toDate()) : 'Unknown Date');
+                    if(!groupedByDate[groupDateStr]) groupedByDate[groupDateStr] = { dailyTotal: 0, items: [], sortTime: r.timestamp ? r.timestamp.toMillis() : 0 };
+                    groupedByDate[groupDateStr].items.push(r);
+                    if(r.actionType === 'add') groupedByDate[groupDateStr].dailyTotal += r.amountVal; else if (r.actionType === 'minus') groupedByDate[groupDateStr].dailyTotal -= r.amountVal;
                 });
 
                 if(Object.keys(groupedByDate).length === 0) {
                     content.innerHTML = `<div class="text-center py-14"><div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><p class="text-slate-500 text-sm font-semibold">Inki abhi tak koi history nahi hai.</p></div>`; return;
                 }
 
+                // Sort Group Headers dynamically
+                let sortedGroupDates = Object.keys(groupedByDate).sort((a, b) => groupedByDate[b].sortTime - groupedByDate[a].sortTime);
+
                 let html = "";
-                for(let date in groupedByDate) {
+                sortedGroupDates.forEach(date => {
                     html += `<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"><div class="bg-indigo-50/70 px-4 py-3 border-b border-indigo-100 flex justify-between items-center"><span class="font-bold text-indigo-800 text-sm font-display">${date}</span><div class="text-right"><span class="block text-[9px] uppercase font-bold text-indigo-400 leading-tight">Daily Added</span><span class="font-bold text-emerald-600 text-sm font-display tabular-nums">₹${groupedByDate[date].dailyTotal.toLocaleString('en-IN')}</span></div></div><div class="p-2 space-y-1">`;
                     groupedByDate[date].items.forEach(item => {
-                        const timeStr = item.timestamp.toDate().toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'});
+                        const timeStr = item.timestamp ? item.timestamp.toDate().toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'}) : '';
                         let actionText = ""; let iconBg = ""; let iconPath = ""; let textColor = ""; const amt = item.amountVal || 0;
                         if(item.actionType === 'add') { actionText = `+₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-emerald-100 text-emerald-600"; textColor = "text-emerald-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>'; } 
                         else if(item.actionType === 'minus') { actionText = `-₹${amt.toLocaleString('en-IN')}`; iconBg = "bg-rose-100 text-rose-600"; textColor = "text-rose-600"; iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/>'; }
                         
+                        const sourceBadge = item.source ? `<span class="bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold ml-1 border border-indigo-200">Via ${item.source}</span>` : `<span class="bg-slate-100 text-slate-500 px-1 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold ml-1 border border-slate-200">Via Card</span>`;
+
                         if (actionText !== "") {
-                            html += `<div class="flex items-center gap-3 text-xs p-2.5 hover:bg-slate-50 rounded-xl transition"><div class="w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg></div><div class="leading-tight flex-1 min-w-0"><div class="font-bold text-slate-800 text-[13px] truncate">${item.ustazName}</div><div class="text-slate-400 font-semibold mt-0.5">${timeStr} &bull; ${item.jamiaName}</div></div><div class="font-bold ${textColor} shrink-0 tabular-nums">${actionText}</div></div>`;
+                            html += `<div class="flex items-center gap-3 text-xs p-2.5 hover:bg-slate-50 rounded-xl transition"><div class="w-8 h-8 rounded-full ${iconBg} flex items-center justify-center shrink-0"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg></div><div class="leading-tight flex-1 min-w-0"><div class="font-bold text-slate-800 text-[13px] truncate">${item.ustazName}</div><div class="text-slate-400 font-semibold mt-0.5 flex items-center">${timeStr} &bull; ${item.jamiaName} ${sourceBadge}</div></div><div class="font-bold ${textColor} shrink-0 tabular-nums">${actionText}</div></div>`;
                         }
                     });
                     html += `</div></div>`;
-                }
+                });
                 content.innerHTML = html;
             } catch(err) { content.innerHTML = `<div class="text-rose-500 text-center py-4 text-sm font-bold">Error: ${err.message}</div>`; }
         }
