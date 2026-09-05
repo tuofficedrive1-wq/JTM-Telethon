@@ -940,80 +940,83 @@ if (ustadDateMap && ustadDateMap[teacher.id]) {
         // EDIT SPECIFIC DATE ONLY (AUTO UPDATES TOTAL & DAILY_AMOUNT)
         // ==========================================
         window.editSpecificDateEntry = async function(docId, dateStr, oldAmount, collectionName, jamiaName, ustazName) {
-            vibrate(10);
-            let input = prompt(`Ustaz: ${ustazName}\nDate: ${dateStr}\n\nIs date ka naya total amount darj karein:`, oldAmount || 0);
-            if(input === null || input.trim() === "") return;
-            
-            let newAmount = parseFloat(input);
-            if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
-            
-            let diff = newAmount - oldAmount;
-            
-            try {
-                const docRef = db.collection(collectionName).doc(docId);
-                const docSnap = await docRef.get();
-                if (!docSnap.exists) { alert("Record nahi mila!"); return; }
-                const data = docSnap.data();
-                
-                let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
-                let currentDaily = parseFloat(data.daily_amount) || 0;
-                
-                let todayStrLocal = formatDateShort(new Date());
-                
-                if (diff === 0) { 
-                    // Self-healing check if DB daily_amount is out of sync with Table's today amount
-                    if (dateStr === todayStrLocal && currentDaily !== newAmount) {
-                        await docRef.update({ daily_amount: newAmount });
-                        alert("Card Sync Fix Applied!");
-                    }
-                    return; 
-                }
-                
-                let action = diff > 0 ? 'add' : 'minus';
-                let finalDiff = Math.abs(diff);
-                
-                let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
-                if(!confirm(confirmMsg)) return;
-
-                let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
-                
-                // BULLETPROOF SYNC: Force exact today's amount into Card View (daily_amount)
-                let newDaily = currentDaily; 
-                if (dateStr === todayStrLocal) {
-                    newDaily = newAmount;
-                }
-                
-                await docRef.update({
-                    amount: newTotal,
-                    total_amount: newTotal,
-                    daily_amount: newDaily,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                await db.collection('entries_history').add({ 
-                    asatizaId: docId, 
-                    collectionName: collectionName, 
-                    jamiaName: jamiaName, 
-                    ustazName: ustazName, 
-                    actionType: action, 
-                    amountVal: finalDiff, 
-                    zimmedarUid: auth.currentUser.uid, 
-                    note: `Manual Correction for ${dateStr}`,
-                    source: 'Table',
-                    targetDate: dateStr, 
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp() // Accurate time insertion
-                });
-                
-                // Refresh views
-                if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
-                if(!document.getElementById('myTeachersList').classList.contains('hidden')) loadMyTeachers(currentZimmedar.ustazName);
-                
-                alert("Date Total successfully update ho gaya!");
-                
-            } catch(e) {
-                console.error(e); alert("Update nahi ho saka. Internet check karein.");
+    vibrate(10);
+    let input = prompt(`Ustaz: ${ustazName}\nDate: ${dateStr}\n\nIs date ka naya total amount darj karein:`, oldAmount || 0);
+    if(input === null || input.trim() === "") return;
+    
+    let newAmount = parseFloat(input);
+    if(isNaN(newAmount) || newAmount < 0) { alert('Sahi number darj karein.'); return; }
+    
+    let diff = newAmount - oldAmount;
+    
+    try {
+        const docRef = db.collection(collectionName).doc(docId);
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) { alert("Record nahi mila!"); return; }
+        const data = docSnap.data();
+        
+        let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+        let currentDaily = parseFloat(data.daily_amount) || 0;
+        
+        let todayStrLocal = formatDateShort(new Date()); 
+        const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }); 
+        
+        if (diff === 0) { 
+            if (dateStr === todayStrLocal && currentDaily !== newAmount) {
+                await docRef.update({ daily_amount: newAmount, last_updated_date: todayDateStr });
+                alert("Card Sync Fix Applied!");
             }
+            return; 
+        }
+        
+        let action = diff > 0 ? 'add' : 'minus';
+        let finalDiff = Math.abs(diff);
+        
+        let confirmMsg = `Kya aap waqai ${dateStr} ki entry ko ₹${oldAmount} se badal kar ₹${newAmount} karna chahte hain?\n\n(Grand Total mein bhi ₹${finalDiff} ${action === 'add' ? 'plus' : 'minus'} ho jayega)`;
+        if(!confirm(confirmMsg)) return;
+
+        let newTotal = action === 'add' ? (currentTotal + finalDiff) : (currentTotal - finalDiff);
+        
+        let updatePayload = {
+            amount: newTotal,
+            total_amount: newTotal,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
+
+        // AUTO RESET: Agar aaj ki date edit ho rahi hai
+        if (dateStr === todayStrLocal) {
+            updatePayload.daily_amount = newAmount;
+            updatePayload.last_updated_date = todayDateStr;
+        } else if (data.last_updated_date !== todayDateStr) {
+            // Agar purani date edit ho rahi hai aur aaj ka koi naya record nahi hai
+            updatePayload.daily_amount = 0;
+        }
+        
+        await docRef.update(updatePayload);
+        
+        await db.collection('entries_history').add({ 
+            asatizaId: docId, 
+            collectionName: collectionName, 
+            jamiaName: jamiaName, 
+            ustazName: ustazName, 
+            actionType: action, 
+            amountVal: finalDiff, 
+            zimmedarUid: auth.currentUser.uid, 
+            note: `Manual Correction for ${dateStr}`,
+            source: 'Table',
+            targetDate: dateStr, 
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+        });
+        
+        if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
+        if(!document.getElementById('myTeachersList').classList.contains('hidden')) loadMyTeachers(currentZimmedar.ustazName);
+        
+        alert("Date Total successfully update ho gaya!");
+        
+    } catch(e) {
+        console.error(e); alert("Update nahi ho saka. Internet check karein.");
+    }
+};
 
         // ==========================================
         // GLOBAL SEARCH LOGIC
@@ -1074,84 +1077,97 @@ if (ustadDateMap && ustadDateMap[teacher.id]) {
         // SUBMIT ENTRY LOGIC (Card Action)
         // ==========================================
         window.submitEntry = async function(action, docId, collectionName, jamiaName, ustazName) {
-            vibrate(10); 
-            const inputField = document.getElementById(`amt_${docId}`); 
-            let amountVal = parseFloat(inputField.value);
-            
-            if (isNaN(amountVal) || amountVal <= 0) { 
-                alert("Barae Karam box mein sahi amount darj karein!"); 
-                return; 
-            }
+    vibrate(10); 
+    const inputField = document.getElementById(`amt_${docId}`); 
+    let amountVal = parseFloat(inputField.value);
+    
+    if (isNaN(amountVal) || amountVal <= 0) { 
+        alert("Barae Karam box mein sahi amount darj karein!"); 
+        return; 
+    }
 
-            let confirmMsg = ""; 
-            if (action === 'add') { 
-                confirmMsg = `Kya aap ${ustazName} (${jamiaName}) ke account mein ₹${amountVal} PLUS (+) karna chahte hain?`; 
-            } else if (action === 'minus') { 
-                confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`; 
-            }
+    let confirmMsg = ""; 
+    if (action === 'add') { 
+        confirmMsg = `Kya aap ${ustazName} (${jamiaName}) ke account mein ₹${amountVal} PLUS (+) karna chahte hain?`; 
+    } else if (action === 'minus') { 
+        confirmMsg = `⚠️ ALERT ⚠️\nKya aap waqai ${ustazName} ke account se ₹${amountVal} MINUS (-) karna chahte hain?`; 
+    }
 
-            if (!confirm(confirmMsg)) throw new Error("User Cancelled");
+    if (!confirm(confirmMsg)) throw new Error("User Cancelled");
 
-            try {
-                const docRef = db.collection(collectionName).doc(docId);
-                const docSnap = await docRef.get();
-                
-                if (!docSnap.exists) {
-                    alert("Record nahi mila!");
-                    return;
-                }
+    try {
+        const docRef = db.collection(collectionName).doc(docId);
+        const docSnap = await docRef.get();
+        
+        if (!docSnap.exists) {
+            alert("Record nahi mila!");
+            return;
+        }
 
-                const data = docSnap.data();
-                
-                let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
-                let currentDaily = parseFloat(data.daily_amount) || 0;
-                
-                let updatePayload = {};
+        const data = docSnap.data();
+        
+        let currentTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
+        let currentDaily = parseFloat(data.daily_amount) || 0;
+        
+        // --- AUTO RESET LOGIC START ---
+        // Aaj ki date generate kar rahe hain (dashboard se match karne ke liye)
+        const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+        let lastUpdatedDate = data.last_updated_date || "";
+        
+        // Agar record aaj ka nahi hai, toh daily amount ko wapas 0 kar dein
+        if (lastUpdatedDate !== todayDateStr) {
+            currentDaily = 0; 
+        }
+        // --- AUTO RESET LOGIC END ---
 
-                if (action === 'add') { 
-                    updatePayload = { 
-                        amount: currentTotal + amountVal, 
-                        total_amount: currentTotal + amountVal,
-                        daily_amount: currentDaily + amountVal,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-                    };
-                } else if (action === 'minus') { 
-                    updatePayload = { 
-                        amount: currentTotal - amountVal, 
-                        total_amount: currentTotal - amountVal,
-                        daily_amount: currentDaily - amountVal,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    }; 
-                }
+        let updatePayload = {};
 
-                await docRef.update(updatePayload);
-                
-                await db.collection('entries_history').add({ 
-                    asatizaId: docId, 
-                    collectionName: collectionName, 
-                    jamiaName: jamiaName, 
-                    ustazName: ustazName, 
-                    actionType: action, 
-                    amountVal: amountVal, 
-                    zimmedarUid: auth.currentUser.uid, 
-                    source: 'Card',
-                    targetDate: formatDateShort(new Date()), // Assumes Today
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-                });
-                
-                const inputs = document.querySelectorAll(`input[id="amt_${docId}"]`);
-                inputs.forEach(inp => inp.value = "");
-                
-                if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
-                if(!document.getElementById('myTeachersList').classList.contains('hidden')) loadMyTeachers(currentZimmedar.ustazName);
-                
-                return true;
-            } catch (error) { 
-                console.error(error); 
-                alert("Entry save nahi hui, Barae Karam internet check karein."); 
-                throw error;
-            }
-        };
+        if (action === 'add') { 
+            updatePayload = { 
+                amount: currentTotal + amountVal, 
+                total_amount: currentTotal + amountVal,
+                daily_amount: currentDaily + amountVal,
+                last_updated_date: todayDateStr, // Naye din ki date save karein
+                timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+            };
+        } else if (action === 'minus') { 
+            updatePayload = { 
+                amount: currentTotal - amountVal, 
+                total_amount: currentTotal - amountVal,
+                daily_amount: currentDaily - amountVal,
+                last_updated_date: todayDateStr, 
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }; 
+        }
+
+        await docRef.update(updatePayload);
+        
+        await db.collection('entries_history').add({ 
+            asatizaId: docId, 
+            collectionName: collectionName, 
+            jamiaName: jamiaName, 
+            ustazName: ustazName, 
+            actionType: action, 
+            amountVal: amountVal, 
+            zimmedarUid: auth.currentUser.uid, 
+            source: 'Card',
+            targetDate: formatDateShort(new Date()),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+        });
+        
+        const inputs = document.querySelectorAll(`input[id="amt_${docId}"]`);
+        inputs.forEach(inp => inp.value = "");
+        
+        if(!document.getElementById('tableView').classList.contains('hidden')) generateTableView();
+        if(!document.getElementById('myTeachersList').classList.contains('hidden')) loadMyTeachers(currentZimmedar.ustazName);
+        
+        return true;
+    } catch (error) { 
+        console.error(error); 
+        alert("Entry save nahi hui, Barae Karam internet check karein."); 
+        throw error;
+    }
+};
 
         async function openTeacherHistory(docId, ustazName) {
             vibrate(8); document.getElementById('historyModal').classList.remove('hidden');
