@@ -268,12 +268,45 @@
                 });
 
                 const unsubAsatiza = db.collection('asatiza_details').onSnapshot(snapshot => {
-                    const parsedData = snapshot.docs.map(doc => {
-                        const data = doc.data(); 
-                        return { id: doc.id, ustazName: data.ustazName || "N/A", jamiaName: data.jamiaName || "N/A", className: data.className || "N/A", region: data.region || "N/A", state: data.state || "N/A", total_amount: parseFloat(data.amount) || 0, daily_amount: parseFloat(data.daily_amount) || 0, photoUrl: data.photoUrl || null, timestamp: data.timestamp };
-                    });
-                    setAllData(parsedData); setIsLoading(false);
-                });
+    // Aaj ki date nikal rahe hain (Example: 5/9/2026)
+    const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    const parsedData = snapshot.docs.map(doc => {
+        const data = doc.data(); 
+        
+        // Database se aane wala amount
+        let dAmount = parseFloat(data.daily_amount) || 0;
+        
+        // Database ki date check kar rahe hain (agar last_updated_date save hoti hai)
+        let docDate = "";
+        if (data.last_updated_date) {
+            docDate = data.last_updated_date;
+        } else if (data.timestamp) {
+            // Agar timestamp mojood hai to usko date me convert karein
+            docDate = data.timestamp.toDate ? data.timestamp.toDate().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : new Date(data.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+        }
+
+        // AUTO-ZERO LOGIC: Agar record aaj ka nahi hai, toh daily_amount = 0
+        if (docDate !== todayDateStr) {
+            dAmount = 0; 
+        }
+
+        return { 
+            id: doc.id, 
+            ustazName: data.ustazName || "N/A", 
+            jamiaName: data.jamiaName || "N/A", 
+            className: data.className || "N/A", 
+            region: data.region || "N/A", 
+            state: data.state || "N/A", 
+            total_amount: parseFloat(data.amount) || 0, 
+            daily_amount: dAmount, // Yahan updated amount pass kar diya
+            photoUrl: data.photoUrl || null, 
+            timestamp: data.timestamp 
+        };
+    });
+    setAllData(parsedData); 
+    setIsLoading(false);
+});
 
                 const unsubCustom = db.collection('custom_records').onSnapshot(snapshot => {
                     const records = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
