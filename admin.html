@@ -1018,6 +1018,7 @@
         function updateDashboardMode(event) { const mode = document.getElementById('dashboardModeSelect').value; const btn = event.target; const originalText = btn.innerText; btn.innerText = "Updating..."; btn.disabled = true; db.collection('settings').doc('dashboard').set({ dashboardMode: mode }, {merge: true}).then(() => alert("✅ Dashboard Mode Live Update Ho Gaya!")).catch(err => alert("Error: " + err.message)).finally(() => { btn.innerText = originalText; btn.disabled = false; }); }
         async function resetDailyAmounts(event) { if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return; const btn = event.target; const origText = btn.innerText; btn.innerText = "Resetting..."; btn.disabled = true; try { const snapshot = await db.collection('asatiza_details').get(); const batch = db.batch(); snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); }); await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!"); } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; } }
         // Function for downloading filtered table data as CSV
+// Function for downloading filtered table data as CSV
 function exportReportsFiltered() {
     if (!window.currentReportsFilteredData || window.currentReportsFilteredData.length === 0) {
         alert("Download karne ke liye koi data nahi hai!");
@@ -1033,6 +1034,8 @@ function exportReportsFiltered() {
             "Class (Darja)": data.className + (data.section ? ` (${data.section})` : ""),
             "Jamia Name": data.jamiaName || "N/A",
             "Zimmedar Name": zimmedarList[data.jamiaName] || "N/A",
+            "Region": data.region || "N/A", // Naya column Excel ke liye add kiya gaya
+            "State": data.state || "N/A",   // Naya column Excel ke liye add kiya gaya
             "Aaj Ka (Daily)": data.display_daily,
             "Total Amount": data.display_total
         };
