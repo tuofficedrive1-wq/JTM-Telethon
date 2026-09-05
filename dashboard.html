@@ -382,11 +382,6 @@ const processedCustomData = customRecords.map(d => {
     return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
 });
 
-            const processedCustomData = customRecords.map(d => {
-                const activeAmt = currentMode === 'daily' ? (d.daily_amount || 0) : (d.amount || 0);
-                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-            });
-
             const getTopWinners = () => {
                 const classMap = {};
                 processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
