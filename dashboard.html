@@ -223,6 +223,7 @@
             
             const [allData, setAllData] = useState([]);
             const [customRecords, setCustomRecords] = useState([]);
+            const [todayHistoryTotals, setTodayHistoryTotals] = useState({});
             
             const [isLoading, setIsLoading] = useState(true);
             const [headerConfig, setHeaderConfig] = useState(null);
@@ -320,6 +321,28 @@
                 return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, []);
 
+            // Aaj ki date targetDate ke format me nikalna (jaise "05 Sept")
+const dObj = new Date();
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
+const todayStr = `${dObj.getDate().toString().padStart(2, '0')} ${months[dObj.getMonth()]}`;
+
+const unsubHistory = db.collection('entries_history')
+    .where('targetDate', '==', todayStr)
+    .onSnapshot(snapshot => {
+        const sums = {};
+        snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
+            
+            if (data.actionType === 'add') {
+                sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
+            } else if (data.actionType === 'minus') {
+                sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
+            }
+        });
+        setTodayHistoryTotals(sums);
+    });
+
             useEffect(() => {
                 if (!timerConfig || !timerConfig.endTime) return;
                 const interval = setInterval(() => {
@@ -334,6 +357,7 @@
                     }
                 }, 1000);
                 return () => clearInterval(interval);
+                return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHistory(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, [timerConfig]);
 
             const topTabs = ['All Jamiaat', 'All Classes'];
@@ -341,10 +365,22 @@
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
             const currentMode = headerConfig?.dashboardMode || 'total';
-            const processedData = allData.map(d => {
-                const activeAmt = currentMode === 'daily' ? d.daily_amount : d.total_amount;
-                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-            });
+           const processedData = allData.map(d => {
+    let activeAmt = d.total_amount;
+    if (currentMode === 'daily') {
+        // Admin ke 0 karne ke bawajood history se aaj ka total yahan set hoga
+        activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : 0;
+    }
+    return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+});
+
+const processedCustomData = customRecords.map(d => {
+    let activeAmt = d.amount || 0;
+    if (currentMode === 'daily') {
+        activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
+    }
+    return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+});
 
             const processedCustomData = customRecords.map(d => {
                 const activeAmt = currentMode === 'daily' ? (d.daily_amount || 0) : (d.amount || 0);
