@@ -273,6 +273,10 @@
         let globalRegionStateStr = "";
 
         const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        let adminSettings = {};
+db.collection('settings').doc('dashboard').onSnapshot(doc => {
+    if(doc.exists) adminSettings = doc.data();
+});
 
         // Date Formatter Helper: Ensure accurate standard formatting (e.g. "04 Sept")
         function formatDateShort(dateObj) {
@@ -510,10 +514,14 @@ if (globalUstadDateMap && globalUstadDateMap[teacher.id]) {
         // CARD GENERATOR HELPER FUNCTION (Class Tab)
         // ==========================================
       function createCardElement(data, idx) {
+          
             const docId = data.id;
             const collectionName = data.collection;
             
             // Yahan ab direct History ka daily aur grand total set hoga
+          let mode = adminSettings.dashboardMode || 'daily';
+let rangeLabel = mode === 'custom' ? 'Selected Date Range' : 'Aaj Ki Jama Raqam (Daily)';
+          
             const totalSoFar = data.history_daily_total !== undefined ? data.history_daily_total : (parseFloat(data.daily_amount) || 0);
             const totalUnit = (totalSoFar / 7000).toFixed(1);
             const progressPct = Math.min(100, ((totalSoFar % 7000) / 7000) * 100).toFixed(1);
@@ -557,7 +565,7 @@ if (globalUstadDateMap && globalUstadDateMap[teacher.id]) {
                     <div class="rounded-2xl bg-gradient-to-br from-indigo-50 to-white border border-indigo-100/70 px-4 py-3.5">
                         <div class="flex items-end justify-between gap-2">
                             <div>
-                               <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Aaj Ki Jama Raqam (Daily)</div>
+                               <div class="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">${rangeLabel}</div>
                                 <div class="text-[26px] sm:text-3xl font-display font-extrabold text-emerald-600 mt-0.5 leading-none tabular-nums">₹${totalSoFar.toLocaleString('en-IN')}</div>
                             </div>
                             <span class="text-[11px] font-bold text-sky-600 bg-white px-2 py-1 rounded-lg border border-sky-100 shrink-0 whitespace-nowrap">${totalUnit} Units</span>
@@ -632,6 +640,18 @@ if (globalUstadDateMap && globalUstadDateMap[teacher.id]) {
                     let historyTotals = {};
                     
                     records.forEach(r => { historyTotals[r.id] = { grandTotal: 0, dailyTotal: 0 }; });
+                    // Naya Date Filter Logic
+let mode = adminSettings.dashboardMode || 'daily';
+let startD = new Date(), endD = new Date();
+startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
+
+if (mode === 'custom' && adminSettings.startDate && adminSettings.endDate) {
+    startD = new Date(adminSettings.startDate); startD.setHours(0,0,0,0);
+    endD = new Date(adminSettings.endDate); endD.setHours(23,59,59,999);
+}
+
+let historyTotals = {};
+records.forEach(r => { historyTotals[r.id] = { grandTotal: 0, dailyTotal: 0 }; });
 
                     historySnap.forEach(doc => {
                         let data = doc.data();
