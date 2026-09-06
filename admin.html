@@ -374,28 +374,47 @@
 
         let currentDashboardMode = "total"; 
 
-        // Authentication state observer (Add this to handle access)
+       // Authentication state observer (Updated)
         auth.onAuthStateChanged(user => {
+            const loginSection = document.getElementById('loginSection');
+            const mainDashboard = document.getElementById('mainDashboard');
+
             if (user) {
                 // Fetch user data from 'users' collection to check if they are an admin
                 db.collection('users').doc(user.uid).get().then((doc) => {
                     if (doc.exists && doc.data().role === 'admin') {
-                        // User is an admin, start loading data
+                        // User is an admin, show dashboard and hide login
+                        loginSection.classList.add('hidden');
+                        mainDashboard.classList.remove('hidden');
                         startDataListeners();
                     } else {
-                        // User is not an admin, sign out and alert
+                        // User is not an admin, sign out and show login section (No Redirect)
                         auth.signOut().then(() => {
-                            alert("Access Denied: You do not have administrator privileges.");
-                            window.location.href = "login.html"; // Redirect to a generic login or error page
+                            alert("Access Denied: Aapke paas Admin rights nahi hain.");
+                            loginSection.classList.remove('hidden');
+                            mainDashboard.classList.add('hidden');
                         });
                     }
                 }).catch((error) => {
                     console.error("Error fetching user data:", error);
                     alert("Error verifying admin status.");
+                    loginSection.classList.remove('hidden');
+                    mainDashboard.classList.add('hidden');
                 });
             } else {
-                // No user is signed in, redirect to login page (or handle appropriately)
-                window.location.href = "login.html"; // Assumes you have a separate login page
+                // No user is signed in, show login section (No Redirect)
+                loginSection.classList.remove('hidden');
+                mainDashboard.classList.add('hidden');
+            }
+        });
+
+        // Logout function for Admin Panel
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if(confirm("Kya aap waqai logout karna chahte hain?")) {
+                auth.signOut().then(() => {
+                    // Page ko refresh karein taaki sare listeners disconnect ho jayein aur safai se login screen aa jaye
+                    window.location.reload();
+                });
             }
         });
 
