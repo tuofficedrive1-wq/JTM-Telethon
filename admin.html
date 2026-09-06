@@ -362,6 +362,7 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
+        const auth = firebase.auth();
         
         let secondaryApp;
         if (!firebase.apps.find(app => app.name === "SecondaryApp")) {
@@ -373,47 +374,83 @@
 
         let currentDashboardMode = "total"; 
 
-        db.collection('settings').doc('dashboard').onSnapshot((doc) => {
-    if(doc.exists) {
-        const data = doc.data();
-        currentDashboardMode = data.dashboardMode || 'total';
-        const selectEl = document.getElementById('dashboardModeSelect');
-        if(selectEl) selectEl.value = currentDashboardMode;
-        
-        // Dates UI me set karein
-        if(data.startDate) document.getElementById('startDate').value = data.startDate;
-        if(data.endDate) document.getElementById('endDate').value = data.endDate;
+        // Authentication state observer (Add this to handle access)
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Fetch user data from 'users' collection to check if they are an admin
+                db.collection('users').doc(user.uid).get().then((doc) => {
+                    if (doc.exists && doc.data().role === 'admin') {
+                        // User is an admin, start loading data
+                        startDataListeners();
+                    } else {
+                        // User is not an admin, sign out and alert
+                        auth.signOut().then(() => {
+                            alert("Access Denied: You do not have administrator privileges.");
+                            window.location.href = "login.html"; // Redirect to a generic login or error page
+                        });
+                    }
+                }).catch((error) => {
+                    console.error("Error fetching user data:", error);
+                    alert("Error verifying admin status.");
+                });
+            } else {
+                // No user is signed in, redirect to login page (or handle appropriately)
+                window.location.href = "login.html"; // Assumes you have a separate login page
+            }
+        });
 
-        document.querySelectorAll('.team-input').forEach(select => { if(select.value) updateTeamScore(select); });
-    }
-});
+        // Function to initialize data fetching ONLY after successful admin authentication
+        function startDataListeners() {
+            db.collection('settings').doc('dashboard').onSnapshot((doc) => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    currentDashboardMode = data.dashboardMode || 'total';
+                    const selectEl = document.getElementById('dashboardModeSelect');
+                    if(selectEl) selectEl.value = currentDashboardMode;
+                    
+                    // Dates UI me set karein
+                    if(data.startDate) document.getElementById('startDate').value = data.startDate;
+                    if(data.endDate) document.getElementById('endDate').value = data.endDate;
+
+                    document.querySelectorAll('.team-input').forEach(select => { if(select.value) updateTeamScore(select); });
+                }
+            });
+
+            // ---------------- 1. DYNAMIC CLASSES & AUTO-RECOVERY LOGIC ----------------
+            db.collection('settings').doc('classes').onSnapshot((doc) => {
+                if(doc.exists && doc.data().list) {
+                    let dbList = doc.data().list;
+                    if (!dbList.includes("Ula") && !dbList.includes("Saniya")) {
+                        const mergedList = Array.from(new Set([...defaultClasses, ...dbList]));
+                        db.collection('settings').doc('classes').set({ list: mergedList }, {merge: true});
+                        availableClasses = mergedList;
+                    } else {
+                        availableClasses = dbList;
+                    }
+                    classHeadingsMap = doc.data().headings || {};
+                } else {
+                    availableClasses = [...defaultClasses]; 
+                    classHeadingsMap = {};
+                }
+                updateClassUI();
+            });
+
+            db.collection('users').where("role", "==", "zimmedar").onSnapshot((snapshot) => {
+                const tbody = document.getElementById('userTableBody'); tbody.innerHTML = snapshot.empty ? '<tr><td colspan="4" class="p-4 text-center text-slate-500">Koi zimmedar add nahi hua abhi.</td></tr>' : "";
+                zimmedarDataMap = {}; snapshot.forEach((doc) => { const data = doc.data(); data.docId = doc.id; zimmedarDataMap[doc.id] = data; tbody.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-semibold text-indigo-600">${data.username}</td><td class="p-3">${data.ustazName}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">${data.assignedClass}</span></td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2"><button onclick="editZimmedar('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteZimmedar('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`; });
+            });
+
+            startAsatizaListener();
+        }
 
         const escapeStr = str => (str || "").toString().replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-        // ---------------- 1. DYNAMIC CLASSES & AUTO-RECOVERY LOGIC ----------------
+        // ---------------- 1. DYNAMIC CLASSES & AUTO-RECOVERY LOGIC (Variables initialized here for global scope) ----------------
         const defaultClasses = ["Hifz Class", "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Sale Duwam Khususi", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis"];
         let availableClasses = [];
         let classHeadingsMap = {};
         
         const autoKeywords = ['rank', 'unit', 'units', 'amount', 'score', 'total'];
-
-        db.collection('settings').doc('classes').onSnapshot((doc) => {
-            if(doc.exists && doc.data().list) {
-                let dbList = doc.data().list;
-                if (!dbList.includes("Ula") && !dbList.includes("Saniya")) {
-                    const mergedList = Array.from(new Set([...defaultClasses, ...dbList]));
-                    db.collection('settings').doc('classes').set({ list: mergedList }, {merge: true});
-                    availableClasses = mergedList;
-                } else {
-                    availableClasses = dbList;
-                }
-                classHeadingsMap = doc.data().headings || {};
-            } else {
-                availableClasses = [...defaultClasses]; 
-                classHeadingsMap = {};
-            }
-            updateClassUI();
-        });
 
         function updateClassUI() {
             const container = document.getElementById('classesListContainer'); container.innerHTML = "";
@@ -667,7 +704,6 @@
                 }); renderTableAndFilter(); 
             } catch(e) { alert("Search Error: " + e.message); startAsatizaListener(); }
         }
-        startAsatizaListener(); 
 
         const zimmedarList = {
             "BHUJ": "Mahtab Misbahi", "KOTHARA": "Mahtab Misbahi", "MANDVI": "Mahtab Misbahi", "NAKHATRANA": "Mahtab Misbahi", "AHMEDABAD": "Mahtab Misbahi", "BARODA": "Mahtab Misbahi", "BHAWNAGAR": "Mahtab Misbahi", "BOMBAY HOTEL": "Mahtab Misbahi", "DHOLKA": "Mahtab Misbahi", "DHORAJI": "Mahtab Misbahi", "GADHADA": "Mahtab Misbahi", "JAMNAGAR": "Mahtab Misbahi", "JUHAPURA": "Mahtab Misbahi", "KAPADWANJ": "Mahtab Misbahi", "RAJKOT": "Mahtab Misbahi", "SURAT": "Mahtab Misbahi", "UNN PATIYA SURAT": "Mahtab Misbahi", "VERAVAL": "Mahtab Misbahi", "VIRAMGAM": "Mahtab Misbahi",
@@ -702,11 +738,6 @@
         });
 
         function resetZimmedarForm() { document.getElementById('createUserForm').reset(); document.getElementById('zimmedarDocId').value = ""; document.getElementById('zimmedarFormTitle').innerText = "Naya Zimmedar Add Karein"; document.getElementById('submitBtn').innerText = "Account Banayein"; document.getElementById('passwordDiv').classList.remove('hidden'); document.getElementById('password').setAttribute('required', 'required'); document.getElementById('username').removeAttribute('disabled'); document.getElementById('username').classList.remove('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.add('hidden'); }
-
-        db.collection('users').where("role", "==", "zimmedar").onSnapshot((snapshot) => {
-            const tbody = document.getElementById('userTableBody'); tbody.innerHTML = snapshot.empty ? '<tr><td colspan="4" class="p-4 text-center text-slate-500">Koi zimmedar add nahi hua abhi.</td></tr>' : "";
-            zimmedarDataMap = {}; snapshot.forEach((doc) => { const data = doc.data(); data.docId = doc.id; zimmedarDataMap[doc.id] = data; tbody.innerHTML += `<tr class="border-b hover:bg-slate-50"><td class="p-3 font-semibold text-indigo-600">${data.username}</td><td class="p-3">${data.ustazName}</td><td class="p-3"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-bold">${data.assignedClass}</span></td><td class="p-3 text-center"><div class="flex items-center justify-center gap-2"><button onclick="editZimmedar('${data.docId}')" class="text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-lg transition" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button><button onclick="deleteZimmedar('${data.docId}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></td></tr>`; });
-        });
 
         function editZimmedar(docId) {
             const data = zimmedarDataMap[docId]; if (!data) return; window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('zimmedarDocId').value = docId; document.getElementById('ustazName').value = data.ustazName; document.getElementById('assignedClass').value = data.assignedClass; document.getElementById('username').value = data.username; document.getElementById('zimmedarFormTitle').innerText = "Zimmedar Edit Karein"; document.getElementById('submitBtn').innerText = "Update Record"; document.getElementById('passwordDiv').classList.add('hidden'); document.getElementById('password').removeAttribute('required'); document.getElementById('username').setAttribute('disabled', 'disabled'); document.getElementById('username').classList.add('opacity-50', 'cursor-not-allowed'); document.getElementById('cancelEditZimmedarBtn').classList.remove('hidden');
