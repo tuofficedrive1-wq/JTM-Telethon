@@ -321,38 +321,49 @@
                 return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, []);
 
-    useEffect(() => {
-    if (!headerConfig) return; // Setting load hone ka intezar karein
+  useEffect(() => {
+    if (!headerConfig) return;
 
     const unsubHistory = db.collection('entries_history').onSnapshot(snapshot => {
         const sums = {};
         let mode = headerConfig.dashboardMode || 'total';
-        let startD, endD;
+        let startD = new Date(), endD = new Date();
+        startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
 
+        // Timezone Fix
         if (mode === 'custom' && headerConfig.startDate && headerConfig.endDate) {
-            startD = new Date(headerConfig.startDate); startD.setHours(0,0,0,0);
-            endD = new Date(headerConfig.endDate); endD.setHours(23,59,59,999);
-        } else {
-            startD = new Date(); startD.setHours(0,0,0,0);
-            endD = new Date(); endD.setHours(23,59,59,999);
+            let sp = headerConfig.startDate.split('-');
+            let ep = headerConfig.endDate.split('-');
+            startD = new Date(sp[0], sp[1]-1, sp[2]); startD.setHours(0,0,0,0);
+            endD = new Date(ep[0], ep[1]-1, ep[2]); endD.setHours(23,59,59,999);
         }
 
         snapshot.docs.forEach(doc => {
             const data = doc.data();
-            if (!data.timestamp) return;
+            let entryDate;
 
-            let isValid = false;
-            if (mode === 'total') {
-                isValid = true;
-            } else {
-                let d = data.timestamp.toDate();
-                if (d >= startD && d <= endD) isValid = true; // Date Range ke hisab se filter
+            // Target Date Fix
+            if (data.targetDate) {
+                entryDate = new Date(data.targetDate + " " + new Date().getFullYear());
+            } else if (data.timestamp) {
+                entryDate = data.timestamp.toDate();
             }
 
-            if (isValid) {
-                if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
-                if (data.actionType === 'add') sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
-                else if (data.actionType === 'minus') sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
+            if (entryDate) {
+                let isValid = false;
+                if (mode === 'total') {
+                    isValid = true;
+                } else {
+                    if (entryDate.getTime() >= startD.getTime() && entryDate.getTime() <= endD.getTime()) {
+                        isValid = true;
+                    }
+                }
+
+                if (isValid) {
+                    if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
+                    if (data.actionType === 'add') sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
+                    else if (data.actionType === 'minus') sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
+                }
             }
         });
         setTodayHistoryTotals(sums);
