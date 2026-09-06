@@ -321,28 +321,45 @@
                 return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, []);
 
-            // Aaj ki date targetDate ke format me nikalna (jaise "05 Sept")
-const dObj = new Date();
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
-const todayStr = `${dObj.getDate().toString().padStart(2, '0')} ${months[dObj.getMonth()]}`;
+    useEffect(() => {
+    if (!headerConfig) return; // Setting load hone ka intezar karein
 
-const unsubHistory = db.collection('entries_history')
-    .where('targetDate', '==', todayStr)
-    .onSnapshot(snapshot => {
+    const unsubHistory = db.collection('entries_history').onSnapshot(snapshot => {
         const sums = {};
+        let mode = headerConfig.dashboardMode || 'total';
+        let startD, endD;
+
+        if (mode === 'custom' && headerConfig.startDate && headerConfig.endDate) {
+            startD = new Date(headerConfig.startDate); startD.setHours(0,0,0,0);
+            endD = new Date(headerConfig.endDate); endD.setHours(23,59,59,999);
+        } else {
+            startD = new Date(); startD.setHours(0,0,0,0);
+            endD = new Date(); endD.setHours(23,59,59,999);
+        }
+
         snapshot.docs.forEach(doc => {
             const data = doc.data();
-            if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
-            
-            if (data.actionType === 'add') {
-                sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
-            } else if (data.actionType === 'minus') {
-                sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
+            if (!data.timestamp) return;
+
+            let isValid = false;
+            if (mode === 'total') {
+                isValid = true;
+            } else {
+                let d = data.timestamp.toDate();
+                if (d >= startD && d <= endD) isValid = true; // Date Range ke hisab se filter
+            }
+
+            if (isValid) {
+                if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
+                if (data.actionType === 'add') sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
+                else if (data.actionType === 'minus') sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
             }
         });
         setTodayHistoryTotals(sums);
     });
 
+    return () => unsubHistory();
+}, [headerConfig]);
             useEffect(() => {
                 if (!timerConfig || !timerConfig.endTime) return;
                 const interval = setInterval(() => {
@@ -371,6 +388,10 @@ const unsubHistory = db.collection('entries_history')
         // Admin ke 0 karne ke bawajood history se aaj ka total yahan set hoga
         activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : 0;
     }
+               // Nayi line:
+if (currentMode === 'daily' || currentMode === 'custom') {
+    activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
+}
     return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
 });
 
