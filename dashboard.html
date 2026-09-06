@@ -12,8 +12,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- FIREBASE SCRIPTS (Auth Add Kiya Gaya Hai) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
@@ -42,19 +46,31 @@
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD (Isko hidden rakhein shuru me) -->
+    <!-- MAIN DASHBOARD -->
     <div id="mainDashboard" class="hidden">
+        <!-- LOGOUT BUTTON BAR -->
+        <div class="bg-indigo-700 text-white px-4 py-2 flex justify-between items-center text-sm font-bold shadow-md">
+            <div>Authorized Admin Access</div>
+            <button onclick="logoutAdmin()" class="bg-white/20 hover:bg-rose-500 px-3 py-1 rounded-lg transition text-xs">Logout</button>
+        </div>
+        
         <div id="root"></div>
         <div id="poster-container" style="position: absolute; left: -9999px; top: 0;"></div>
     </div>
-    <div id="root"></div>
-    <div id="poster-container" style="position: absolute; left: -9999px; top: 0;"></div>
+    
+    <!-- REACT SCRIPTS -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+    <!-- FIREBASE INITIALIZATION & AUTH LOGIC -->
     <script>
+        const firebaseConfig = { apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg", authDomain: "telethon-28c88.firebaseapp.com", projectId: "telethon-28c88", storageBucket: "telethon-28c88.firebasestorage.app", messagingSenderId: "609452116316", appId: "1:609452116316:web:e940fc5dc4537b34551999", measurementId: "G-FYS0PJLQQB" };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        
         const auth = firebase.auth();
+        const db = firebase.firestore();
+        let reactRoot = null;
         
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -74,27 +90,37 @@
             }
         });
 
+        function logoutAdmin() {
+            if(confirm("Kya aap logout karna chahte hain?")) {
+                auth.signOut();
+            }
+        }
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('mainDashboard').classList.remove('hidden');
-                // Yahan se React render call karein (jo pehle bahar tha)
-                if(!window.isReactRendered) {
-                    const root = ReactDOM.createRoot(document.getElementById('root'));
-                    root.render(React.createElement(TelethoneDashboard));
-                    window.isReactRendered = true;
+                
+                if(!reactRoot && window.TelethoneDashboardComponent) {
+                    reactRoot = ReactDOM.createRoot(document.getElementById('root'));
+                    reactRoot.render(React.createElement(window.TelethoneDashboardComponent));
                 }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden');
                 document.getElementById('mainDashboard').classList.add('hidden');
+                document.getElementById('loginBtn').innerText = 'Login';
+                document.getElementById('loginBtn').disabled = false;
+                
+                if(reactRoot) {
+                    reactRoot.unmount();
+                    reactRoot = null;
+                }
             }
         });
     </script>
 
+    <!-- MAIN REACT COMPONENT -->
     <script type="text/babel">
-        const firebaseConfig = { apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg", authDomain: "telethon-28c88.firebaseapp.com", projectId: "telethon-28c88", storageBucket: "telethon-28c88.firebasestorage.app", messagingSenderId: "609452116316", appId: "1:609452116316:web:e940fc5dc4537b34551999", measurementId: "G-FYS0PJLQQB" };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.firestore();
         const { useState, useEffect, useRef } = React;
 
         const autoKeywords = ['rank', 'unit', 'units', 'amount', 'score', 'total'];
@@ -330,45 +356,40 @@
                 });
 
                 const unsubAsatiza = db.collection('asatiza_details').onSnapshot(snapshot => {
-    // Aaj ki date nikal rahe hain (Example: 5/9/2026)
-    const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                    const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
 
-    const parsedData = snapshot.docs.map(doc => {
-        const data = doc.data(); 
-        
-        // Database se aane wala amount
-        let dAmount = parseFloat(data.daily_amount) || 0;
-        
-        // Database ki date check kar rahe hain (agar last_updated_date save hoti hai)
-        let docDate = "";
-        if (data.last_updated_date) {
-            docDate = data.last_updated_date;
-        } else if (data.timestamp) {
-            // Agar timestamp mojood hai to usko date me convert karein
-            docDate = data.timestamp.toDate ? data.timestamp.toDate().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : new Date(data.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-        }
+                    const parsedData = snapshot.docs.map(doc => {
+                        const data = doc.data(); 
+                        
+                        let dAmount = parseFloat(data.daily_amount) || 0;
+                        
+                        let docDate = "";
+                        if (data.last_updated_date) {
+                            docDate = data.last_updated_date;
+                        } else if (data.timestamp) {
+                            docDate = data.timestamp.toDate ? data.timestamp.toDate().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : new Date(data.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+                        }
 
-        // AUTO-ZERO LOGIC: Agar record aaj ka nahi hai, toh daily_amount = 0
-        if (docDate !== todayDateStr) {
-            dAmount = 0; 
-        }
+                        if (docDate !== todayDateStr) {
+                            dAmount = 0; 
+                        }
 
-        return { 
-            id: doc.id, 
-            ustazName: data.ustazName || "N/A", 
-            jamiaName: data.jamiaName || "N/A", 
-            className: data.className || "N/A", 
-            region: data.region || "N/A", 
-            state: data.state || "N/A", 
-            total_amount: parseFloat(data.amount) || 0, 
-            daily_amount: dAmount, // Yahan updated amount pass kar diya
-            photoUrl: data.photoUrl || null, 
-            timestamp: data.timestamp 
-        };
-    });
-    setAllData(parsedData); 
-    setIsLoading(false);
-});
+                        return { 
+                            id: doc.id, 
+                            ustazName: data.ustazName || "N/A", 
+                            jamiaName: data.jamiaName || "N/A", 
+                            className: data.className || "N/A", 
+                            region: data.region || "N/A", 
+                            state: data.state || "N/A", 
+                            total_amount: parseFloat(data.amount) || 0, 
+                            daily_amount: dAmount, 
+                            photoUrl: data.photoUrl || null, 
+                            timestamp: data.timestamp 
+                        };
+                    });
+                    setAllData(parsedData); 
+                    setIsLoading(false);
+                });
 
                 const unsubCustom = db.collection('custom_records').onSnapshot(snapshot => {
                     const records = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
@@ -382,56 +403,55 @@
                 return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, []);
 
-  useEffect(() => {
-    if (!headerConfig) return;
+            useEffect(() => {
+                if (!headerConfig) return;
 
-    const unsubHistory = db.collection('entries_history').onSnapshot(snapshot => {
-        const sums = {};
-        let mode = headerConfig.dashboardMode || 'total';
-        let startD = new Date(), endD = new Date();
-        startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
+                const unsubHistory = db.collection('entries_history').onSnapshot(snapshot => {
+                    const sums = {};
+                    let mode = headerConfig.dashboardMode || 'total';
+                    let startD = new Date(), endD = new Date();
+                    startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
 
-        // Timezone Fix
-        if (mode === 'custom' && headerConfig.startDate && headerConfig.endDate) {
-            let sp = headerConfig.startDate.split('-');
-            let ep = headerConfig.endDate.split('-');
-            startD = new Date(sp[0], sp[1]-1, sp[2]); startD.setHours(0,0,0,0);
-            endD = new Date(ep[0], ep[1]-1, ep[2]); endD.setHours(23,59,59,999);
-        }
-
-        snapshot.docs.forEach(doc => {
-            const data = doc.data();
-            let entryDate;
-
-            // Target Date Fix
-            if (data.targetDate) {
-                entryDate = new Date(data.targetDate + " " + new Date().getFullYear());
-            } else if (data.timestamp) {
-                entryDate = data.timestamp.toDate();
-            }
-
-            if (entryDate) {
-                let isValid = false;
-                if (mode === 'total') {
-                    isValid = true;
-                } else {
-                    if (entryDate.getTime() >= startD.getTime() && entryDate.getTime() <= endD.getTime()) {
-                        isValid = true;
+                    if (mode === 'custom' && headerConfig.startDate && headerConfig.endDate) {
+                        let sp = headerConfig.startDate.split('-');
+                        let ep = headerConfig.endDate.split('-');
+                        startD = new Date(sp[0], sp[1]-1, sp[2]); startD.setHours(0,0,0,0);
+                        endD = new Date(ep[0], ep[1]-1, ep[2]); endD.setHours(23,59,59,999);
                     }
-                }
 
-                if (isValid) {
-                    if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
-                    if (data.actionType === 'add') sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
-                    else if (data.actionType === 'minus') sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
-                }
-            }
-        });
-        setTodayHistoryTotals(sums);
-    });
+                    snapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        let entryDate;
 
-    return () => unsubHistory();
-}, [headerConfig]);
+                        if (data.targetDate) {
+                            entryDate = new Date(data.targetDate + " " + new Date().getFullYear());
+                        } else if (data.timestamp) {
+                            entryDate = data.timestamp.toDate();
+                        }
+
+                        if (entryDate) {
+                            let isValid = false;
+                            if (mode === 'total') {
+                                isValid = true;
+                            } else {
+                                if (entryDate.getTime() >= startD.getTime() && entryDate.getTime() <= endD.getTime()) {
+                                    isValid = true;
+                                }
+                            }
+
+                            if (isValid) {
+                                if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
+                                if (data.actionType === 'add') sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
+                                else if (data.actionType === 'minus') sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
+                            }
+                        }
+                    });
+                    setTodayHistoryTotals(sums);
+                });
+
+                return () => unsubHistory();
+            }, [headerConfig]);
+
             useEffect(() => {
                 if (!timerConfig || !timerConfig.endTime) return;
                 const interval = setInterval(() => {
@@ -446,7 +466,6 @@
                     }
                 }, 1000);
                 return () => clearInterval(interval);
-                return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHistory(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, [timerConfig]);
 
             const topTabs = ['All Jamiaat', 'All Classes'];
@@ -454,26 +473,22 @@
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
             const currentMode = headerConfig?.dashboardMode || 'total';
-           const processedData = allData.map(d => {
-    let activeAmt = d.total_amount;
-    if (currentMode === 'daily') {
-        // Admin ke 0 karne ke bawajood history se aaj ka total yahan set hoga
-        activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : 0;
-    }
-               // Nayi line:
-if (currentMode === 'daily' || currentMode === 'custom') {
-    activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
-}
-    return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-});
+            
+            const processedData = allData.map(d => {
+                let activeAmt = d.total_amount;
+                if (currentMode === 'daily' || currentMode === 'custom') {
+                    activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
+                }
+                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+            });
 
-const processedCustomData = customRecords.map(d => {
-    let activeAmt = d.amount || 0;
-    if (currentMode === 'daily') {
-        activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
-    }
-    return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-});
+            const processedCustomData = customRecords.map(d => {
+                let activeAmt = d.amount || 0;
+                if (currentMode === 'daily' || currentMode === 'custom') {
+                    activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
+                }
+                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+            });
 
             const getTopWinners = () => {
                 const classMap = {};
@@ -492,7 +507,6 @@ const processedCustomData = customRecords.map(d => {
                 return total;
             };
 
-            // HERE: Increase timeout from 300 to 3000 to allow images to fully load
             useEffect(() => {
                 if (!posterData) return;
                 const generateImage = async () => {
@@ -823,8 +837,7 @@ const processedCustomData = customRecords.map(d => {
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<TelethoneDashboard />);
+        window.TelethoneDashboardComponent = TelethoneDashboard;
     </script>
 </body>
 </html>
