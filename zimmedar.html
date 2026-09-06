@@ -634,67 +634,67 @@ let rangeLabel = mode === 'custom' ? 'Selected Date Range' : 'Aaj Ki Jama Raqam 
                 }
 
                 try {
-                    // History Database se total calculate karein
-                    const historySnap = await db.collection('entries_history').get();
-                    let todayStrLocal = formatDateShort(new Date());
-                    let historyTotals = {};
-                    
-                    records.forEach(r => { historyTotals[r.id] = { grandTotal: 0, dailyTotal: 0 }; });
-                    // Naya Date Filter Logic
-let mode = adminSettings.dashboardMode || 'daily';
-let startD = new Date(), endD = new Date();
-startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
+    // History Database se total calculate karein
+    const historySnap = await db.collection('entries_history').get();
+    
+    // Naya Date Filter Logic
+    let mode = adminSettings.dashboardMode || 'daily';
+    let startD = new Date(), endD = new Date();
+    startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
 
-if (mode === 'custom' && adminSettings.startDate && adminSettings.endDate) {
-    startD = new Date(adminSettings.startDate); startD.setHours(0,0,0,0);
-    endD = new Date(adminSettings.endDate); endD.setHours(23,59,59,999);
+    if (mode === 'custom' && adminSettings.startDate && adminSettings.endDate) {
+        startD = new Date(adminSettings.startDate); startD.setHours(0,0,0,0);
+        endD = new Date(adminSettings.endDate); endD.setHours(23,59,59,999);
+    }
+
+    // DHYAN DEIN: Yahan sirf ek baar let historyTotals = {} likhna hai
+    let historyTotals = {};
+    records.forEach(r => { historyTotals[r.id] = { grandTotal: 0, dailyTotal: 0 }; });
+
+    historySnap.forEach(doc => {
+        let data = doc.data();
+        if (data.timestamp && historyTotals[data.asatizaId]) {
+            let amt = parseFloat(data.amountVal) || 0;
+            let d = data.timestamp.toDate();
+            let isRange = (d >= startD && d <= endD); // Date check
+            
+            if (data.actionType === 'add') {
+                historyTotals[data.asatizaId].grandTotal += amt;
+                if (isRange) historyTotals[data.asatizaId].dailyTotal += amt;
+            } else if (data.actionType === 'minus') {
+                historyTotals[data.asatizaId].grandTotal -= amt;
+                if (isRange) historyTotals[data.asatizaId].dailyTotal -= amt;
+            }
+        }
+    });
+
+    // Cards me history wale totals set karein
+    records.forEach(r => {
+        r.history_grand_total = historyTotals[r.id].grandTotal;
+        r.history_daily_total = historyTotals[r.id].dailyTotal;
+    });
+
+    // Sorting based on History Grand Total
+    records.sort((a, b) => b.history_grand_total - a.history_grand_total);
+
+    // Stats Dashboard me bhi History ka Today's Total dikhayein
+    const totalCollected = records.reduce((sum, r) => sum + r.history_daily_total, 0);
+    document.getElementById('statTeacherCount').innerText = records.length;
+    document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
+
+    const listDiv = document.getElementById('jamiaList');
+    listDiv.innerHTML = "";
+    records.forEach((data, idx) => {
+        const card = createCardElement(data, idx);
+        listDiv.appendChild(card);
+    });
+    
+    generateTableView();
+
+} catch (error) {
+    console.error("History loading error:", error);
+    document.getElementById('jamiaList').innerHTML = `<div class="text-center p-8 text-rose-500 font-bold">Error loading history!</div>`;
 }
-
-let historyTotals = {};
-records.forEach(r => { historyTotals[r.id] = { grandTotal: 0, dailyTotal: 0 }; });
-
-                    historySnap.forEach(doc => {
-                        let data = doc.data();
-                        if (data.timestamp && historyTotals[data.asatizaId]) {
-                            let amt = parseFloat(data.amountVal) || 0;
-                            let dateStr = data.targetDate || formatDateShort(data.timestamp.toDate());
-                            
-                            if (data.actionType === 'add') {
-                                historyTotals[data.asatizaId].grandTotal += amt;
-                                if (dateStr === todayStrLocal) historyTotals[data.asatizaId].dailyTotal += amt;
-                            } else if (data.actionType === 'minus') {
-                                historyTotals[data.asatizaId].grandTotal -= amt;
-                                if (dateStr === todayStrLocal) historyTotals[data.asatizaId].dailyTotal -= amt;
-                            }
-                        }
-                    });
-
-                    // Cards me history wale totals set karein
-                    records.forEach(r => {
-                        r.history_grand_total = historyTotals[r.id].grandTotal;
-                        r.history_daily_total = historyTotals[r.id].dailyTotal;
-                    });
-
-                    // Sorting based on History Grand Total
-                    records.sort((a, b) => b.history_grand_total - a.history_grand_total);
-
-                    // Stats Dashboard me bhi History ka Today's Total dikhayein
-                    const totalCollected = records.reduce((sum, r) => sum + r.history_daily_total, 0);
-                    document.getElementById('statTeacherCount').innerText = records.length;
-                    document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
-
-                    listDiv.innerHTML = "";
-                    records.forEach((data, idx) => {
-                        const card = createCardElement(data, idx);
-                        listDiv.appendChild(card);
-                    });
-                    
-                    generateTableView();
-
-                } catch (error) {
-                    console.error("History loading error:", error);
-                    listDiv.innerHTML = `<div class="text-center p-8 text-rose-500 font-bold">Error loading history!</div>`;
-                }
             };
 
             unsubStandard = db.collection('asatiza_details').where("className", "in", classVariants).onSnapshot((snapshot) => {
