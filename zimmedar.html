@@ -525,7 +525,7 @@ let rangeLabel = mode === 'custom' ? 'Selected Date Range' : 'Aaj Ki Jama Raqam 
             const totalSoFar = data.history_daily_total !== undefined ? data.history_daily_total : (parseFloat(data.daily_amount) || 0);
             const totalUnit = (totalSoFar / 7000).toFixed(1);
             const progressPct = Math.min(100, ((totalSoFar % 7000) / 7000) * 100).toFixed(1);
-            const grandTotal = data.history_grand_total !== undefined ? data.history_grand_total : (parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0);
+            const grandTotal = parseFloat(data.total_amount) || parseFloat(data.amount) || parseFloat(data.grand_total) || 0;
 
             const photoSrc = getDirectImageUrl(data.photoUrl);
             const initials = getInitials(data.ustazName);
@@ -633,51 +633,62 @@ let rangeLabel = mode === 'custom' ? 'Selected Date Range' : 'Aaj Ki Jama Raqam 
                     listDiv.innerHTML = `<div class="text-center p-8 text-indigo-500 font-bold animate-pulse">Cards aur History load ho rahi hai...</div>`;
                 }
 
-                try {
-    // History Database se total calculate karein
+try {
     const historySnap = await db.collection('entries_history').get();
-    
-    // Naya Date Filter Logic
+
     let mode = adminSettings.dashboardMode || 'daily';
     let startD = new Date(), endD = new Date();
     startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
 
+    // 1. Timezone Bug Fix: Date ko properly tod kar set karna
     if (mode === 'custom' && adminSettings.startDate && adminSettings.endDate) {
-        startD = new Date(adminSettings.startDate); startD.setHours(0,0,0,0);
-        endD = new Date(adminSettings.endDate); endD.setHours(23,59,59,999);
+        let sp = adminSettings.startDate.split('-');
+        let ep = adminSettings.endDate.split('-');
+        startD = new Date(sp[0], sp[1]-1, sp[2]); startD.setHours(0,0,0,0);
+        endD = new Date(ep[0], ep[1]-1, ep[2]); endD.setHours(23,59,59,999);
     }
 
-    // DHYAN DEIN: Yahan sirf ek baar let historyTotals = {} likhna hai
     let historyTotals = {};
-    records.forEach(r => { historyTotals[r.id] = { grandTotal: 0, dailyTotal: 0 }; });
+    records.forEach(r => { historyTotals[r.id] = { dailyTotal: 0 }; });
 
     historySnap.forEach(doc => {
         let data = doc.data();
-        if (data.timestamp && historyTotals[data.asatizaId]) {
+        if (historyTotals[data.asatizaId]) {
             let amt = parseFloat(data.amountVal) || 0;
-            let d = data.timestamp.toDate();
-            let isRange = (d >= startD && d <= endD); // Date check
-            
-            if (data.actionType === 'add') {
-                historyTotals[data.asatizaId].grandTotal += amt;
-                if (isRange) historyTotals[data.asatizaId].dailyTotal += amt;
-            } else if (data.actionType === 'minus') {
-                historyTotals[data.asatizaId].grandTotal -= amt;
-                if (isRange) historyTotals[data.asatizaId].dailyTotal -= amt;
+            let entryDate;
+
+            // 2. Exact Target Date Fetch Fix (Taake purani edits sahi range me jayen)
+            if (data.targetDate) {
+                entryDate = new Date(data.targetDate + " " + new Date().getFullYear());
+            } else if (data.timestamp) {
+                entryDate = data.timestamp.toDate();
+            }
+
+            if (entryDate) {
+                // Check if entry falls exactly between Start and End Date
+                let isRange = (entryDate.getTime() >= startD.getTime() && entryDate.getTime() <= endD.getTime());
+
+                if (isRange) {
+                    if (data.actionType === 'add') {
+                        historyTotals[data.asatizaId].dailyTotal += amt;
+                    } else if (data.actionType === 'minus') {
+                        historyTotals[data.asatizaId].dailyTotal -= amt;
+                    }
+                }
             }
         }
     });
 
-    // Cards me history wale totals set karein
+    // Sirf Selected Date Range (Daily) total ko history se update karein
     records.forEach(r => {
-        r.history_grand_total = historyTotals[r.id].grandTotal;
         r.history_daily_total = historyTotals[r.id].dailyTotal;
+        // NOTE: Grand Total ab seedha database se aayega, history par depend nahi karega.
     });
 
-    // Sorting based on History Grand Total
-    records.sort((a, b) => b.history_grand_total - a.history_grand_total);
+    // Sorting 
+    records.sort((a, b) => b.history_daily_total - a.history_daily_total);
 
-    // Stats Dashboard me bhi History ka Today's Total dikhayein
+    // Top Stats Strip Update
     const totalCollected = records.reduce((sum, r) => sum + r.history_daily_total, 0);
     document.getElementById('statTeacherCount').innerText = records.length;
     document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
@@ -688,7 +699,7 @@ let rangeLabel = mode === 'custom' ? 'Selected Date Range' : 'Aaj Ki Jama Raqam 
         const card = createCardElement(data, idx);
         listDiv.appendChild(card);
     });
-    
+
     generateTableView();
 
 } catch (error) {
