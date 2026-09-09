@@ -321,56 +321,7 @@
                 return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHeader(); unsubTimer(); unsubComp(); };
             }, []);
 
-  useEffect(() => {
-    if (!headerConfig) return;
 
-    const unsubHistory = db.collection('entries_history').onSnapshot(snapshot => {
-        const sums = {};
-        let mode = headerConfig.dashboardMode || 'total';
-        let startD = new Date(), endD = new Date();
-        startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
-
-        // Timezone Fix
-        if (mode === 'custom' && headerConfig.startDate && headerConfig.endDate) {
-            let sp = headerConfig.startDate.split('-');
-            let ep = headerConfig.endDate.split('-');
-            startD = new Date(sp[0], sp[1]-1, sp[2]); startD.setHours(0,0,0,0);
-            endD = new Date(ep[0], ep[1]-1, ep[2]); endD.setHours(23,59,59,999);
-        }
-
-        snapshot.docs.forEach(doc => {
-            const data = doc.data();
-            let entryDate;
-
-            // Target Date Fix
-            if (data.targetDate) {
-                entryDate = new Date(data.targetDate + " " + new Date().getFullYear());
-            } else if (data.timestamp) {
-                entryDate = data.timestamp.toDate();
-            }
-
-            if (entryDate) {
-                let isValid = false;
-                if (mode === 'total') {
-                    isValid = true;
-                } else {
-                    if (entryDate.getTime() >= startD.getTime() && entryDate.getTime() <= endD.getTime()) {
-                        isValid = true;
-                    }
-                }
-
-                if (isValid) {
-                    if (!sums[data.asatizaId]) sums[data.asatizaId] = 0;
-                    if (data.actionType === 'add') sums[data.asatizaId] += (parseFloat(data.amountVal) || 0);
-                    else if (data.actionType === 'minus') sums[data.asatizaId] -= (parseFloat(data.amountVal) || 0);
-                }
-            }
-        });
-        setTodayHistoryTotals(sums);
-    });
-
-    return () => unsubHistory();
-}, [headerConfig]);
             useEffect(() => {
                 if (!timerConfig || !timerConfig.endTime) return;
                 const interval = setInterval(() => {
@@ -393,18 +344,31 @@
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
             const currentMode = headerConfig?.dashboardMode || 'total';
+       
+            const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+           // SAFE FIX: Removed all dependencies on 'entries_history' for the dashboard.
+           // Now it uses the perfectly synced 'daily_amount' and 'last_updated_date' from the teacher's profile.
            const processedData = allData.map(d => {
-    let activeAmt = d.total_amount;
-    if (currentMode === 'daily') {
-        // Admin ke 0 karne ke bawajood history se aaj ka total yahan set hoga
-        activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : 0;
-    }
-               // Nayi line:
-if (currentMode === 'daily' || currentMode === 'custom') {
-    activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
-}
-    return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-});
+                let activeAmt = d.total_amount;
+                
+                if (currentMode === 'daily' || currentMode === 'custom') {
+                    // Agar aaj update hua hai tabhi daily amount dikhega, warna 0 (Automatic Reset)
+                    activeAmt = (d.last_updated_date === todayDateStr) ? (parseFloat(d.daily_amount) || 0) : 0;
+                }
+                
+                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+            });
+
+            const processedCustomData = customRecords.map(d => {
+                let activeAmt = parseFloat(d.amount) || 0;
+                
+                if (currentMode === 'daily') {
+                    activeAmt = (d.last_updated_date === todayDateStr) ? (parseFloat(d.daily_amount) || 0) : 0;
+                }
+                
+                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
+            });
 
 const processedCustomData = customRecords.map(d => {
     let activeAmt = d.amount || 0;
