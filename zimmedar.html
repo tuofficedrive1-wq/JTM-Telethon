@@ -594,8 +594,8 @@ let rangeLabel = mode === 'custom' ? 'Selected Date Range' : 'Aaj Ki Jama Raqam 
             return card;
         }
 
-        // ==========================================
-        // LOAD CLASS WISE DATA
+       // ==========================================
+        // LOAD CLASS WISE DATA (SAFE VERSION - NO BILLING SPIKE)
         // ==========================================
         function loadJamias(assignedClass) {
             if (unsubStandard) unsubStandard();
@@ -628,84 +628,39 @@ let rangeLabel = mode === 'custom' ? 'Selected Date Range' : 'Aaj Ki Jama Raqam 
                     return;
                 }
 
-                // Loading indicator jab tak history fetch ho
-                if (!document.querySelector('.jamia-card')) {
-                    listDiv.innerHTML = `<div class="text-center p-8 text-indigo-500 font-bold animate-pulse">Cards aur History load ho rahi hai...</div>`;
+                try {
+                    // SAFE FIX: Removed the massive 'entries_history' fetch loop from here.
+                    // Now it relies directly on the daily_amount saved inside the teacher's profile.
+                    
+                    const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+                    records.forEach(r => {
+                        // Agar record aaj hi update hua hai toh daily_amount dikhao, warna 0.
+                        if (r.last_updated_date === todayDateStr) {
+                            r.history_daily_total = parseFloat(r.daily_amount) || 0;
+                        } else {
+                            r.history_daily_total = 0;
+                        }
+                    });
+
+                    // Cards ko zyada amount wale order me set karein
+                    records.sort((a, b) => b.history_daily_total - a.history_daily_total);
+
+                    // Top Dashboard Stats update karein
+                    const totalCollected = records.reduce((sum, r) => sum + r.history_daily_total, 0);
+                    document.getElementById('statTeacherCount').innerText = records.length;
+                    document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
+
+                    listDiv.innerHTML = "";
+                    records.forEach((data, idx) => {
+                        const card = createCardElement(data, idx);
+                        listDiv.appendChild(card);
+                    });
+
+                } catch (error) {
+                    console.error("Rendering error:", error);
+                    document.getElementById('jamiaList').innerHTML = `<div class="text-center p-8 text-rose-500 font-bold">Error loading cards!</div>`;
                 }
-
-try {
-    const historySnap = await db.collection('entries_history').get();
-
-    let mode = adminSettings.dashboardMode || 'daily';
-    let startD = new Date(), endD = new Date();
-    startD.setHours(0,0,0,0); endD.setHours(23,59,59,999);
-
-    // 1. Timezone Bug Fix: Date ko properly tod kar set karna
-    if (mode === 'custom' && adminSettings.startDate && adminSettings.endDate) {
-        let sp = adminSettings.startDate.split('-');
-        let ep = adminSettings.endDate.split('-');
-        startD = new Date(sp[0], sp[1]-1, sp[2]); startD.setHours(0,0,0,0);
-        endD = new Date(ep[0], ep[1]-1, ep[2]); endD.setHours(23,59,59,999);
-    }
-
-    let historyTotals = {};
-    records.forEach(r => { historyTotals[r.id] = { dailyTotal: 0 }; });
-
-    historySnap.forEach(doc => {
-        let data = doc.data();
-        if (historyTotals[data.asatizaId]) {
-            let amt = parseFloat(data.amountVal) || 0;
-            let entryDate;
-
-            // 2. Exact Target Date Fetch Fix (Taake purani edits sahi range me jayen)
-            if (data.targetDate) {
-                entryDate = new Date(data.targetDate + " " + new Date().getFullYear());
-            } else if (data.timestamp) {
-                entryDate = data.timestamp.toDate();
-            }
-
-            if (entryDate) {
-                // Check if entry falls exactly between Start and End Date
-                let isRange = (entryDate.getTime() >= startD.getTime() && entryDate.getTime() <= endD.getTime());
-
-                if (isRange) {
-                    if (data.actionType === 'add') {
-                        historyTotals[data.asatizaId].dailyTotal += amt;
-                    } else if (data.actionType === 'minus') {
-                        historyTotals[data.asatizaId].dailyTotal -= amt;
-                    }
-                }
-            }
-        }
-    });
-
-    // Sirf Selected Date Range (Daily) total ko history se update karein
-    records.forEach(r => {
-        r.history_daily_total = historyTotals[r.id].dailyTotal;
-        // NOTE: Grand Total ab seedha database se aayega, history par depend nahi karega.
-    });
-
-    // Sorting 
-    records.sort((a, b) => b.history_daily_total - a.history_daily_total);
-
-    // Top Stats Strip Update
-    const totalCollected = records.reduce((sum, r) => sum + r.history_daily_total, 0);
-    document.getElementById('statTeacherCount').innerText = records.length;
-    document.getElementById('statTotalAmount').innerText = "₹" + totalCollected.toLocaleString('en-IN');
-
-    const listDiv = document.getElementById('jamiaList');
-    listDiv.innerHTML = "";
-    records.forEach((data, idx) => {
-        const card = createCardElement(data, idx);
-        listDiv.appendChild(card);
-    });
-
-    generateTableView();
-
-} catch (error) {
-    console.error("History loading error:", error);
-    document.getElementById('jamiaList').innerHTML = `<div class="text-center p-8 text-rose-500 font-bold">Error loading history!</div>`;
-}
             };
 
             unsubStandard = db.collection('asatiza_details').where("className", "in", classVariants).onSnapshot((snapshot) => {
@@ -720,7 +675,7 @@ try {
                     let data = doc.data(); let recordData = data.recordData || {}; let keys = Object.keys(recordData);
                     let displayUstaz = recordData[keys[0]] || "Custom Record";
                     let displayJamia = recordData[keys[1]] || "";
-                    customRecordsList.push({ id: doc.id, collection: 'custom_records', ustazName: displayUstaz, jamiaName: displayJamia, mobileNo: "-", photoUrl: null, amount: data.amount || 0, total_amount: data.total_amount || data.amount || 0, daily_amount: data.daily_amount || 0, className: data.className, section: data.section });
+                    customRecordsList.push({ id: doc.id, collection: 'custom_records', ustazName: displayUstaz, jamiaName: displayJamia, mobileNo: "-", photoUrl: null, amount: data.amount || 0, total_amount: data.total_amount || data.amount || 0, daily_amount: data.daily_amount || 0, last_updated_date: data.last_updated_date || "", className: data.className, section: data.section });
                 });
                 renderMerged();
             });
