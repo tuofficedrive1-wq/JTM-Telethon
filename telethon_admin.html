@@ -137,8 +137,13 @@
                     <div class="flex flex-wrap gap-2 w-full xl:w-auto">
                         <!-- Teacher / Jamia Search Filter -->
                         <input type="text" id="reportSearchFilter" onkeyup="renderReportsUI()" placeholder="Search Teacher, Jamia ya Zimmedar..." class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto">
-                        <!-- Date Filter -->
-                        <input type="date" id="reportDateFilter" onchange="renderReportsUI()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none" title="Select Date for History">
+                        <!-- Date Range Filter -->
+<div class="flex items-center gap-2 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-indigo-500 shadow-sm">
+    <span class="text-[11px] font-bold text-slate-400 uppercase">From</span>
+    <input type="date" id="reportStartDate" onchange="renderReportsUI()" class="bg-transparent text-sm font-semibold text-indigo-700 outline-none cursor-pointer">
+    <span class="text-[11px] font-bold text-slate-400 uppercase">To</span>
+    <input type="date" id="reportEndDate" onchange="renderReportsUI()" class="bg-transparent text-sm font-semibold text-indigo-700 outline-none cursor-pointer">
+</div>
                         <!-- Class Filter -->
                         <select id="reportClassFilter" onchange="fetchAndRenderReports()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none">
                             <option value="all">Sabhi Classes Dekhein</option>
@@ -164,7 +169,7 @@
                                 <th class="p-3 border-b whitespace-nowrap">Ustaz Name & Mobile</th>
                                 <th class="p-3 border-b whitespace-nowrap">Class & Jamia</th>
                                 <th class="p-3 border-b whitespace-nowrap font-bold text-indigo-700">Zimmedar Name</th>
-                                <th class="p-3 border-b text-right text-blue-600 font-bold whitespace-nowrap">Aaj Ka (Daily)</th>
+                                <th class="p-3 border-b text-right text-blue-600 font-bold whitespace-nowrap" id="dynamicColumnTitle">Aaj Ka (Daily)</th>
                                 <th class="p-3 border-b text-right text-emerald-600 font-bold">Total Amount</th>
                                 <th class="p-3 border-b text-center">Action / History</th>
                             </tr>
@@ -773,7 +778,7 @@
             });
         }
 
-        // Fast Local Rendering (Zero Extra Reads)
+        // Fast Local Rendering (Date Range System Supported)
         function renderReportsUI() {
             if(!window.cachedReportsData) return;
             
@@ -781,23 +786,63 @@
             const tbody = document.getElementById('reportsTableBody');
             const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
 
-           // SAFE FIX: Map Data directly from teacher's profile (daily_amount and total_amount)
-           // No need to loop through thousands of history documents
+            // Naya Date Range Logic
+            const startDateVal = document.getElementById('reportStartDate').value;
+            const endDateVal = document.getElementById('reportEndDate').value;
+            
+            let isRangeActive = false;
+            let dateRangeAmounts = {};
+
+            if (startDateVal && endDateVal) {
+                isRangeActive = true;
+                const start = new Date(startDateVal); start.setHours(0,0,0,0);
+                const end = new Date(endDateVal); end.setHours(23,59,59,999);
+
+                // Table ka title change karna
+                document.getElementById('dynamicColumnTitle').innerText = "Selected Range Total";
+
+                if (window.cachedHistory) {
+                    window.cachedHistory.forEach(h => {
+                        let entryDate;
+                        if (h.targetDate) { entryDate = new Date(h.targetDate + " " + new Date().getFullYear()); } 
+                        else if (h.timestamp) { entryDate = h.timestamp.toDate(); }
+
+                        if (entryDate && entryDate.getTime() >= start.getTime() && entryDate.getTime() <= end.getTime()) {
+                            let tid = h.asatizaId;
+                            if(!dateRangeAmounts[tid]) dateRangeAmounts[tid] = 0;
+                            
+                            let amt = parseFloat(h.amountVal) || 0;
+                            if(h.actionType === 'add') dateRangeAmounts[tid] += amt;
+                            else if(h.actionType === 'minus') dateRangeAmounts[tid] -= amt;
+                        }
+                    });
+                }
+            } else {
+                // Agar date select nahi ki toh by-default 'Aaj ki (Daily)' rakhein
+                document.getElementById('dynamicColumnTitle').innerText = "Aaj Ka (Daily)";
+            }
+
             let processedData = window.cachedReportsData.map(t => {
                 let totalAmt = (Number(t.total_amount) || Number(t.grand_total) || Number(t.amount) || 0);
                 
-                // Agar record aaj update hua hai tabhi daily amount show hoga, warna 0
-                let dailyAmt = (t.last_updated_date === todayDateStr) ? (Number(t.daily_amount) || 0) : 0;
+                let displayColumnAmt = 0;
+                if (isRangeActive) {
+                    // Range me kitna add hua
+                    displayColumnAmt = dateRangeAmounts[t.docId] || 0;
+                } else {
+                    // Normal daily mode
+                    displayColumnAmt = (t.last_updated_date === todayDateStr) ? (Number(t.daily_amount) || 0) : 0;
+                }
                 
-                return { ...t, display_daily: dailyAmt, display_total: totalAmt };
+                return { ...t, display_daily: displayColumnAmt, display_total: totalAmt };
             });
 
             // Status Filters
             if (statusFilter === 'active') processedData = processedData.filter(t => t.display_daily > 0);
             if (statusFilter === 'zero_total') processedData = processedData.filter(t => t.display_total === 0);
 
-            // NAYA SEARCH FILTER YAHAN ADD KIYA GAYA HAI
-                      const searchQuery = document.getElementById('reportSearchFilter') ? document.getElementById('reportSearchFilter').value.toLowerCase().trim() : '';
+            // Search Filter
+            const searchQuery = document.getElementById('reportSearchFilter') ? document.getElementById('reportSearchFilter').value.toLowerCase().trim() : '';
             if (searchQuery !== "") {
                 processedData = processedData.filter(t => {
                     const uName = (t.ustazName || "").toLowerCase();
@@ -807,15 +852,16 @@
                 });
             }
 
-            // Sorting (Pehle Daily Amount, Phir Total Amount, Phir Naam)
+            // Sorting
             processedData.sort((a,b) => {
                 if (b.display_daily !== a.display_daily) return b.display_daily - a.display_daily;
                 if (b.display_total !== a.display_total) return b.display_total - a.display_total;
                 return (a.ustazName || "").localeCompare(b.ustazName || "");
             });
 
-            // Filhal jo data table me dikh raha hai usko export function ke liye save karein
             window.currentReportsFilteredData = processedData;
+            window.isRangeActiveState = isRangeActive; // Export ke liye save kar rahe hain
+            
             let tableHtml = "";
             let srNo = 1;
             processedData.forEach(data => {
@@ -832,21 +878,17 @@
                         <div class="text-xs font-semibold text-slate-600">${data.jamiaName}</div>
                     </td>
                     <td class="p-3 text-sm font-bold text-slate-700">${zimmedarList[data.jamiaName] || "N/A"}</td>
-                    <td class="p-3 text-right font-bold text-blue-600 text-sm">₹${data.display_daily.toLocaleString('en-IN')}</td>
+                    <td class="p-3 text-right font-bold ${isRangeActive ? 'text-purple-600' : 'text-blue-600'} text-sm">₹${data.display_daily.toLocaleString('en-IN')}</td>
                     <td class="p-3 text-right font-bold text-emerald-600 text-sm">₹${data.display_total.toLocaleString('en-IN')}</td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center items-center gap-2">
-                            <button onclick="quickUpdateTotal('${data.docId}', '${escapeStr(data.ustazName)}', '${escapeStr(data.jamiaName)}', ${data.display_total})" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-indigo-200 whitespace-nowrap">
-                                ✏️ Update Total
-                            </button>
-                            <button onclick="viewHistory('${data.docId}', '${escapeStr(data.ustazName)}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-slate-200 whitespace-nowrap">
-                                🕒 History
-                            </button>
+                            <button onclick="quickUpdateTotal('${data.docId}', '${escapeStr(data.ustazName)}', '${escapeStr(data.jamiaName)}', ${data.display_total})" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-indigo-200 whitespace-nowrap">✏️ Update</button>
+                            <button onclick="viewHistory('${data.docId}', '${escapeStr(data.ustazName)}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-slate-200 whitespace-nowrap">🕒 History</button>
                         </div>
                     </td>
                 </tr>`;
             });
-            tbody.innerHTML = tableHtml || `<tr><td colspan="6" class="p-4 text-center text-slate-500 font-medium">Koi record nahi mila is class me.</td></tr>`;
+            tbody.innerHTML = tableHtml || `<tr><td colspan="7" class="p-4 text-center text-slate-500 font-medium">Koi record nahi mila.</td></tr>`;
         }
 
         async function quickUpdateTotal(docId, ustazName, jamiaName, currentTotal) {
@@ -976,37 +1018,38 @@ function exportReportsFiltered() {
         return;
     }
 
-    // Data ko CSV/Excel ke liye format karein
+    let isRange = window.isRangeActiveState;
+    let dynamicColumnName = isRange ? "Selected Range Total" : "Aaj Ka (Daily)";
+
     let exportData = window.currentReportsFilteredData.map((data, index) => {
-      return {
+      let row = {
             "Sr. No": index + 1,
             "Ustaz Name": data.ustazName || "N/A",
             "Mobile No": data.mobileNo || "N/A",
             "Class (Darja)": data.className + (data.section ? ` (${data.section})` : ""),
             "Jamia Name": data.jamiaName || "N/A",
             "Zimmedar Name": zimmedarList[data.jamiaName] || "N/A",
-            "Region": data.region || "N/A", // Naya column Excel ke liye add kiya gaya
-            "State": data.state || "N/A",   // Naya column Excel ke liye add kiya gaya
-            "Aaj Ka (Daily)": data.display_daily,
-            "Total Amount": data.display_total
+            "Region": data.region || "N/A", 
+            "State": data.state || "N/A"
         };
+        row[dynamicColumnName] = data.display_daily;
+        row["Total Amount (Grand)"] = data.display_total;
+        return row;
     });
 
-    // SheetJS library ka istemal (Jo aapke code me pehle se shamil hai)
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Reports");
     
-    // File ka naam dynamically banayein (Class + Date ke hisab se)
     let classFilter = document.getElementById('reportClassFilter').value;
     let className = classFilter === 'all' ? 'All_Classes' : classFilter;
     
-    let dateFilter = document.getElementById('reportDateFilter').value;
-    let dateStr = dateFilter ? dateFilter : new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+    let startD = document.getElementById('reportStartDate').value;
+    let endD = document.getElementById('reportEndDate').value;
+    let dateStr = (startD && endD) ? `${startD}_to_${endD}` : new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
     
-    let fileName = `Telethon_Report_${className}_${dateStr}.csv`;
+    let fileName = `Telethon_Report_${className}_${dateStr}.xlsx`; // .xlsx format me download hoga
     
-    // CSV file download karein
     XLSX.writeFile(workbook, fileName);
 }
     </script>
