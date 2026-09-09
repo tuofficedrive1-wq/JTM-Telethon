@@ -732,7 +732,7 @@
         }
 
         // ==========================================
-        // REPORTS TAB FAST LOADING LOGIC (CLASS VARIANTS)
+        // REPORTS TAB FAST LOADING LOGIC (SAFE VERSION - NO LIVE HISTORY SPIKE)
         // ==========================================
         let reportsUnsubscribe = null;
         let reportHistUnsubscribe = null;
@@ -745,20 +745,17 @@
             tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">Data load ho raha hai...</td></tr>';
             zimActivityContainer.innerHTML = '<div class="text-center text-sm text-slate-500 p-4">Activity calculate ho rahi hai...</div>';
 
-            // Fast History Fetch (One Time Sync/Listen)
-            if (!reportHistUnsubscribe) {
-                reportHistUnsubscribe = db.collection('entries_history').onSnapshot(snap => {
-                    window.cachedHistory = [];
-                    snap.forEach(doc => window.cachedHistory.push(doc.data()));
-                    renderReportsUI(); 
-                });
+            // SAFE FIX: Removed onSnapshot for entries_history. 
+            // Ab admin table history par nahi, balki seedhe teacher documents ke amount par chalegi.
+            if (reportHistUnsubscribe) {
+                reportHistUnsubscribe(); 
+                reportHistUnsubscribe = null;
             }
 
             if (reportsUnsubscribe) {
                 reportsUnsubscribe();
             }
 
-            // Firebase Class Fetch with Multi-Section mapping
             let query = db.collection('asatiza_details');
             
             if (classFilter !== 'all') {
@@ -778,105 +775,19 @@
 
         // Fast Local Rendering (Zero Extra Reads)
         function renderReportsUI() {
-            if(!window.cachedReportsData || !window.cachedHistory) return;
+            if(!window.cachedReportsData) return;
             
-            const dateFilter = document.getElementById('reportDateFilter').value;
             const statusFilter = document.getElementById('reportFilter').value || 'all';
-            const zimActivityContainer = document.getElementById('zimmedarActivityList');
             const tbody = document.getElementById('reportsTableBody');
+            const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
 
-            // 1. Zimmedar Stats Calculation (Registered Users only)
-            let zimStats = {};
-            for(let uid in zimmedarDataMap) {
-                let z = zimmedarDataMap[uid];
-                zimStats[uid] = { name: z.ustazName, class: z.assignedClass, today: 0, total: 0 };
-            }
-            zimStats['ADMIN'] = { name: 'Admin Panel', class: 'All', today: 0, total: 0 };
-
-            let todayStr = new Date().toLocaleDateString('en-IN');
-            
-            window.cachedHistory.forEach(h => {
-                let uid = h.zimmedarUid;
-                if(!uid) return;
-                
-                // Sirf unki record banegi jo user map me existing hain ya Admin hain
-                if(zimStats[uid]) {
-                    zimStats[uid].total++;
-                    if(h.timestamp) {
-                        let hDate = h.timestamp.toDate().toLocaleDateString('en-IN');
-                        if(hDate === todayStr) {
-                            zimStats[uid].today++;
-                        }
-                    }
-                }
-            });
-
-            let zimHtml = "";
-            for(let uid in zimStats) {
-                let s = zimStats[uid];
-                // Agar kabhi entry ki hai tabhi show karo, ya woh registered Zimmedar hai tab.
-                if(s.class !== '-' || s.total > 0) {
-                    zimHtml += `
-                    <div class="flex justify-between items-center p-3 border rounded-lg shadow-sm bg-slate-50 mb-2">
-                        <div>
-                            <div class="font-bold text-sm text-slate-800">${s.name} <span class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-bold ml-1">${s.class}</span></div>
-                            <div class="text-[11px] text-slate-500 mt-1">
-                                <span class="font-bold text-slate-700">${s.total}</span> Baar Total Entry Ki | <span class="font-bold text-emerald-600">${s.today}</span> Baar Aaj Entry Ki
-                            </div>
-                        </div>
-                        <div class="px-2 py-1 rounded-md text-[10px] uppercase font-bold border shadow-sm ${s.today > 0 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
-                            ${s.today > 0 ? 'Active Today' : 'No Activity'}
-                        </div>
-                    </div>`;
-                }
-            }
-            zimActivityContainer.innerHTML = zimHtml;
-
-            // 2. Date Filter Amounts Calculation (Local Cache Filter)
-            let dateAmounts = null;
-            if(dateFilter) {
-                dateAmounts = {};
-                const start = new Date(dateFilter); start.setHours(0,0,0,0);
-                const end = new Date(dateFilter); end.setHours(23,59,59,999);
-                
-                window.cachedHistory.forEach(h => {
-                    if(!h.timestamp) return;
-                    let t = h.timestamp.toDate();
-                    if(t >= start && t <= end) {
-                        let tid = h.asatizaId;
-                        if(!dateAmounts[tid]) dateAmounts[tid] = 0;
-                        if(h.actionType === 'add') dateAmounts[tid] += h.amountVal;
-                        else if(h.actionType === 'minus') dateAmounts[tid] -= h.amountVal;
-                    }
-                });
-            }
-
-           // 3. Process Data for Table (Updated for Accurate History Total)
+           // SAFE FIX: Map Data directly from teacher's profile (daily_amount and total_amount)
+           // No need to loop through thousands of history documents
             let processedData = window.cachedReportsData.map(t => {
-                let historyTotal = 0;
-                let hasHistory = false;
+                let totalAmt = (Number(t.total_amount) || Number(t.grand_total) || Number(t.amount) || 0);
                 
-                let teacherHistory = window.cachedHistory.filter(h => h.asatizaId === t.docId);
-                teacherHistory.sort((a, b) => {
-                    let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
-                    let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
-                    return timeA - timeB; 
-                });
-
-                teacherHistory.forEach(h => {
-                    hasHistory = true;
-                    let amt = Number(h.amountVal) || 0;
-                    if (h.actionType === 'set') {
-                        historyTotal = amt; 
-                    } else if (h.actionType === 'minus') {
-                        historyTotal -= amt;
-                    } else {
-                        historyTotal += amt; 
-                    }
-                });
-
-                let totalAmt = hasHistory ? historyTotal : (Number(t.total_amount) || Number(t.grand_total) || Number(t.amount) || 0);
-                let dailyAmt = dateAmounts ? (dateAmounts[t.docId] || 0) : (Number(t.daily_amount) || 0);
+                // Agar record aaj update hua hai tabhi daily amount show hoga, warna 0
+                let dailyAmt = (t.last_updated_date === todayDateStr) ? (Number(t.daily_amount) || 0) : 0;
                 
                 return { ...t, display_daily: dailyAmt, display_total: totalAmt };
             });
