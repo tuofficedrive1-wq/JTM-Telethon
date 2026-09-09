@@ -121,41 +121,31 @@
         </div>
 
         <!-- REPORTS & ACTIVITY TAB WITH HISTORY -->
-        <div id="reportsTab" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Zimmedar Status -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 h-fit">
-                <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">Zimmedar Activity Status</h2>
-                <div id="zimmedarActivityList" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                    <div class="text-center text-sm text-slate-500 p-4">Activity calculate ho rahi hai...</div>
-                </div>
-            </div>
+        <div id="reportsTab" class="hidden grid grid-cols-1 gap-6">
             
-            <!-- Daily Report Table -->
-            <div class="col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-200">
+            <!-- Daily / Date-Wise Report Table (Full Width) -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2 flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3">
                     <span>Asatiza Reports & History</span>
-                    <div class="flex flex-wrap gap-2 w-full xl:w-auto">
-                        <!-- Teacher / Jamia Search Filter -->
-                        <input type="text" id="reportSearchFilter" onkeyup="renderReportsUI()" placeholder="Search Teacher, Jamia ya Zimmedar..." class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto">
+                    <div class="flex flex-wrap gap-2 w-full xl:w-auto items-center">
+                        <input type="text" id="reportSearchFilter" onkeyup="renderReportsUI()" placeholder="Search Teacher, Jamia ya Z..." class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:w-auto">
+                        
                         <!-- Date Range Filter -->
-<div class="flex items-center gap-2 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-indigo-500 shadow-sm">
-    <span class="text-[11px] font-bold text-slate-400 uppercase">From</span>
-    <input type="date" id="reportStartDate" onchange="renderReportsUI()" class="bg-transparent text-sm font-semibold text-indigo-700 outline-none cursor-pointer">
-    <span class="text-[11px] font-bold text-slate-400 uppercase">To</span>
-    <input type="date" id="reportEndDate" onchange="renderReportsUI()" class="bg-transparent text-sm font-semibold text-indigo-700 outline-none cursor-pointer">
-</div>
-                        <!-- Class Filter -->
+                        <div class="flex items-center gap-2 bg-slate-50 border rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-indigo-500 shadow-sm">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">From</span>
+                            <input type="date" id="reportStartDate" onchange="renderReportsUI()" class="bg-transparent text-sm font-semibold text-indigo-700 outline-none cursor-pointer">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">To</span>
+                            <input type="date" id="reportEndDate" onchange="renderReportsUI()" class="bg-transparent text-sm font-semibold text-indigo-700 outline-none cursor-pointer">
+                        </div>
+
                         <select id="reportClassFilter" onchange="fetchAndRenderReports()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none">
                             <option value="all">Sabhi Classes Dekhein</option>
-                            <!-- Dynamic Population -->
                         </select>
-                        <!-- Status Filter -->
                         <select id="reportFilter" onchange="renderReportsUI()" class="px-3 py-2 border rounded-lg bg-slate-50 text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 outline-none">
                             <option value="all">Sare Teachers (All)</option>
                             <option value="active">Active Amount Wala</option>
                             <option value="zero_total">Abhi Tak 0 Hai</option>
                         </select>
-                        <!-- Download CSV Button -->
                         <button onclick="exportReportsFiltered()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded-lg text-sm flex items-center gap-2 transition whitespace-nowrap shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download CSV
                         </button>
@@ -164,14 +154,8 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-sm">
-                                <th class="p-3 border-b text-center">Sr.</th>
-                                <th class="p-3 border-b whitespace-nowrap">Ustaz Name & Mobile</th>
-                                <th class="p-3 border-b whitespace-nowrap">Class & Jamia</th>
-                                <th class="p-3 border-b whitespace-nowrap font-bold text-indigo-700">Zimmedar Name</th>
-                                <th class="p-3 border-b text-right text-blue-600 font-bold whitespace-nowrap" id="dynamicColumnTitle">Aaj Ka (Daily)</th>
-                                <th class="p-3 border-b text-right text-emerald-600 font-bold">Total Amount</th>
-                                <th class="p-3 border-b text-center">Action / History</th>
+                            <tr class="bg-slate-100 text-slate-600 text-sm" id="dynamicReportHeaders">
+                                <!-- Headers JavaScript se aayenge -->
                             </tr>
                         </thead>
                         <tbody id="reportsTableBody" class="text-sm"></tbody>
@@ -778,28 +762,37 @@
             });
         }
 
-        // Fast Local Rendering (Date Range System Supported)
+        // Date formatting helper
+        function formatShortDate(dateObj) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
+            return `${dateObj.getDate().toString().padStart(2, '0')} ${months[dateObj.getMonth()]}`;
+        }
+
+        // Fast Local Rendering (Date-Wise Dynamic Columns)
         function renderReportsUI() {
             if(!window.cachedReportsData) return;
             
             const statusFilter = document.getElementById('reportFilter').value || 'all';
             const tbody = document.getElementById('reportsTableBody');
+            const thead = document.getElementById('dynamicReportHeaders');
             const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
 
-            // Naya Date Range Logic
             const startDateVal = document.getElementById('reportStartDate').value;
             const endDateVal = document.getElementById('reportEndDate').value;
             
             let isRangeActive = false;
-            let dateRangeAmounts = {};
+            let dateColumns = []; 
+            let dateRangeAmounts = {}; // teacherId -> { dateStr: amount }
 
             if (startDateVal && endDateVal) {
                 isRangeActive = true;
                 const start = new Date(startDateVal); start.setHours(0,0,0,0);
                 const end = new Date(endDateVal); end.setHours(23,59,59,999);
 
-                // Table ka title change karna
-                document.getElementById('dynamicColumnTitle').innerText = "Selected Range Total";
+                // Create array of dates for columns
+                for(let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+                    dateColumns.push(formatShortDate(new Date(dt)));
+                }
 
                 if (window.cachedHistory) {
                     window.cachedHistory.forEach(h => {
@@ -809,86 +802,138 @@
 
                         if (entryDate && entryDate.getTime() >= start.getTime() && entryDate.getTime() <= end.getTime()) {
                             let tid = h.asatizaId;
-                            if(!dateRangeAmounts[tid]) dateRangeAmounts[tid] = 0;
+                            let colDateStr = formatShortDate(entryDate);
+                            
+                            if(!dateRangeAmounts[tid]) dateRangeAmounts[tid] = {};
+                            if(!dateRangeAmounts[tid][colDateStr]) dateRangeAmounts[tid][colDateStr] = 0;
                             
                             let amt = parseFloat(h.amountVal) || 0;
-                            if(h.actionType === 'add') dateRangeAmounts[tid] += amt;
-                            else if(h.actionType === 'minus') dateRangeAmounts[tid] -= amt;
+                            if(h.actionType === 'add') dateRangeAmounts[tid][colDateStr] += amt;
+                            else if(h.actionType === 'minus') dateRangeAmounts[tid][colDateStr] -= amt;
                         }
                     });
                 }
-            } else {
-                // Agar date select nahi ki toh by-default 'Aaj ki (Daily)' rakhein
-                document.getElementById('dynamicColumnTitle').innerText = "Aaj Ka (Daily)";
             }
 
+            // Build Headers
+            let headerHtml = `
+                <th class="p-3 border-b text-center">Sr.</th>
+                <th class="p-3 border-b whitespace-nowrap">Ustaz Name & Mobile</th>
+                <th class="p-3 border-b whitespace-nowrap">Class & Jamia</th>
+                <th class="p-3 border-b whitespace-nowrap font-bold text-indigo-700">Zimmedar Name</th>`;
+            
+            if (isRangeActive) {
+                dateColumns.forEach(dateStr => {
+                    headerHtml += `<th class="p-3 border-b text-center text-purple-600 font-bold whitespace-nowrap">${dateStr}</th>`;
+                });
+            } else {
+                headerHtml += `<th class="p-3 border-b text-center text-blue-600 font-bold whitespace-nowrap">Aaj Ka (Daily)</th>`;
+            }
+            headerHtml += `<th class="p-3 border-b text-right text-emerald-600 font-bold">Total Amount</th>`;
+            thead.innerHTML = headerHtml;
+
+            // Process Data
             let processedData = window.cachedReportsData.map(t => {
                 let totalAmt = (Number(t.total_amount) || Number(t.grand_total) || Number(t.amount) || 0);
                 
-                let displayColumnAmt = 0;
+                let rangeValues = {};
+                let dailyFallback = 0;
+                
                 if (isRangeActive) {
-                    // Range me kitna add hua
-                    displayColumnAmt = dateRangeAmounts[t.docId] || 0;
+                    dateColumns.forEach(d => {
+                        rangeValues[d] = (dateRangeAmounts[t.docId] && dateRangeAmounts[t.docId][d]) ? dateRangeAmounts[t.docId][d] : 0;
+                    });
                 } else {
-                    // Normal daily mode
-                    displayColumnAmt = (t.last_updated_date === todayDateStr) ? (Number(t.daily_amount) || 0) : 0;
+                    dailyFallback = (t.last_updated_date === todayDateStr) ? (Number(t.daily_amount) || 0) : 0;
                 }
                 
-                return { ...t, display_daily: displayColumnAmt, display_total: totalAmt };
+                return { ...t, rangeValues: rangeValues, display_daily: dailyFallback, display_total: totalAmt };
             });
 
-            // Status Filters
-            if (statusFilter === 'active') processedData = processedData.filter(t => t.display_daily > 0);
+            // Filters
+            if (statusFilter === 'active') {
+                processedData = processedData.filter(t => isRangeActive ? Object.values(t.rangeValues).some(v => v > 0) : t.display_daily > 0);
+            }
             if (statusFilter === 'zero_total') processedData = processedData.filter(t => t.display_total === 0);
 
-            // Search Filter
             const searchQuery = document.getElementById('reportSearchFilter') ? document.getElementById('reportSearchFilter').value.toLowerCase().trim() : '';
             if (searchQuery !== "") {
                 processedData = processedData.filter(t => {
-                    const uName = (t.ustazName || "").toLowerCase();
-                    const jName = (t.jamiaName || "").toLowerCase();
-                    const zName = (zimmedarList[t.jamiaName] || "").toLowerCase();
-                    return uName.includes(searchQuery) || jName.includes(searchQuery) || zName.includes(searchQuery);
+                    return (t.ustazName || "").toLowerCase().includes(searchQuery) || 
+                           (t.jamiaName || "").toLowerCase().includes(searchQuery) || 
+                           (zimmedarList[t.jamiaName] || "").toLowerCase().includes(searchQuery);
                 });
             }
 
-            // Sorting
-            processedData.sort((a,b) => {
-                if (b.display_daily !== a.display_daily) return b.display_daily - a.display_daily;
-                if (b.display_total !== a.display_total) return b.display_total - a.display_total;
-                return (a.ustazName || "").localeCompare(b.ustazName || "");
-            });
+            processedData.sort((a,b) => b.display_total - a.display_total);
 
+            // Save for export
             window.currentReportsFilteredData = processedData;
-            window.isRangeActiveState = isRangeActive; // Export ke liye save kar rahe hain
+            window.isRangeActiveState = isRangeActive;
+            window.activeDateColumns = dateColumns;
             
+            // Build Table Body
             let tableHtml = "";
             let srNo = 1;
             processedData.forEach(data => {
-                let mobileStr = data.mobileNo ? data.mobileNo : 'N/A';
-                tableHtml += `
-                <tr class="border-b hover:bg-slate-50 transition">
+                tableHtml += `<tr class="border-b hover:bg-slate-50 transition">
                     <td class="p-3 text-center font-bold text-slate-400 text-xs">${srNo++}</td>
-                    <td class="p-3">
-                        <div class="font-semibold text-slate-800">${data.ustazName}</div>
-                        <div class="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5"><svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg> ${mobileStr}</div>
-                    </td>
-                   <td class="p-3">
-                        <div class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded inline-block mb-1 border border-indigo-100">${data.className} ${data.section ? ' ('+data.section+')' : ''}</div>
-                        <div class="text-xs font-semibold text-slate-600">${data.jamiaName}</div>
-                    </td>
-                    <td class="p-3 text-sm font-bold text-slate-700">${zimmedarList[data.jamiaName] || "N/A"}</td>
-                    <td class="p-3 text-right font-bold ${isRangeActive ? 'text-purple-600' : 'text-blue-600'} text-sm">₹${data.display_daily.toLocaleString('en-IN')}</td>
-                    <td class="p-3 text-right font-bold text-emerald-600 text-sm">₹${data.display_total.toLocaleString('en-IN')}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex justify-center items-center gap-2">
-                            <button onclick="quickUpdateTotal('${data.docId}', '${escapeStr(data.ustazName)}', '${escapeStr(data.jamiaName)}', ${data.display_total})" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-indigo-200 whitespace-nowrap">✏️ Update</button>
-                            <button onclick="viewHistory('${data.docId}', '${escapeStr(data.ustazName)}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md text-[11px] font-bold transition shadow-sm border border-slate-200 whitespace-nowrap">🕒 History</button>
-                        </div>
-                    </td>
+                    <td class="p-3"><div class="font-semibold text-slate-800">${data.ustazName}</div><div class="text-[11px] text-slate-500 font-medium">📞 ${data.mobileNo || 'N/A'}</div></td>
+                    <td class="p-3"><div class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded inline-block mb-1 border border-indigo-100">${data.className} ${data.section ? ' ('+data.section+')' : ''}</div><div class="text-xs font-semibold text-slate-600">${data.jamiaName}</div></td>
+                    <td class="p-3 text-sm font-bold text-slate-700">${zimmedarList[data.jamiaName] || "N/A"}</td>`;
+                
+                if (isRangeActive) {
+                    dateColumns.forEach(d => {
+                        let val = data.rangeValues[d];
+                        tableHtml += `<td class="p-3 text-center font-bold ${val > 0 ? 'text-purple-600' : 'text-slate-300'} text-sm">${val === 0 ? '-' : '₹'+val.toLocaleString('en-IN')}</td>`;
+                    });
+                } else {
+                    tableHtml += `<td class="p-3 text-center font-bold ${data.display_daily > 0 ? 'text-blue-600' : 'text-slate-300'} text-sm">${data.display_daily === 0 ? '-' : '₹'+data.display_daily.toLocaleString('en-IN')}</td>`;
+                }
+                
+                tableHtml += `<td class="p-3 text-right font-extrabold text-emerald-600 text-sm bg-emerald-50/30">₹${data.display_total.toLocaleString('en-IN')}</td>
                 </tr>`;
             });
-            tbody.innerHTML = tableHtml || `<tr><td colspan="7" class="p-4 text-center text-slate-500 font-medium">Koi record nahi mila.</td></tr>`;
+            tbody.innerHTML = tableHtml || `<tr><td colspan="10" class="p-4 text-center text-slate-500 font-medium">Koi record nahi mila.</td></tr>`;
+        }
+
+        // Export Function
+        function exportReportsFiltered() {
+            if (!window.currentReportsFilteredData || window.currentReportsFilteredData.length === 0) { alert("Download karne ke liye koi data nahi hai!"); return; }
+
+            let exportData = window.currentReportsFilteredData.map((data, index) => {
+              let row = {
+                    "Sr. No": index + 1,
+                    "Ustaz Name": data.ustazName || "N/A",
+                    "Mobile No": data.mobileNo || "N/A",
+                    "Class (Darja)": data.className + (data.section ? ` (${data.section})` : ""),
+                    "Jamia Name": data.jamiaName || "N/A",
+                    "Zimmedar Name": zimmedarList[data.jamiaName] || "N/A",
+                    "Region": data.region || "N/A", 
+                    "State": data.state || "N/A"
+                };
+                
+                if (window.isRangeActiveState) {
+                    window.activeDateColumns.forEach(d => { row[d] = data.rangeValues[d]; });
+                } else {
+                    row["Aaj Ka (Daily)"] = data.display_daily;
+                }
+                row["Total Amount (Grand)"] = data.display_total;
+                return row;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Reports");
+            
+            let classFilter = document.getElementById('reportClassFilter').value;
+            let className = classFilter === 'all' ? 'All_Classes' : classFilter;
+            
+            let startD = document.getElementById('reportStartDate').value;
+            let endD = document.getElementById('reportEndDate').value;
+            let dateStr = (startD && endD) ? `${startD}_to_${endD}` : new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+            
+            XLSX.writeFile(workbook, `Telethon_Report_${className}_${dateStr}.xlsx`);
         }
 
         async function quickUpdateTotal(docId, ustazName, jamiaName, currentTotal) {
