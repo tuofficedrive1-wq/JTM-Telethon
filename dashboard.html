@@ -343,12 +343,10 @@
             const endTabs = ['All Regions', 'Result', 'Muqabla'];
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
-            const currentMode = headerConfig?.dashboardMode || 'total';
-       
+           const currentMode = headerConfig?.dashboardMode || 'total';
             const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
 
            // SAFE FIX: Removed all dependencies on 'entries_history' for the dashboard.
-           // Now it uses the perfectly synced 'daily_amount' and 'last_updated_date' from the teacher's profile.
            const processedData = allData.map(d => {
                 let activeAmt = d.total_amount;
                 
@@ -369,14 +367,6 @@
                 
                 return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
             });
-
-const processedCustomData = customRecords.map(d => {
-    let activeAmt = d.amount || 0;
-    if (currentMode === 'daily') {
-        activeAmt = todayHistoryTotals[d.id] !== undefined ? todayHistoryTotals[d.id] : (d.daily_amount || 0);
-    }
-    return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-});
 
             const getTopWinners = () => {
                 const classMap = {};
