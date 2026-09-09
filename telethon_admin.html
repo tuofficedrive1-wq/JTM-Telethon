@@ -720,8 +720,8 @@
             tbody.innerHTML = tableHTML;
         }
 
-        // ==========================================
-        // REPORTS TAB FAST LOADING LOGIC (SAFE VERSION - NO LIVE HISTORY SPIKE)
+       // ==========================================
+        // REPORTS TAB FAST LOADING LOGIC (FIXED VERSION)
         // ==========================================
         let reportsUnsubscribe = null;
         let reportHistUnsubscribe = null;
@@ -729,13 +729,11 @@
         function fetchAndRenderReports() {
             const classFilter = document.getElementById('reportClassFilter').value || 'all';
             const tbody = document.getElementById('reportsTableBody');
-            const zimActivityContainer = document.getElementById('zimmedarActivityList');
             
-            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-500">Data load ho raha hai...</td></tr>';
-            zimActivityContainer.innerHTML = '<div class="text-center text-sm text-slate-500 p-4">Activity calculate ho rahi hai...</div>';
+            // Loading text show karega
+            tbody.innerHTML = '<tr><td colspan="10" class="p-4 text-center text-slate-500 font-medium">Data load ho raha hai, kripya intezar karein...</td></tr>';
 
-            // SAFE FIX: Removed onSnapshot for entries_history. 
-            // Ab admin table history par nahi, balki seedhe teacher documents ke amount par chalegi.
+            // Purane history listener ko hatana
             if (reportHistUnsubscribe) {
                 reportHistUnsubscribe(); 
                 reportHistUnsubscribe = null;
