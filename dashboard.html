@@ -292,15 +292,17 @@
             dAmount = 0; 
         }
 
-        return { 
+       return { 
             id: doc.id, 
             ustazName: data.ustazName || "N/A", 
             jamiaName: data.jamiaName || "N/A", 
             className: data.className || "N/A", 
             region: data.region || "N/A", 
             state: data.state || "N/A", 
-            total_amount: parseFloat(data.amount) || 0, 
-            daily_amount: dAmount, // Yahan updated amount pass kar diya
+            // Total amount sahi calculate hoga
+            total_amount: parseFloat(data.total_amount) || parseFloat(data.grand_total) || parseFloat(data.amount) || 0, 
+            daily_amount: dAmount, 
+            last_updated_date: docDate, // YEH LINE MISSING THI
             photoUrl: data.photoUrl || null, 
             timestamp: data.timestamp 
         };
