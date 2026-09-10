@@ -875,9 +875,14 @@
             tbody.innerHTML = tableHtml || `<tr><td colspan="10" class="p-4 text-center text-slate-500 font-medium">Koi record nahi mila.</td></tr>`;
         }
 
-        // Export Function
+       // ==========================================
+        // EXCEL DOWNLOAD FUNCTION (Fixed for Date Columns)
+        // ==========================================
         function exportReportsFiltered() {
-            if (!window.currentReportsFilteredData || window.currentReportsFilteredData.length === 0) { alert("Download karne ke liye koi data nahi hai!"); return; }
+            if (!window.currentReportsFilteredData || window.currentReportsFilteredData.length === 0) { 
+                alert("Download karne ke liye koi data nahi hai!"); 
+                return; 
+            }
 
             let exportData = window.currentReportsFilteredData.map((data, index) => {
               let row = {
@@ -891,12 +896,17 @@
                     "State": data.state || "N/A"
                 };
                 
-                if (window.isRangeActiveState) {
-                    window.activeDateColumns.forEach(d => { row[d] = data.rangeValues[d]; });
+                // Agar Range select ki gayi hai, toh har date ka naya column banega
+                if (window.isRangeActiveState && window.activeDateColumns) {
+                    window.activeDateColumns.forEach(d => { 
+                        row[d] = data.rangeValues[d] || 0; 
+                    });
                 } else {
-                    row["Aaj Ka (Daily)"] = data.display_daily;
+                    // Agar range nahi hai toh by default aaj ki daily
+                    row["Aaj Ka (Daily)"] = data.display_daily || 0;
                 }
-                row["Total Amount (Grand)"] = data.display_total;
+                
+                row["Total Amount (Grand)"] = data.display_total || 0;
                 return row;
             });
 
