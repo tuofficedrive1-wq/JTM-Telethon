@@ -1043,48 +1043,7 @@
     .finally(() => { btn.innerText = originalText; btn.disabled = false; }); 
 }    
         async function resetDailyAmounts(event) { if(!confirm("⚠️ WARNING ⚠️\nKya aap sach me sabhi asatiza ka Daily Amount 0 karna chahte hain?\n(Aapka Main Grand Total bilkul safe rahega)")) return; const btn = event.target; const origText = btn.innerText; btn.innerText = "Resetting..."; btn.disabled = true; try { const snapshot = await db.collection('asatiza_details').get(); const batch = db.batch(); snapshot.docs.forEach(doc => { batch.update(doc.ref, { daily_amount: 0 }); }); await batch.commit(); alert("✅ Sabhi ka Daily Amount successfully 0 ho gaya hai!"); } catch(e) { alert("Error: " + e.message); } finally { btn.innerText = origText; btn.disabled = false; } }
-        // Function for downloading filtered table data as CSV
-// Function for downloading filtered table data as CSV
-function exportReportsFiltered() {
-    if (!window.currentReportsFilteredData || window.currentReportsFilteredData.length === 0) {
-        alert("Download karne ke liye koi data nahi hai!");
-        return;
-    }
-
-    let isRange = window.isRangeActiveState;
-    let dynamicColumnName = isRange ? "Selected Range Total" : "Aaj Ka (Daily)";
-
-    let exportData = window.currentReportsFilteredData.map((data, index) => {
-      let row = {
-            "Sr. No": index + 1,
-            "Ustaz Name": data.ustazName || "N/A",
-            "Mobile No": data.mobileNo || "N/A",
-            "Class (Darja)": data.className + (data.section ? ` (${data.section})` : ""),
-            "Jamia Name": data.jamiaName || "N/A",
-            "Zimmedar Name": zimmedarList[data.jamiaName] || "N/A",
-            "Region": data.region || "N/A", 
-            "State": data.state || "N/A"
-        };
-        row[dynamicColumnName] = data.display_daily;
-        row["Total Amount (Grand)"] = data.display_total;
-        return row;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Reports");
-    
-    let classFilter = document.getElementById('reportClassFilter').value;
-    let className = classFilter === 'all' ? 'All_Classes' : classFilter;
-    
-    let startD = document.getElementById('reportStartDate').value;
-    let endD = document.getElementById('reportEndDate').value;
-    let dateStr = (startD && endD) ? `${startD}_to_${endD}` : new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-    
-    let fileName = `Telethon_Report_${className}_${dateStr}.xlsx`; // .xlsx format me download hoga
-    
-    XLSX.writeFile(workbook, fileName);
-}
+       
     </script>
 </body>
 </html>
