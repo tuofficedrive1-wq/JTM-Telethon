@@ -875,8 +875,8 @@
             tbody.innerHTML = tableHtml || `<tr><td colspan="10" class="p-4 text-center text-slate-500 font-medium">Koi record nahi mila.</td></tr>`;
         }
 
-       // ==========================================
-        // EXCEL DOWNLOAD FUNCTION (Fixed for Date Columns)
+      // ==========================================
+        // EXCEL DOWNLOAD FUNCTION (Fixed for Multiple Date Columns)
         // ==========================================
         function exportReportsFiltered() {
             if (!window.currentReportsFilteredData || window.currentReportsFilteredData.length === 0) { 
@@ -902,7 +902,7 @@
                         row[d] = data.rangeValues[d] || 0; 
                     });
                 } else {
-                    // Agar range nahi hai toh by default aaj ki daily
+                    // Agar range nahi hai toh by default aaj ki daily aayegi
                     row["Aaj Ka (Daily)"] = data.display_daily || 0;
                 }
                 
