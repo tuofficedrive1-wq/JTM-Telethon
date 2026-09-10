@@ -766,8 +766,8 @@
             return `${dateObj.getDate().toString().padStart(2, '0')} ${months[dateObj.getMonth()]}`;
         }
 
-        // Fast Local Rendering (Date-Wise Dynamic Columns)
-        function renderReportsUI() {
+        // Fast & Safe Rendering (Fetches History ONLY for selected range)
+        async function renderReportsUI() {
             if(!window.cachedReportsData) return;
             
             const statusFilter = document.getElementById('reportFilter').value || 'all';
@@ -780,40 +780,49 @@
             
             let isRangeActive = false;
             let dateColumns = []; 
-            let dateRangeAmounts = {}; // teacherId -> { dateStr: amount }
+            let dateRangeAmounts = {}; 
 
             if (startDateVal && endDateVal) {
                 isRangeActive = true;
                 const start = new Date(startDateVal); start.setHours(0,0,0,0);
                 const end = new Date(endDateVal); end.setHours(23,59,59,999);
 
-                // Create array of dates for columns
                 for(let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
                     dateColumns.push(formatShortDate(new Date(dt)));
                 }
 
-                if (window.cachedHistory) {
-                    window.cachedHistory.forEach(h => {
-                        let entryDate;
-                        if (h.targetDate) { entryDate = new Date(h.targetDate + " " + new Date().getFullYear()); } 
-                        else if (h.timestamp) { entryDate = h.timestamp.toDate(); }
+                document.getElementById('dynamicColumnTitle').innerText = "Selected Range Total";
+                
+                // SAFE FETCH: Sirf select ki gayi dates ka data database se mangwana (No massive loops)
+                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-indigo-500 font-bold animate-pulse">Selected dates ki history load ho rahi hai...</td></tr>`;
+                
+                try {
+                    const historySnap = await db.collection('entries_history')
+                        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start))
+                        .where('timestamp', '<=', firebase.firestore.Timestamp.fromDate(end))
+                        .get();
 
-                        if (entryDate && entryDate.getTime() >= start.getTime() && entryDate.getTime() <= end.getTime()) {
-                            let tid = h.asatizaId;
-                            let colDateStr = formatShortDate(entryDate);
-                            
-                            if(!dateRangeAmounts[tid]) dateRangeAmounts[tid] = {};
-                            if(!dateRangeAmounts[tid][colDateStr]) dateRangeAmounts[tid][colDateStr] = 0;
-                            
-                            let amt = parseFloat(h.amountVal) || 0;
-                            if(h.actionType === 'add') dateRangeAmounts[tid][colDateStr] += amt;
-                            else if(h.actionType === 'minus') dateRangeAmounts[tid][colDateStr] -= amt;
-                        }
+                    historySnap.forEach(doc => {
+                        let h = doc.data();
+                        let tid = h.asatizaId;
+                        let entryDate = h.timestamp.toDate();
+                        let colDateStr = formatShortDate(entryDate);
+                        
+                        if(!dateRangeAmounts[tid]) dateRangeAmounts[tid] = {};
+                        if(!dateRangeAmounts[tid][colDateStr]) dateRangeAmounts[tid][colDateStr] = 0;
+                        
+                        let amt = parseFloat(h.amountVal) || 0;
+                        if(h.actionType === 'add') dateRangeAmounts[tid][colDateStr] += amt;
+                        else if(h.actionType === 'minus') dateRangeAmounts[tid][colDateStr] -= amt;
                     });
+                } catch(e) {
+                    console.error("History fetch error: ", e);
                 }
+            } else {
+                if(document.getElementById('dynamicColumnTitle')) document.getElementById('dynamicColumnTitle').innerText = "Aaj Ka (Daily)";
             }
 
-            // Build Headers
+            // Headers Setup
             let headerHtml = `
                 <th class="p-3 border-b text-center">Sr.</th>
                 <th class="p-3 border-b whitespace-nowrap">Ustaz Name & Mobile</th>
@@ -821,76 +830,51 @@
                 <th class="p-3 border-b whitespace-nowrap font-bold text-indigo-700">Zimmedar Name</th>`;
             
             if (isRangeActive) {
-                dateColumns.forEach(dateStr => {
-                    headerHtml += `<th class="p-3 border-b text-center text-purple-600 font-bold whitespace-nowrap">${dateStr}</th>`;
-                });
+                dateColumns.forEach(dateStr => { headerHtml += `<th class="p-3 border-b text-center text-purple-600 font-bold whitespace-nowrap">${dateStr}</th>`; });
             } else {
-                headerHtml += `<th class="p-3 border-b text-center text-blue-600 font-bold whitespace-nowrap">Aaj Ka (Daily)</th>`;
+                headerHtml += `<th class="p-3 border-b text-right text-blue-600 font-bold whitespace-nowrap">Aaj Ka (Daily)</th>`;
             }
             headerHtml += `<th class="p-3 border-b text-right text-emerald-600 font-bold">Total Amount</th>`;
             thead.innerHTML = headerHtml;
 
-            // Process Data
+            // Process Rows
             let processedData = window.cachedReportsData.map(t => {
                 let totalAmt = (Number(t.total_amount) || Number(t.grand_total) || Number(t.amount) || 0);
-                
                 let rangeValues = {};
                 let dailyFallback = 0;
                 
                 if (isRangeActive) {
-                    dateColumns.forEach(d => {
-                        rangeValues[d] = (dateRangeAmounts[t.docId] && dateRangeAmounts[t.docId][d]) ? dateRangeAmounts[t.docId][d] : 0;
-                    });
+                    dateColumns.forEach(d => { rangeValues[d] = (dateRangeAmounts[t.docId] && dateRangeAmounts[t.docId][d]) ? dateRangeAmounts[t.docId][d] : 0; });
                 } else {
                     dailyFallback = (t.last_updated_date === todayDateStr) ? (Number(t.daily_amount) || 0) : 0;
                 }
-                
                 return { ...t, rangeValues: rangeValues, display_daily: dailyFallback, display_total: totalAmt };
             });
 
             // Filters
-            if (statusFilter === 'active') {
-                processedData = processedData.filter(t => isRangeActive ? Object.values(t.rangeValues).some(v => v > 0) : t.display_daily > 0);
-            }
+            if (statusFilter === 'active') { processedData = processedData.filter(t => isRangeActive ? Object.values(t.rangeValues).some(v => v > 0) : t.display_daily > 0); }
             if (statusFilter === 'zero_total') processedData = processedData.filter(t => t.display_total === 0);
 
             const searchQuery = document.getElementById('reportSearchFilter') ? document.getElementById('reportSearchFilter').value.toLowerCase().trim() : '';
             if (searchQuery !== "") {
-                processedData = processedData.filter(t => {
-                    return (t.ustazName || "").toLowerCase().includes(searchQuery) || 
-                           (t.jamiaName || "").toLowerCase().includes(searchQuery) || 
-                           (zimmedarList[t.jamiaName] || "").toLowerCase().includes(searchQuery);
-                });
+                processedData = processedData.filter(t => { return (t.ustazName || "").toLowerCase().includes(searchQuery) || (t.jamiaName || "").toLowerCase().includes(searchQuery) || (zimmedarList[t.jamiaName] || "").toLowerCase().includes(searchQuery); });
             }
 
             processedData.sort((a,b) => b.display_total - a.display_total);
-
-            // Save for export
             window.currentReportsFilteredData = processedData;
             window.isRangeActiveState = isRangeActive;
             window.activeDateColumns = dateColumns;
             
-            // Build Table Body
-            let tableHtml = "";
-            let srNo = 1;
+            // Build Table
+            let tableHtml = ""; let srNo = 1;
             processedData.forEach(data => {
-                tableHtml += `<tr class="border-b hover:bg-slate-50 transition">
-                    <td class="p-3 text-center font-bold text-slate-400 text-xs">${srNo++}</td>
-                    <td class="p-3"><div class="font-semibold text-slate-800">${data.ustazName}</div><div class="text-[11px] text-slate-500 font-medium">📞 ${data.mobileNo || 'N/A'}</div></td>
-                    <td class="p-3"><div class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded inline-block mb-1 border border-indigo-100">${data.className} ${data.section ? ' ('+data.section+')' : ''}</div><div class="text-xs font-semibold text-slate-600">${data.jamiaName}</div></td>
-                    <td class="p-3 text-sm font-bold text-slate-700">${zimmedarList[data.jamiaName] || "N/A"}</td>`;
-                
+                tableHtml += `<tr class="border-b hover:bg-slate-50 transition"><td class="p-3 text-center font-bold text-slate-400 text-xs">${srNo++}</td><td class="p-3"><div class="font-semibold text-slate-800">${data.ustazName}</div><div class="text-[11px] text-slate-500 font-medium">📞 ${data.mobileNo || 'N/A'}</div></td><td class="p-3"><div class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded inline-block mb-1 border border-indigo-100">${data.className} ${data.section ? ' ('+data.section+')' : ''}</div><div class="text-xs font-semibold text-slate-600">${data.jamiaName}</div></td><td class="p-3 text-sm font-bold text-slate-700">${zimmedarList[data.jamiaName] || "N/A"}</td>`;
                 if (isRangeActive) {
-                    dateColumns.forEach(d => {
-                        let val = data.rangeValues[d];
-                        tableHtml += `<td class="p-3 text-center font-bold ${val > 0 ? 'text-purple-600' : 'text-slate-300'} text-sm">${val === 0 ? '-' : '₹'+val.toLocaleString('en-IN')}</td>`;
-                    });
+                    dateColumns.forEach(d => { let val = data.rangeValues[d]; tableHtml += `<td class="p-3 text-center font-bold ${val > 0 ? 'text-purple-600' : 'text-slate-300'} text-sm">${val === 0 ? '-' : '₹'+val.toLocaleString('en-IN')}</td>`; });
                 } else {
-                    tableHtml += `<td class="p-3 text-center font-bold ${data.display_daily > 0 ? 'text-blue-600' : 'text-slate-300'} text-sm">${data.display_daily === 0 ? '-' : '₹'+data.display_daily.toLocaleString('en-IN')}</td>`;
+                    tableHtml += `<td class="p-3 text-right font-bold ${data.display_daily > 0 ? 'text-blue-600' : 'text-slate-300'} text-sm">${data.display_daily === 0 ? '-' : '₹'+data.display_daily.toLocaleString('en-IN')}</td>`;
                 }
-                
-                tableHtml += `<td class="p-3 text-right font-extrabold text-emerald-600 text-sm bg-emerald-50/30">₹${data.display_total.toLocaleString('en-IN')}</td>
-                </tr>`;
+                tableHtml += `<td class="p-3 text-right font-extrabold text-emerald-600 text-sm bg-emerald-50/30">₹${data.display_total.toLocaleString('en-IN')}</td></tr>`;
             });
             tbody.innerHTML = tableHtml || `<tr><td colspan="10" class="p-4 text-center text-slate-500 font-medium">Koi record nahi mila.</td></tr>`;
         }
