@@ -791,9 +791,7 @@
                     dateColumns.push(formatShortDate(new Date(dt)));
                 }
 
-                document.getElementById('dynamicColumnTitle').innerText = "Selected Range Total";
-                
-                // SAFE FETCH: Sirf select ki gayi dates ka data database se mangwana (No massive loops)
+                // SAFE FETCH: Sirf select ki gayi dates ka data mangwana
                 tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-indigo-500 font-bold animate-pulse">Selected dates ki history load ho rahi hai...</td></tr>`;
                 
                 try {
@@ -818,8 +816,6 @@
                 } catch(e) {
                     console.error("History fetch error: ", e);
                 }
-            } else {
-                if(document.getElementById('dynamicColumnTitle')) document.getElementById('dynamicColumnTitle').innerText = "Aaj Ka (Daily)";
             }
 
             // Headers Setup
