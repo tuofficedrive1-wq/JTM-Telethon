@@ -63,9 +63,10 @@
         const JAMIA_CANDIDATES = ["Jamia Name", "JAMIA NAME", "Jamia", "Jamiah"];
         const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
 
-        function gvizUrl(sheetId, sheetName) {
-            return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
-        }
+       function gvizUrl(sheetId, sheetName) {
+    // Har request ko unique banane ke liye aakhir mein '&t=...' lagaya hai taake purana data na aaye
+    return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}&t=${new Date().getTime()}`;
+}
 
         async function fetchSheetData(sheetId, sheetName) {
             for (let attempt = 0; attempt < 3; attempt++) {
