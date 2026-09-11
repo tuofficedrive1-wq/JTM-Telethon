@@ -539,7 +539,7 @@
                         <nav className="mb-6">
                             <div className="flex flex-wrap gap-2 justify-center">
                                 {allTabs.map((opt) => (
-                                    <button key={opt} onClick={() => setActiveTab(opt)} className={`tab-btn px-4 py-2 rounded-full font-semibold text-sm shadow-sm focus:outline-none ${activeTab === opt ? "bg-indigo-600 text-white shadow-md scale-105" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}>
+                                   <button key={opt} onClick={() => { setDisplayedData([]); setActiveTab(opt); }} className={`tab-btn px-4 py-2 rounded-full font-semibold text-sm shadow-sm focus:outline-none ${activeTab === opt ? "bg-indigo-600 text-white shadow-md scale-105" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}>
                                         {opt}
                                     </button>
                                 ))}
