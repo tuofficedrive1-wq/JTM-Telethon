@@ -103,13 +103,13 @@
             }
         }
 
-       function findColumnByCandidates(cols, candidates) {
-    const lower = cols.map((c) => (c || "").toLowerCase().trim());
+      function findColumnByCandidates(cols, candidates) {
+    const lower = cols.map((c) => String(c || "").toLowerCase().replace(/\s+/g, ''));
     for (let cand of candidates) {
         if(!cand) continue;
-        const target = cand.toLowerCase().trim();
+        const target = String(cand).toLowerCase().replace(/\s+/g, '');
         const idx = lower.findIndex((c) => c === target);
-        if (idx >= 0) return idx; // Yahan cols[idx] ki jagah sirf idx return karna hai
+        if (idx >= 0) return idx; // Ye index number hi return karega
     }
     return null;
 }
