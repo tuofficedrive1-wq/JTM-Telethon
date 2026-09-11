@@ -32,7 +32,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- AAPKI GOOGLE SHEET KI ID ---
+        // --- YAHAN AAPKI ASLI GOOGLE SHEET KI ID UPDATE KAR DI GAYI HAI ---
         const SHEET_ID = "1eY3TG5dIfUPsrx0CRwrv9H0HlkzRTjbWsXw2ypVAXCA";
 
         const DEFAULT_SHEET_CONFIGS = {
@@ -706,7 +706,7 @@
                                                 )}
                                             </div>
                                         ))}
-                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div> )}
+                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai for {adminConfig.targetCol}.</div> )}
                                     </div>
                                 </div>
                             )}
