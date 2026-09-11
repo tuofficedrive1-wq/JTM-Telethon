@@ -102,16 +102,16 @@
             }
         }
 
-        function findColumnByCandidates(cols, candidates) {
-            const lower = cols.map((c) => (c || "").toLowerCase().trim());
-            for (let cand of candidates) {
-                if(!cand) continue;
-                const target = cand.toLowerCase().trim();
-                const idx = lower.findIndex((c) => c === target);
-                if (idx >= 0) return cols[idx];
-            }
-            return null;
-        }
+       function findColumnByCandidates(cols, candidates) {
+    const lower = cols.map((c) => (c || "").toLowerCase().trim());
+    for (let cand of candidates) {
+        if(!cand) continue;
+        const target = cand.toLowerCase().trim();
+        const idx = lower.findIndex((c) => c === target);
+        if (idx >= 0) return idx; // Yahan cols[idx] ki jagah sirf idx return karna hai
+    }
+    return null;
+}
 
         function parseNumericValue(value) {
             if (value === null || value === undefined || String(value).trim() === "") return NaN;
