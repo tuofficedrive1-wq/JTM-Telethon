@@ -387,7 +387,7 @@ try {
                                             if(!Number.isNaN(val)) total += val;
                                         });
                                     });
-                                    return { id: cls, className: cls, totalAmount: total, units: (total / UNIT_DIVISOR).toFixed(1) };
+                                    return { id: cls, className: cls, totalAmount: total, amount: total, units: (total / UNIT_DIVISOR).toFixed(1) };
                                 } catch(e) { return { className: cls, totalAmount: 0, units: "0.0" }; }
                             });
                             const results = await Promise.all(promises);
@@ -409,9 +409,9 @@ try {
                                     });
                                 }
                             });
-                            const formatted = Object.keys(regTotals).map(reg => ({
-                                id: reg, region: reg, totalAmount: regTotals[reg], units: (regTotals[reg] / UNIT_DIVISOR).toFixed(1)
-                            })).sort((a, b) => b.totalAmount - a.totalAmount);
+                           const formatted = Object.keys(regTotals).map(reg => ({
+    id: reg, region: reg, totalAmount: regTotals[reg], amount: regTotals[reg], units: (regTotals[reg] / UNIT_DIVISOR).toFixed(1)
+})).sort((a, b) => b.totalAmount - a.totalAmount);
                             setDisplayedData(formatted);
                         }
                         else if (activeTab === "All Jamiaat") {
