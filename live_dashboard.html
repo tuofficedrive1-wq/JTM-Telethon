@@ -12,8 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
@@ -26,22 +24,139 @@
 <body class="bg-slate-100">
     <div id="root"></div>
     <div id="poster-container" style="position: absolute; left: -9999px; top: 0;"></div>
+    
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <script type="text/babel">
-        const firebaseConfig = { apiKey: "AIzaSyC87_ca7MsGB2WjOnr6dC-IYL78TYx0Oyg", authDomain: "telethon-28c88.firebaseapp.com", projectId: "telethon-28c88", storageBucket: "telethon-28c88.firebasestorage.app", messagingSenderId: "609452116316", appId: "1:609452116316:web:e940fc5dc4537b34551999", measurementId: "G-FYS0PJLQQB" };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.firestore();
         const { useState, useEffect, useRef } = React;
 
-        const autoKeywords = ['rank', 'unit', 'units', 'amount', 'score', 'total'];
+        // --- Google Sheets Configuration & Utility Functions ---
+        const DEFAULT_SHEET_CONFIGS = {
+            "Ibtidaiya": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Ibtidaiya" },
+            "Sale Awwal": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Sale Awwal" },
+            "Sale Duwam": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Sale Duwam" },
+            "Ula": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Ula" },
+            "Saniya": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Saniya" },
+            "Salisa": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Salisa" },
+            "Rabia": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Rabia" },
+            "Khamisa": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Khamisa" },
+            "Sadisa": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Sadisa" },
+            "Sabia": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Sabia" },
+            "Doratul Hadis": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Daurul Hadis" },
+            "Takhassusat": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Takhassusat" },
+            "Darulifta Ahle Sunnat": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Darul Ifta" },
+            "All Jamiaat": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "JAMIA" },
+            "All Regions": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "REGION M" }
+        };
 
+        const POLL_INTERVAL_MS = 5000;
+        const UNIT_DIVISOR = 7000;
+
+        const RANK_CANDIDATES = ["Rank", "S. R.", "S.R.", "S R", "Sr", "Serial", "S No", "S.No"];
+        const NAME_CANDIDATES = ["Name", "Student Name"];
+        const USTAZ_CANDIDATES = ["Ustaz Name", "USTAZ NAME", "Ustaz", "Ustad", "Instructor", "Teacher", "Class"];
+        const JAMIA_CANDIDATES = ["Jamia Name", "JAMIA NAME", "Jamia", "Jamiah"];
+        const RAQAM_CANDIDATES = ["Raqam", "RAQAM", "Amount", "Value", "रकम", "राशि"];
+        const UNIT_CANDIDATES = ["Unit", "UNIT", "Units"];
+        const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
+        const PHOTO_CANDIDATES = ["Photo", "Image", "Pic", "Profile Picture"];
+
+        function gvizUrl(sheetId, sheetName) {
+            return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+        }
+
+        async function fetchSheetData(sheetId, sheetName) {
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const url = gvizUrl(sheetId, sheetName);
+                    const res = await fetch(url, { cache: "no-cache" });
+                    if (res.status === 429) { 
+                        if (attempt < 2) {
+                            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                            continue;
+                        }
+                        throw new Error("Too many requests to Google Sheets API.");
+                    }
+                    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+                    const text = await res.text();
+                    
+                    let jsonText = null;
+                    const match = text.match(/setResponse\(([\s\S]*)\);?\s*$/);
+                    if (match && match[1]) jsonText = match[1];
+                    else {
+                        const first = text.indexOf('{');
+                        const last = text.lastIndexOf('}');
+                        if (first !== -1 && last !== -1 && last > first) jsonText = text.slice(first, last + 1);
+                    }
+
+                    if (!jsonText) throw new Error('Could not extract JSON from GViz response.');
+
+                    const data = JSON.parse(jsonText);
+                    const cols = (data.table.cols || []).map((c, i) => (c.label || c.id || `col${i}`).toString());
+                    const rows = (data.table.rows || []).map((r) => r.c.map((cell) => (cell ? (cell.f !== undefined ? cell.f : cell.v) : null)));
+                    return { cols, items: rows };
+                } catch (error) {
+                    if (attempt === 2) throw error;
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                }
+            }
+        }
+
+        function findColumnByCandidates(cols, candidates) {
+            const lower = cols.map((c) => (c || "").toLowerCase().trim());
+            for (let cand of candidates) {
+                const target = cand.toLowerCase().trim();
+                const idx = lower.findIndex((c) => c === target);
+                if (idx >= 0) return cols[idx];
+            }
+            for (let cand of candidates) {
+                const token = cand.toLowerCase().trim();
+                const idx = lower.findIndex((c) => c.includes(token));
+                if (idx >= 0) return cols[idx];
+            }
+            return null;
+        }
+
+        function getGoogleDriveImageUrl(url) {
+            if (!url || typeof url !== 'string') return null;
+            const fileIdMatch = url.match(/[-\w]{25,}/);
+            if (fileIdMatch && fileIdMatch[0]) {
+                const fileId = fileIdMatch[0];
+                return `https://lh3.googleusercontent.com/d/${fileId}`;
+            }
+            return url;
+        }
+
+        function parseNumericValue(value, isInteger = false) {
+            if (value === null || value === undefined || String(value).trim() === "") return NaN;
+            const cleaned = String(value).replace(/[^0-9.-]+/g, "");
+            const n = Number(cleaned);
+            if (Number.isNaN(n)) return NaN;
+            return isInteger ? Math.round(n) : n;
+        }
+
+        function calculateTimeRemaining(targetDate) {
+            if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+            const now = new Date();
+            const difference = targetDate - now;
+
+            if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+            const seconds = Math.floor((difference / 1000) % 60);
+            const minutes = Math.floor((difference / 1000 / 60) % 60);
+            const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            
+            return { days, hours, minutes, seconds, expired: false }; 
+        }
+
+        // --- UI Components ---
         const ListPoster = ({ data }) => {
             if (!data) return null;
-            const { className, items, isJamiaView, isClassView, isRegionView, isResult, isCustomView, headings, type } = data;
+            const { className, items, isJamiaView, isClassView, isRegionView, isResult, headings, type } = data;
             const dateStr = new Date().toLocaleDateString('en-IN');
+            const autoKeywords = ['rank', 'unit', 'units', 'amount', 'score', 'total'];
 
          if (isResult) {
                 const topN = items.slice(0, type);
@@ -51,9 +166,7 @@
                         
                         <div style={{ textAlign: 'center', marginBottom: '45px' }}>
                             <h2 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '60px', color: '#059669', letterSpacing: '3px', margin: 0, textShadow: '1px 1px 2px rgba(0,0,0,0.1)' }}>CONGRATULATIONS!</h2>
-                            
                             <h1 style={{ fontFamily: "'Bowlby One SC', sans-serif", fontSize: '75px', color: '#1e3a8a', letterSpacing: '2px', margin: '15px 0 10px 0', textShadow: '3px 3px 6px rgba(0,0,0,0.15)' }}>TELETHON 2026</h1>
-                            
                             <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
                                 <span style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#475569', letterSpacing: '2px' }}>TOP {type} WINNERS -</span>
                                 <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '36px', fontWeight: '800', color: '#4338ca', letterSpacing: '1px' }}>{className}</span>
@@ -77,22 +190,15 @@
                             ) : (
                                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '40px' }}>
                                     {topN.map((it, idx) => {
-                                        const photoSrc = typeof getDirectImageUrl === 'function' ? getDirectImageUrl(it.photoUrl) : it.photoUrl;
-                                        const proxiedSrc = photoSrc ? `https://wsrv.nl/?url=${encodeURIComponent(photoSrc)}&output=png` : null;
+                                        const proxiedSrc = it.photoUrl ? `https://wsrv.nl/?url=${encodeURIComponent(it.photoUrl)}&output=png` : null;
                                         const rankColors = idx === 0 ? '#fbbf24' : idx === 1 ? '#94a3b8' : idx === 2 ? '#d97706' : '#6366f1';
                                         
                                         return (
                                         <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', padding: '30px', background: 'rgba(255,255,255,0.95)', borderRadius: '24px', boxShadow: '0 15px 35px rgba(0,0,0,0.1)', position: 'relative', width: '320px', borderTop: `10px solid ${rankColors}` }}>
-                                            
                                             <div style={{ position: 'absolute', top: '-30px', width: '60px', height: '60px', background: rankColors, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 'bold', fontFamily: "'Bowlby One SC', sans-serif", border: '5px solid white', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>{idx + 1}</div>
-                                            
                                             <div style={{ width: '220px', height: '220px', borderRadius: '16px', border: `8px solid ${rankColors}`, overflow: 'hidden', backgroundColor: '#f1f5f9', marginTop: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-                                                
-                                                {/* UPDATE: objectPosition: 'top center' lagaya gaya hai face ko highlight karne ke liye */}
                                                 {proxiedSrc ? <img src={proxiedSrc} crossOrigin="anonymous" loading="eager" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }} alt="Ustaz" /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#cbd5e1', fontWeight:'bold', fontSize:'20px'}}>No Image</div>}
-                                            
                                             </div>
-                                            
                                             <div style={{ textAlign: 'center', width: '100%', marginTop: '10px' }}>
                                                 <h3 style={{ margin: 0, fontSize: '26px', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2' }}>{it.ustazName}</h3>
                                                 <p style={{ margin: '8px 0', fontSize: '18px', color: '#4338ca', fontWeight: '600' }}>{it.jamiaName}</p>
@@ -119,29 +225,7 @@
                         </p>
                     </div>
                     <div style={{ flexGrow: 1 }}>
-                        {isCustomView ? (
-                            <div>
-                                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${headings.length}, 1fr)`, alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#dbeafe', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', color: '#1e3a8a', marginBottom: '12px', textTransform: 'uppercase' }}>
-                                    {headings.map((h, i) => <span key={i} style={{textAlign: autoKeywords.some(kw => h.toLowerCase().includes(kw)) ? 'center' : 'left'}}>{h}</span>)}
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    {items.map((it, idx) => (
-                                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: `repeat(${headings.length}, 1fr)`, alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', fontSize: '20px', color: '#1e293b', fontWeight: 600, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                            {headings.map((h, i) => {
-                                                const hLower = h.toLowerCase();
-                                                const isRank = hLower.includes('rank');
-                                                const isUnit = hLower.includes('unit');
-                                                const isAmount = hLower.includes('amount') || hLower.includes('total');
-                                                if(isRank) return <span key={i} style={{color: '#64748b', fontSize:'24px', fontWeight:'bold', textAlign:'center'}}>#{idx + 1}</span>;
-                                                if(isUnit) return <span key={i} style={{textAlign:'center', color: '#0ea5e9', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>{it.units}</span>;
-                                                if(isAmount) return <span key={i} style={{textAlign:'center', color: '#059669', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>₹{it.amount.toLocaleString('en-IN')}</span>;
-                                                return <span key={i} style={{textTransform: i===1?'uppercase':'none', fontWeight: i===1?700:600}}>{it.recordData[h] || "-"}</span>;
-                                            })}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : isRegionView ? (
+                        {isRegionView ? (
                             <div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '100px 3fr 1.5fr', alignItems: 'center', gap: '16px', padding: '12px 16px', background: '#dbeafe', borderRadius: '12px', fontWeight: 'bold', fontSize: '18px', color: '#1e3a8a', marginBottom: '12px', textTransform: 'uppercase' }}>
                                     <span>Rank</span><span>Region Name</span><span style={{textAlign: 'right'}}>Total Units</span>
@@ -216,178 +300,235 @@
         };
 
         function TelethoneDashboard() {
-            const defaultClassesList = ["Hifz Class", "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis"];
-            const [availableClasses, setAvailableClasses] = useState([]);
-            const [classHeadingsMap, setClassHeadingsMap] = useState({});
-            const [activeTab, setActiveTab] = useState("All Jamiaat");
-            
-            const [allData, setAllData] = useState([]);
-            const [customRecords, setCustomRecords] = useState([]);
-            const [todayHistoryTotals, setTodayHistoryTotals] = useState({});
-            
-            const [isLoading, setIsLoading] = useState(true);
-            const [headerConfig, setHeaderConfig] = useState(null);
-            const [timerConfig, setTimerConfig] = useState(null);
-            const [competitions, setCompetitions] = useState([]);
-            const [countdownStr, setCountdownStr] = useState("");
-            const [showTop3, setShowTop3] = useState(false);
-            const [posterData, setPosterData] = useState(null);
-            const [isDownloading, setIsDownloading] = useState(false);
-            const posterContainerRef = useRef(null);
-
-            const getDirectImageUrl = (url) => {
-                if (!url) return "";
-                const match = url.match(/[-\w]{25,}/); 
-                if (match && match[0]) return `https://lh3.googleusercontent.com/d/${match[0]}`;
-                return url;
-            };
-
-            const getBaseClass = (className) => { 
-                if (!className) return "N/A"; 
-                let base = className.replace(/\s+[A-D]$/i, '').trim(); 
-                if (base === "Sale Duwam Khususi") return "Sale Duwam"; 
-                return base; 
-            };
-
-            useEffect(() => {
-                posterContainerRef.current = document.getElementById('poster-container');
-                
-                const unsubSettings = db.collection('settings').doc('classes').onSnapshot(doc => {
-                    if(doc.exists && doc.data().list) {
-                        let dbList = doc.data().list;
-                        dbList = dbList.filter(c => c !== "Sale Duwam Khususi");
-
-                        if (!dbList.includes("Ula") && !dbList.includes("Saniya")) {
-                            setAvailableClasses(Array.from(new Set([...defaultClassesList, ...dbList])));
-                        } else {
-                            setAvailableClasses(dbList);
-                        }
-                        setClassHeadingsMap(doc.data().headings || {});
-                    } else {
-                        setAvailableClasses([...defaultClassesList]);
-                    }
-                });
-
-                const unsubAsatiza = db.collection('asatiza_details').onSnapshot(snapshot => {
-    // Aaj ki date nikal rahe hain (Example: 5/9/2026)
-    const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-
-    const parsedData = snapshot.docs.map(doc => {
-        const data = doc.data(); 
-        
-        // Database se aane wala amount
-        let dAmount = parseFloat(data.daily_amount) || 0;
-        
-        // Database ki date check kar rahe hain (agar last_updated_date save hoti hai)
-        let docDate = "";
-        if (data.last_updated_date) {
-            docDate = data.last_updated_date;
-        } else if (data.timestamp) {
-            // Agar timestamp mojood hai to usko date me convert karein
-            docDate = data.timestamp.toDate ? data.timestamp.toDate().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) : new Date(data.timestamp).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
-        }
-
-        // AUTO-ZERO LOGIC: Agar record aaj ka nahi hai, toh daily_amount = 0
-        if (docDate !== todayDateStr) {
-            dAmount = 0; 
-        }
-
-       return { 
-            id: doc.id, 
-            ustazName: data.ustazName || "N/A", 
-            jamiaName: data.jamiaName || "N/A", 
-            className: data.className || "N/A", 
-            region: data.region || "N/A", 
-            state: data.state || "N/A", 
-            // Total amount sahi calculate hoga
-            total_amount: parseFloat(data.total_amount) || parseFloat(data.grand_total) || parseFloat(data.amount) || 0, 
-            daily_amount: dAmount, 
-            last_updated_date: docDate, // YEH LINE MISSING THI
-            photoUrl: data.photoUrl || null, 
-            timestamp: data.timestamp 
-        };
-    });
-    setAllData(parsedData); 
-    setIsLoading(false);
-});
-
-                const unsubCustom = db.collection('custom_records').onSnapshot(snapshot => {
-                    const records = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                    setCustomRecords(records);
-                });
-
-                const unsubHeader = db.collection('settings').doc('dashboard').onSnapshot(doc => { if(doc.exists) setHeaderConfig(doc.data()); });
-                const unsubTimer = db.collection('settings').doc('timer').onSnapshot(doc => { if(doc.exists) setTimerConfig(doc.data()); });
-                const unsubComp = db.collection('competitions').orderBy('timestamp', 'desc').onSnapshot(snapshot => { setCompetitions(snapshot.docs.map(d => d.data())); });
-                
-                return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHeader(); unsubTimer(); unsubComp(); };
-            }, []);
-
-
-            useEffect(() => {
-                if (!timerConfig || !timerConfig.endTime) return;
-                const interval = setInterval(() => {
-                    const now = new Date().getTime(); const target = new Date(timerConfig.endTime).getTime(); const diff = target - now;
-                    if (diff <= 0) {
-                        setCountdownStr("Time Up!"); const delayMs = (timerConfig.delayMinutes || 0) * 60 * 1000;
-                        if (now >= target + delayMs) setShowTop3(true); else setShowTop3(false);
-                    } else {
-                        setShowTop3(false);
-                        const d = Math.floor(diff / (1000 * 60 * 60 * 24)); const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); const s = Math.floor((diff % (1000 * 60)) / 1000);
-                        let timeStr = ""; if(d > 0) timeStr += `${d}d `; timeStr += `${h}h ${m}m ${s}s`; setCountdownStr(timeStr);
-                    }
-                }, 1000);
-                return () => clearInterval(interval);
-                return () => { unsubSettings(); unsubAsatiza(); unsubCustom(); unsubHistory(); unsubHeader(); unsubTimer(); unsubComp(); };
-            }, [timerConfig]);
-
+            const availableClasses = ["Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis", "Takhassusat", "Darulifta Ahle Sunnat"];
             const topTabs = ['All Jamiaat', 'All Classes'];
             const endTabs = ['All Regions', 'Result', 'Muqabla'];
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
-           const currentMode = headerConfig?.dashboardMode || 'total';
-            const todayDateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+            const [activeTab, setActiveTab] = useState("All Jamiaat");
+            const [displayedData, setDisplayedData] = useState([]);
+            const [resultData, setResultData] = useState({});
+            const [muqablaScores, setMuqablaScores] = useState({});
+            
+            const [isLoading, setIsLoading] = useState(true);
+            const [showTop3, setShowTop3] = useState(false);
+            const [countdownStr, setCountdownStr] = useState("");
+            
+            const [posterData, setPosterData] = useState(null);
+            const [isDownloading, setIsDownloading] = useState(false);
+            const posterContainerRef = useRef(null);
 
-           // SAFE FIX: Removed all dependencies on 'entries_history' for the dashboard.
-           const processedData = allData.map(d => {
-                let activeAmt = d.total_amount;
+            const targetDate = new Date('2026-09-11T22:00:00');
+
+            useEffect(() => {
+                posterContainerRef.current = document.getElementById('poster-container');
+                const timerId = setInterval(() => {
+                    const remaining = calculateTimeRemaining(targetDate);
+                    if (remaining.expired) {
+                        setCountdownStr("Time Up!");
+                        setShowTop3(true);
+                    } else {
+                        let timeStr = ""; 
+                        if(remaining.days > 0) timeStr += `${remaining.days}d `; 
+                        timeStr += `${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s`; 
+                        setCountdownStr(timeStr);
+                    }
+                }, 1000);
+                return () => clearInterval(timerId);
+            }, [targetDate]);
+
+            useEffect(() => {
+                let pollId;
                 
-                if (currentMode === 'daily' || currentMode === 'custom') {
-                    // Agar aaj update hua hai tabhi daily amount dikhega, warna 0 (Automatic Reset)
-                    activeAmt = (d.last_updated_date === todayDateStr) ? (parseFloat(d.daily_amount) || 0) : 0;
-                }
-                
-                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-            });
+                const loadData = async () => {
+                    if (activeTab === "Muqabla") {
+                        // Muqabla logic: Fetch both Region and Overall Rank for specific matchups
+                        try {
+                            const scores = {};
+                            const classPromises = availableClasses.map(async (cls) => {
+                                const cfg = DEFAULT_SHEET_CONFIGS[cls];
+                                if (!cfg) return;
+                                try {
+                                    const { cols, items: rows } = await fetchSheetData(cfg.id, cfg.sheet);
+                                    const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                                    let total = 0;
+                                    rows.forEach(r => {
+                                        const val = parseNumericValue(r[raqamCol]);
+                                        if (!Number.isNaN(val)) total += val;
+                                    });
+                                    scores[cls] = (total / UNIT_DIVISOR).toFixed(1);
+                                } catch(e) {}
+                            });
+                            
+                            const regionCfg = DEFAULT_SHEET_CONFIGS["All Regions"];
+                            const regionPromise = async () => {
+                                try {
+                                    const { cols, items: rows } = await fetchSheetData(regionCfg.id, regionCfg.sheet);
+                                    const regCol = findColumnByCandidates(cols, REGION_CANDIDATES);
+                                    const unitCol = findColumnByCandidates(cols, UNIT_CANDIDATES);
+                                    const raqCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                                    const regTotals = {};
+                                    rows.forEach(r => {
+                                        const reg = String(r[regCol] || "").trim();
+                                        if (reg) {
+                                            const val = unitCol ? parseNumericValue(r[unitCol]) : (parseNumericValue(r[raqCol]) / UNIT_DIVISOR);
+                                            if (!Number.isNaN(val)) regTotals[reg] = (regTotals[reg] || 0) + val;
+                                        }
+                                    });
+                                    // Handle grouped teams like HYD+BENGALORE & Kolkata mapping to HYD+BENG+KOLKATA
+                                    let hyd = 0; let kol = 0; let mum = 0; let ajmer = 0; let dehli = 0;
+                                    Object.keys(regTotals).forEach(k => {
+                                        const t = k.toLowerCase();
+                                        if (t.includes('hyd') || t.includes('beng')) hyd += regTotals[k];
+                                        else if (t.includes('kol')) kol += regTotals[k];
+                                        else if (t.includes('mumbai')) mum += regTotals[k];
+                                        else if (t.includes('ajmer')) ajmer += regTotals[k];
+                                        else if (t.includes('dehli') || t.includes('delhi')) dehli += regTotals[k];
+                                    });
+                                    scores['HYD+BENG+KOLKATA'] = (hyd + kol).toFixed(1);
+                                    scores['Mumbai'] = mum.toFixed(1);
+                                    scores['Ajmer'] = ajmer.toFixed(1);
+                                    scores['Dehli'] = dehli.toFixed(1);
+                                } catch(e) {}
+                            };
+                            
+                            await Promise.all([...classPromises, regionPromise()]);
+                            setMuqablaScores(scores);
+                        } catch(e) { console.error(e); }
+                        setIsLoading(false);
+                        return;
+                    }
 
-            const processedCustomData = customRecords.map(d => {
-                let activeAmt = parseFloat(d.amount) || 0;
-                
-                if (currentMode === 'daily') {
-                    activeAmt = (d.last_updated_date === todayDateStr) ? (parseFloat(d.daily_amount) || 0) : 0;
-                }
-                
-                return { ...d, amount: activeAmt, units: (activeAmt / 7000).toFixed(1) };
-            });
+                    if (activeTab === "Result") {
+                        try {
+                            const fetchPromises = availableClasses.map(async (opt) => {
+                                const cfg = DEFAULT_SHEET_CONFIGS[opt];
+                                if (!cfg) return { className: opt, winners: [] };
+                                try {
+                                    const { cols, items: rows } = await fetchSheetData(cfg.id, cfg.sheet);
+                                    const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
+                                    const ustazCol = findColumnByCandidates(cols, USTAZ_CANDIDATES);
+                                    const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                                    const photoCol = findColumnByCandidates(cols, PHOTO_CANDIDATES);
+                                    
+                                    let parsed = rows.map((r, idx) => {
+                                        const value = parseNumericValue(r[raqamCol]);
+                                        return {
+                                            id: idx,
+                                            ustazName: String(r[ustazCol] || "").trim(),
+                                            jamiaName: String(r[jamiaCol] || "").trim(),
+                                            amount: value,
+                                            units: (value / UNIT_DIVISOR).toFixed(1),
+                                            photoUrl: photoCol ? getGoogleDriveImageUrl(r[photoCol]) : null
+                                        };
+                                    }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount));
+                                    parsed.sort((a, b) => b.amount - a.amount);
+                                    return { className: opt, winners: parsed.slice(0, 10) };
+                                } catch(e) { return { className: opt, winners: [] }; }
+                            });
+                            const results = await Promise.all(fetchPromises);
+                            const winnersMap = {};
+                            results.forEach(r => { if (r.winners.length > 0) winnersMap[r.className] = r.winners; });
+                            setResultData(winnersMap);
+                        } catch(e) { console.error(e); }
+                        setIsLoading(false);
+                        return;
+                    }
 
-            const getTopWinners = () => {
-                const classMap = {};
-                processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (baseClass === "N/A") return; if (!classMap[baseClass]) classMap[baseClass] = []; classMap[baseClass].push(d); });
-                const topData = []; 
-                availableClasses.forEach(cls => { 
-                    if(classMap[cls]) { const sorted = classMap[cls].sort((a, b) => b.amount - a.amount).slice(0, 10); if(sorted.length > 0) topData.push({ className: cls, winners: sorted }); } 
-                });
-                return topData;
-            };
+                    setIsLoading(true);
+                    try {
+                        if (activeTab === "All Classes") {
+                            const promises = availableClasses.map(async (cls) => {
+                                const cfg = DEFAULT_SHEET_CONFIGS[cls];
+                                if(!cfg) return { className: cls, totalAmount: 0 };
+                                try {
+                                    const { cols, items: rows } = await fetchSheetData(cfg.id, cfg.sheet);
+                                    const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                                    let total = 0;
+                                    rows.forEach(r => {
+                                        const val = parseNumericValue(r[raqamCol]);
+                                        if(!Number.isNaN(val)) total += val;
+                                    });
+                                    return { id: cls, className: cls, totalAmount: total, units: (total / UNIT_DIVISOR).toFixed(1) };
+                                } catch(e) { return { className: cls, totalAmount: 0, units: "0.0" }; }
+                            });
+                            const results = await Promise.all(promises);
+                            setDisplayedData(results.sort((a, b) => b.totalAmount - a.totalAmount));
+                        } 
+                        else if (activeTab === "All Regions") {
+                            const cfg = DEFAULT_SHEET_CONFIGS["All Regions"];
+                            const { cols, items: rows } = await fetchSheetData(cfg.id, cfg.sheet);
+                            const regionCol = findColumnByCandidates(cols, REGION_CANDIDATES);
+                            const unitCol = findColumnByCandidates(cols, UNIT_CANDIDATES);
+                            const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                            const regTotals = {};
+                            rows.forEach(r => {
+                                const reg = String(r[regionCol] || "").trim();
+                                if(reg) {
+                                    const val = unitCol ? parseNumericValue(r[unitCol]) : (parseNumericValue(r[raqamCol]) / UNIT_DIVISOR);
+                                    if(!Number.isNaN(val)) {
+                                        regTotals[reg] = (regTotals[reg] || 0) + val;
+                                    }
+                                }
+                            });
+                            const formatted = Object.keys(regTotals).map(reg => ({
+                                id: reg, region: reg, totalAmount: regTotals[reg] * UNIT_DIVISOR, units: regTotals[reg].toFixed(1)
+                            })).sort((a, b) => b.totalAmount - a.totalAmount);
+                            setDisplayedData(formatted);
+                        }
+                        else if (activeTab === "All Jamiaat") {
+                            const cfg = DEFAULT_SHEET_CONFIGS["All Jamiaat"];
+                            const { cols, items: rows } = await fetchSheetData(cfg.id, cfg.sheet);
+                            const nameCol = findColumnByCandidates(cols, NAME_CANDIDATES);
+                            const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
+                            const unitCol = findColumnByCandidates(cols, UNIT_CANDIDATES);
+                            
+                            const parsed = rows.map((r, idx) => {
+                                const unitValue = parseNumericValue(r[unitCol]);
+                                return {
+                                    id: idx,
+                                    jamiaName: String(r[jamiaCol] || "").trim(),
+                                    region: "", 
+                                    units: Number.isNaN(unitValue) ? "0.0" : unitValue.toFixed(1),
+                                    totalAmount: Number.isNaN(unitValue) ? 0 : unitValue * UNIT_DIVISOR
+                                };
+                            }).filter(x => x.jamiaName !== "");
+                            parsed.sort((a, b) => b.totalAmount - a.totalAmount);
+                            setDisplayedData(parsed);
+                        }
+                        else {
+                            const cfg = DEFAULT_SHEET_CONFIGS[activeTab];
+                            if(!cfg) return;
+                            const { cols, items: rows } = await fetchSheetData(cfg.id, cfg.sheet);
+                            const rankCol = findColumnByCandidates(cols, RANK_CANDIDATES);
+                            const ustazCol = findColumnByCandidates(cols, USTAZ_CANDIDATES);
+                            const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
+                            const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                            
+                            const parsed = rows.map((r, idx) => {
+                                const amount = parseNumericValue(r[raqamCol]);
+                                return {
+                                    id: idx,
+                                    rank: String(r[rankCol] || "").trim(),
+                                    ustazName: String(r[ustazCol] || "").trim(),
+                                    jamiaName: String(r[jamiaCol] || "").trim(),
+                                    className: activeTab,
+                                    region: "",
+                                    amount: amount,
+                                    units: (amount / UNIT_DIVISOR).toFixed(1)
+                                }
+                            }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount));
+                            parsed.sort((a, b) => b.amount - a.amount);
+                            setDisplayedData(parsed);
+                        }
+                    } catch(e) { console.error(e); } finally { setIsLoading(false); }
+                };
 
-            const getTeamScore = (teamName) => {
-                let total = 0;
-                processedData.forEach(d => { if (d.className === teamName) total += d.amount; });
-                processedCustomData.forEach(d => { if (d.className === teamName) total += d.amount; });
-                return total;
-            };
+                loadData();
+                pollId = setInterval(loadData, POLL_INTERVAL_MS);
+                return () => clearInterval(pollId);
+            }, [activeTab]);
 
-            // HERE: Increase timeout from 300 to 3000 to allow images to fully load
             useEffect(() => {
                 if (!posterData) return;
                 const generateImage = async () => {
@@ -401,62 +542,37 @@
                             link.href = dataUrl; 
                             link.download = `Telethon_2026_${posterData.className.replace(/\s+/g, '_')}_Leaderboard.png`; 
                             link.click();
-                        } catch(err) { 
-                            console.error(err); 
-                            alert("Poster banne mein masla aaya hai."); 
-                        } finally { 
-                            setPosterData(null); 
-                            setIsDownloading(false); 
+                        } catch(err) { alert("Poster banne mein masla aaya hai."); } finally { 
+                            setPosterData(null); setIsDownloading(false); 
                         }
                     }
                 };
                 generateImage();
             }, [posterData]);
 
-            let displayedData = []; 
             let isJamiaView = activeTab === "All Jamiaat"; 
             let isClassView = activeTab === "All Classes"; 
             let isRegionView = activeTab === "All Regions"; 
             let isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
-            
-            const customDataForTab = processedCustomData.filter(d => d.className === activeTab).sort((a,b) => b.amount - a.amount);
-            const standardDataForTab = processedData.filter(d => getBaseClass(d.className) === activeTab).sort((a, b) => b.amount - a.amount);
-            
-            let isCustomView = false;
-            let currentHeadings = [];
-            const isCustomTab = !defaultClassesList.includes(activeTab) && availableClasses.includes(activeTab) && activeTab !== "All Regions";
-
-            if (!isSpecialTab) {
-                if (isJamiaView) {
-                    const jamiaMap = {}; processedData.forEach(d => { if (!jamiaMap[d.jamiaName]) jamiaMap[d.jamiaName] = { id: d.jamiaName, jamiaName: d.jamiaName, region: d.region, totalAmount: 0, teacherCount: 0 }; jamiaMap[d.jamiaName].totalAmount += d.amount; jamiaMap[d.jamiaName].teacherCount += 1; });
-                    displayedData = Object.values(jamiaMap).map(j => ({ ...j, units: (j.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
-                } else if (isClassView) {
-                    const classMap = {}; processedData.forEach(d => { const baseClass = getBaseClass(d.className); if (!classMap[baseClass]) classMap[baseClass] = { id: baseClass, className: baseClass, totalAmount: 0, teacherCount: 0 }; classMap[baseClass].totalAmount += d.amount; classMap[baseClass].teacherCount += 1; });
-                    displayedData = Object.values(classMap).map(c => ({ ...c, units: (c.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
-                } else if (isRegionView) {
-                    const regionMap = {};
-                    processedData.forEach(d => { 
-                        const reg = d.region || "Unknown";
-                        if (!regionMap[reg]) regionMap[reg] = { id: reg, region: reg, totalAmount: 0, teacherCount: 0 }; 
-                        regionMap[reg].totalAmount += d.amount; 
-                        regionMap[reg].teacherCount += 1; 
-                    });
-                    displayedData = Object.values(regionMap).map(r => ({ ...r, units: (r.totalAmount / 7000).toFixed(1) })).sort((a, b) => b.totalAmount - a.totalAmount);
-                } else if (isCustomTab) {
-                    isCustomView = true;
-                    displayedData = customDataForTab;
-                    currentHeadings = classHeadingsMap[activeTab] || ["Rank", "Name", "Details"];
-                } else {
-                    displayedData = standardDataForTab;
-                }
-            }
 
             const handleDownloadPoster = () => { 
                 if(displayedData.length === 0) return; 
                 setIsDownloading(true); 
-                setPosterData({ className: activeTab, items: displayedData, isJamiaView, isClassView, isRegionView, isCustomView, headings: currentHeadings }); 
+                setPosterData({ className: activeTab, items: displayedData, isJamiaView, isClassView, isRegionView }); 
             };
             const DownloadIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> );
+
+            // Static matchups exactly as index.html
+            const muqablaMatchups = [
+                { teams: ['Ajmer', 'Dehli'] },
+                { teams: ['Mumbai', 'HYD+BENG+KOLKATA'] },
+                { teams: ['Ibtidaiya', 'Sale Awwal'] },
+                { teams: ['Sale Duwam', 'Ula'] },
+                { teams: ['Saniya', 'Salisa'] },
+                { teams: ['Rabia', 'Khamisa'] },
+                { teams: ['Sadisa', 'Sabia'] },
+                { teams: ['Doratul Hadis', 'Takhassusat'] }
+            ];
 
             return (
                 <div className="min-h-screen bg-gray-50 pb-10">
@@ -464,17 +580,8 @@
 
                     <div className="max-w-7xl mx-auto p-4 sm:p-6">
                         <header className="mb-8 text-center">
-                            <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] text-blue-500 tracking-wider uppercase drop-shadow-sm mb-1">
-                                TELETHON 2026
-                            </h1>
-                            <h2 className="text-2xl sm:text-3xl font-['Bebas_Neue'] text-slate-500 tracking-widest uppercase">
-                                {headerConfig?.line1Text || 'LIVE LEADERBOARD'}
-                            </h2>
-                            {headerConfig?.line2Text && (
-                                <h3 className="text-3xl sm:text-4xl font-['Bebas_Neue'] tracking-widest uppercase mt-1 drop-shadow-sm" style={{ color: headerConfig?.line2Color || '#f59e0b' }}>
-                                    {headerConfig.line2Text}
-                                </h3>
-                            )}
+                            <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] text-blue-500 tracking-wider uppercase drop-shadow-sm mb-1">TELETHON 2026</h1>
+                            <h2 className="text-2xl sm:text-3xl font-['Bebas_Neue'] text-slate-500 tracking-widest uppercase">LIVE LEADERBOARD</h2>
                             <p className="text-sm text-slate-500 mt-3 font-medium">
                                 {isSpecialTab ? "" : isClassView ? "Overall Classes Ranking based on Total Units" : isJamiaView ? "Overall Jamiaat Ranking based on Total Units" : isRegionView ? "Overall Region Ranking based on Total Units" : "Jamia-tul-Madina India Class/Jamia Wise Positions"}
                             </p>
@@ -483,12 +590,7 @@
                         <nav className="mb-6">
                             <div className="flex flex-wrap gap-2 justify-center">
                                 {allTabs.map((opt) => (
-                                    <button
-                                        key={opt}
-                                        onClick={() => setActiveTab(opt)}
-                                        className={`tab-btn px-4 py-2 rounded-full font-semibold text-sm shadow-sm focus:outline-none 
-                                            ${activeTab === opt ? "bg-indigo-600 text-white shadow-md scale-105" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
-                                    >
+                                    <button key={opt} onClick={() => setActiveTab(opt)} className={`tab-btn px-4 py-2 rounded-full font-semibold text-sm shadow-sm focus:outline-none ${activeTab === opt ? "bg-indigo-600 text-white shadow-md scale-105" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"}`}>
                                         {opt}
                                     </button>
                                 ))}
@@ -504,80 +606,70 @@
 
                             {activeTab === "Result" && (
                                 <div className="text-center p-6 md:p-10 bg-gradient-to-br from-slate-50 to-indigo-50/50 rounded-2xl border border-indigo-100/50">
-                                    {!timerConfig ? (
-                                        <div className="text-xl text-slate-500 font-bold py-10">Admin ne abhi result timer set nahi kiya hai.</div>
-                                    ) : (
-                                        <div className="animate-fade-in-up">
-                                            <h2 className="text-3xl sm:text-4xl font-['Bebas_Neue'] text-indigo-900 tracking-wider mb-4">{countdownStr !== "Time Up!" ? "TIME REMAINING FOR RESULT" : "STATUS"}</h2>
-                                            <div className={`text-4xl sm:text-7xl font-mono font-black mb-8 drop-shadow-sm ${countdownStr !== "Time Up!" ? 'text-indigo-600' : 'text-rose-600'}`}>{countdownStr}</div>
-                                            {!showTop3 && countdownStr === "Time Up!" && ( <div className="inline-block bg-white px-6 py-3 rounded-full border border-indigo-100 shadow-sm animate-pulse text-xl font-bold text-indigo-600">Result is being prepared... Please wait! ⏳</div> )}
-                                            {showTop3 && (
-                                                <div className="mt-12 animate-fade-in-up">
-                                                    <h3 className="text-3xl sm:text-5xl font-['Bebas_Neue'] text-emerald-600 mb-10 tracking-wide bg-emerald-50 py-4 px-8 rounded-2xl inline-block border border-emerald-100 shadow-sm">🎉 {timerConfig.message || "MUBARAK HO WINNERS KO!"} 🎉</h3>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-left">
-                                                        {getTopWinners().map((clsData, i) => (
-                                                            <div key={i} className="bg-white p-5 rounded-2xl shadow-md border border-slate-200 relative overflow-hidden transition-transform hover:-translate-y-1">
-                                                                <div className="absolute top-0 right-0 bg-indigo-600 text-white px-4 py-1 rounded-bl-xl font-bold text-xs uppercase tracking-wider shadow-sm">Result View</div>
-                                                                <h4 className="text-xl sm:text-2xl font-['Bowlby_One_SC'] text-indigo-900 mb-4 border-b border-slate-100 pb-3 mt-2">{clsData.className}</h4>
-                                                                
-                                                                <div className="space-y-3 mb-4">
-                                                                    {clsData.winners.slice(0, 3).map((winner, idx) => {
-                                                                        const photoSrc = typeof getDirectImageUrl === 'function' ? getDirectImageUrl(winner.photoUrl) : winner.photoUrl;
-                                                                        return (
-                                                                        <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border ${idx === 0 ? 'bg-amber-50 border-amber-200' : idx === 1 ? 'bg-slate-50 border-slate-200' : 'bg-orange-50/50 border-orange-200/50'}`}>
-                                                                            <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? 'bg-amber-400 text-white' : idx === 1 ? 'bg-slate-300 text-slate-700' : 'bg-orange-300 text-orange-900'}`}>#{idx + 1}</div>
-                                                                            <div className="w-11 h-11 shrink-0 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-200 flex items-center justify-center">
-                                                                                {photoSrc ? <img src={photoSrc} crossOrigin="anonymous" alt="pic" className="w-full h-full object-cover" /> : <span className="text-[9px] text-slate-400">No Pic</span>}
-                                                                            </div>
-                                                                            <div className="flex-1 min-w-0"><div className="font-bold text-slate-800 uppercase truncate text-[13px] sm:text-sm">{winner.ustazName}</div><div className="text-[11px] font-semibold text-indigo-600 truncate">{winner.jamiaName}</div></div>
-                                                                            <div className="text-right shrink-0"><div className="font-['Bowlby_One_SC'] text-emerald-600 text-[15px] sm:text-base">₹{winner.amount.toLocaleString('en-IN')}</div><div className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded inline-block mt-0.5">{winner.units} Units</div></div>
+                                    <div className="animate-fade-in-up">
+                                        <h2 className="text-3xl sm:text-4xl font-['Bebas_Neue'] text-indigo-900 tracking-wider mb-4">{countdownStr !== "Time Up!" ? "TIME REMAINING FOR RESULT" : "STATUS"}</h2>
+                                        <div className={`text-4xl sm:text-7xl font-mono font-black mb-8 drop-shadow-sm ${countdownStr !== "Time Up!" ? 'text-indigo-600' : 'text-rose-600'}`}>{countdownStr}</div>
+                                        {!showTop3 && countdownStr === "Time Up!" && ( <div className="inline-block bg-white px-6 py-3 rounded-full border border-indigo-100 shadow-sm animate-pulse text-xl font-bold text-indigo-600">Result is being prepared... Please wait! ⏳</div> )}
+                                        {showTop3 && (
+                                            <div className="mt-12 animate-fade-in-up">
+                                                <h3 className="text-3xl sm:text-5xl font-['Bebas_Neue'] text-emerald-600 mb-10 tracking-wide bg-emerald-50 py-4 px-8 rounded-2xl inline-block border border-emerald-100 shadow-sm">🎉 MUBARAK HO WINNERS KO! 🎉</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-left">
+                                                    {Object.keys(resultData).map((className, i) => {
+                                                        const winners = resultData[className];
+                                                        return (
+                                                        <div key={i} className="bg-white p-5 rounded-2xl shadow-md border border-slate-200 relative overflow-hidden transition-transform hover:-translate-y-1">
+                                                            <div className="absolute top-0 right-0 bg-indigo-600 text-white px-4 py-1 rounded-bl-xl font-bold text-xs uppercase tracking-wider shadow-sm">Result View</div>
+                                                            <h4 className="text-xl sm:text-2xl font-['Bowlby_One_SC'] text-indigo-900 mb-4 border-b border-slate-100 pb-3 mt-2">{className}</h4>
+                                                            <div className="space-y-3 mb-4">
+                                                                {winners.slice(0, 3).map((winner, idx) => {
+                                                                    const proxiedSrc = winner.photoUrl ? `https://wsrv.nl/?url=${encodeURIComponent(winner.photoUrl)}&output=png` : null;
+                                                                    return (
+                                                                    <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl border ${idx === 0 ? 'bg-amber-50 border-amber-200' : idx === 1 ? 'bg-slate-50 border-slate-200' : 'bg-orange-50/50 border-orange-200/50'}`}>
+                                                                        <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-black text-sm ${idx === 0 ? 'bg-amber-400 text-white' : idx === 1 ? 'bg-slate-300 text-slate-700' : 'bg-orange-300 text-orange-900'}`}>#{idx + 1}</div>
+                                                                        <div className="w-11 h-11 shrink-0 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-200 flex items-center justify-center">
+                                                                            {proxiedSrc ? <img src={proxiedSrc} crossOrigin="anonymous" alt="pic" className="w-full h-full object-cover" /> : <span className="text-[9px] text-slate-400">No Pic</span>}
                                                                         </div>
-                                                                    )})}
-                                                                </div>
-                                                                <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 justify-center">
-                                                                    <button onClick={() => setPosterData({ isResult: true, type: 3, className: clsData.className, items: clsData.winners })} className="text-[11px] bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg font-bold transition">Top 3 Poster</button>
-                                                                    <button onClick={() => setPosterData({ isResult: true, type: 5, className: clsData.className, items: clsData.winners })} className="text-[11px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg font-bold transition">Top 5 Poster</button>
-                                                                    <button onClick={() => setPosterData({ isResult: true, type: 10, className: clsData.className, items: clsData.winners })} className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold transition">Top 10 Table</button>
-                                                                </div>
+                                                                        <div className="flex-1 min-w-0"><div className="font-bold text-slate-800 uppercase truncate text-[13px] sm:text-sm">{winner.ustazName}</div><div className="text-[11px] font-semibold text-indigo-600 truncate">{winner.jamiaName}</div></div>
+                                                                        <div className="text-right shrink-0"><div className="font-['Bowlby_One_SC'] text-emerald-600 text-[15px] sm:text-base">₹{winner.amount.toLocaleString('en-IN')}</div><div className="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded inline-block mt-0.5">{winner.units} Units</div></div>
+                                                                    </div>
+                                                                )})}
                                                             </div>
-                                                        ))}
-                                                    </div>
+                                                            <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 justify-center">
+                                                                <button onClick={() => setPosterData({ isResult: true, type: 3, className: className, items: winners })} className="text-[11px] bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-lg font-bold transition">Top 3 Poster</button>
+                                                                <button onClick={() => setPosterData({ isResult: true, type: 5, className: className, items: winners })} className="text-[11px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg font-bold transition">Top 5 Poster</button>
+                                                                <button onClick={() => setPosterData({ isResult: true, type: 10, className: className, items: winners })} className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold transition">Top 10 Table</button>
+                                                            </div>
+                                                        </div>
+                                                    )})}
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
                             {activeTab === "Muqabla" && (
                                 <div className="grid grid-cols-1 gap-6">
-                                    {competitions.length === 0 ? (
-                                        <div className="text-center py-16 text-slate-400 font-bold text-xl bg-slate-50 rounded-2xl border border-dashed border-slate-200">Koi muqabla set nahi kiya gaya.</div>
-                                    ) : (
-                                        competitions.map((comp, idx) => {
-                                            const teams = comp.teams || [comp.teamA, comp.teamB].filter(Boolean);
-                                            return (
-                                            <div key={idx} className="bg-gradient-to-r from-sky-500 to-indigo-600 p-8 rounded-3xl shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
-                                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
-                                                <div className="flex flex-wrap justify-center items-center gap-y-8 relative z-10 w-full">
-                                                    {teams.map((team, tIdx) => {
-                                                        const score = getTeamScore(team);
-                                                        const units = (score / 7000).toFixed(1);
-                                                        return (
-                                                        <React.Fragment key={tIdx}>
-                                                            <div className="text-center flex flex-col items-center mx-4 min-w-[140px]">
-                                                                <span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md text-white mb-3">{team}</span>
-                                                                <span className="bg-white text-indigo-700 px-4 py-1.5 rounded-full font-bold text-xl sm:text-2xl shadow-inner border-2 border-indigo-100">{units} Units</span>
-                                                            </div>
-                                                            {tIdx < teams.length - 1 && (
-                                                                <div className="w-12 h-12 shrink-0 bg-amber-400 text-indigo-900 rounded-full flex items-center justify-center font-black text-xl italic shadow-xl border-4 border-white z-20 mx-2">VS</div>
-                                                            )}
-                                                        </React.Fragment>
-                                                    )})}
-                                                </div>
+                                    {muqablaMatchups.map((comp, idx) => (
+                                        <div key={idx} className="bg-gradient-to-r from-sky-500 to-indigo-600 p-8 rounded-3xl shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
+                                            <div className="flex flex-wrap justify-center items-center gap-y-8 relative z-10 w-full">
+                                                {comp.teams.map((team, tIdx) => {
+                                                    const units = muqablaScores[team] || "0.0";
+                                                    return (
+                                                    <React.Fragment key={tIdx}>
+                                                        <div className="text-center flex flex-col items-center mx-4 min-w-[140px]">
+                                                            <span className="text-2xl sm:text-4xl font-black uppercase drop-shadow-md text-white mb-3">{team}</span>
+                                                            <span className="bg-white text-indigo-700 px-4 py-1.5 rounded-full font-bold text-xl sm:text-2xl shadow-inner border-2 border-indigo-100">{units} Units</span>
+                                                        </div>
+                                                        {tIdx < comp.teams.length - 1 && (
+                                                            <div className="w-12 h-12 shrink-0 bg-amber-400 text-indigo-900 rounded-full flex items-center justify-center font-black text-xl italic shadow-xl border-4 border-white z-20 mx-2">VS</div>
+                                                        )}
+                                                    </React.Fragment>
+                                                )})}
                                             </div>
-                                        )})
-                                    )}
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 
@@ -593,50 +685,25 @@
                                     </div>
 
                                     <div className="hidden md:block">
-                                        {isCustomView ? (
-                                            <div>
-                                                <div className="grid items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider" style={{ gridTemplateColumns: `repeat(${currentHeadings.length}, 1fr)` }}>
-                                                    {currentHeadings.map((h, i) => <div key={i} className={autoKeywords.some(kw => h.toLowerCase().includes(kw)) ? 'text-center' : ''}>{h}</div>)}
-                                                </div>
-                                                <div className="space-y-2 mt-2">
-                                                    {displayedData.map((it, idx) => (
-                                                        <div key={idx} className="grid items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow" style={{ gridTemplateColumns: `repeat(${currentHeadings.length}, 1fr)` }}>
-                                                            {currentHeadings.map((h, i) => {
-                                                                const hLower = h.toLowerCase();
-                                                                const isAuto = autoKeywords.some(kw => hLower.includes(kw));
-                                                                const isRank = hLower.includes('rank');
-                                                                const isUnit = hLower.includes('unit');
-                                                                const isAmount = hLower.includes('amount') || hLower.includes('total') || hLower.includes('score');
-                                                                
-                                                                if(isRank) return <div key={i} className="font-bold text-slate-400 text-lg pl-2 text-center">#{idx + 1}</div>;
-                                                                if(isUnit) return <div key={i} className="text-center font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div>;
-                                                                if(isAmount) return <div key={i} className="text-center font-['Bowlby_One_SC'] text-emerald-600 text-2xl tracking-wide">₹{it.amount.toLocaleString('en-IN')}</div>;
-                                                                
-                                                                return <div key={i} className="font-semibold text-slate-700 text-lg">{it.recordData[h] || "-"}</div>;
-                                                            })}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : isRegionView ? (
+                                        {isRegionView ? (
                                             <div>
                                                 <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-2">Rank</div><div className="col-span-8">Region Name</div><div className="col-span-2 text-right text-sky-500">Total Units</div></div>
                                                 <div className="space-y-2 mt-2">
-                                                    {displayedData.map((it, idx) => ( <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-2 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-8 font-bold text-indigo-600 text-lg uppercase">{it.region}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
+                                                    {displayedData.map((it, idx) => ( <div key={idx} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-2 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-8 font-bold text-indigo-600 text-lg uppercase">{it.region}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
                                                 </div>
                                             </div>
                                         ) : isClassView ? (
                                             <div>
                                                 <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-2">Rank</div><div className="col-span-8">Class Name</div><div className="col-span-2 text-right text-sky-500">Total Units</div></div>
                                                 <div className="space-y-2 mt-2">
-                                                    {displayedData.map((it, idx) => ( <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-2 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-8 font-bold text-indigo-600 text-lg uppercase">{it.className}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
+                                                    {displayedData.map((it, idx) => ( <div key={idx} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-2 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-8 font-bold text-indigo-600 text-lg uppercase">{it.className}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
                                                 </div>
                                             </div>
                                         ) : isJamiaView ? (
                                             <div>
                                                 <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-1">Rank</div><div className="col-span-6">Jamia Name</div><div className="col-span-3 text-center">Region</div><div className="col-span-2 text-right text-sky-500">Total Units</div></div>
                                                 <div className="space-y-2 mt-2">
-                                                    {displayedData.map((it, idx) => ( <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-6 font-bold text-indigo-600 text-lg">{it.jamiaName}</div><div className="col-span-3 text-center font-bold text-slate-700">{it.region}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
+                                                    {displayedData.map((it, idx) => ( <div key={idx} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"><div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div><div className="col-span-6 font-bold text-indigo-600 text-lg">{it.jamiaName}</div><div className="col-span-3 text-center font-bold text-slate-700">{it.region}</div><div className="col-span-2 text-right font-['Bowlby_One_SC'] text-sky-500 text-2xl tracking-wide">{it.units}</div></div> ))}
                                                 </div>
                                             </div>
                                         ) : (
@@ -644,11 +711,11 @@
                                                 <div className="grid grid-cols-12 items-center px-4 py-3 border-b text-sm font-bold text-slate-500 bg-slate-50 rounded-t-xl uppercase tracking-wider"><div className="col-span-1">Rank</div><div className="col-span-3">Ustaz Name</div><div className="col-span-4">Jamia Name</div><div className="col-span-1 text-center">Region</div><div className="col-span-2 text-right text-emerald-600">Total Amount</div><div className="col-span-1 text-right text-sky-500">Units</div></div>
                                                 <div className="space-y-2 mt-2">
                                                     {displayedData.map((it, idx) => (
-                                                        <div key={it.id} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                                        <div key={idx} className="grid grid-cols-12 items-center gap-4 p-3 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                                                             <div className="col-span-1 font-bold text-slate-400 text-lg pl-2">#{idx + 1}</div>
-                                                            <div className="col-span-3 font-semibold text-slate-800 uppercase">{it.ustazName}{it.className !== activeTab && <div className="text-[11px] text-indigo-500 normal-case mt-0.5">Section: {it.className.slice(-1)}</div>}</div>
+                                                            <div className="col-span-3 font-semibold text-slate-800 uppercase">{it.ustazName}</div>
                                                             <div className="col-span-4 font-bold text-indigo-600">{it.jamiaName}</div>
-                                                            <div className="col-span-1 text-center"><div className="text-sm font-bold text-slate-700">{it.region}</div><div className="text-xs text-slate-500">{it.state}</div></div>
+                                                            <div className="col-span-1 text-center"><div className="text-sm font-bold text-slate-700">{it.region}</div></div>
                                                             <div className="col-span-2 text-right font-['Bowlby_One_SC'] text-emerald-600 text-lg tracking-wide">₹{it.amount.toLocaleString('en-IN')}</div>
                                                             <div className="col-span-1 text-right font-bold text-sky-600 bg-sky-50 py-1 px-2 rounded-lg border border-sky-100 text-sm w-fit ml-auto">{it.units}</div>
                                                         </div>
@@ -664,30 +731,7 @@
                                             <div key={idx} className="p-4 rounded-xl shadow-sm bg-white border border-slate-100 relative overflow-hidden">
                                                 <div className={`absolute top-0 right-0 bg-gradient-to-l ${isClassView ? 'from-indigo-100' : isJamiaView ? 'from-sky-100' : 'from-emerald-100'} to-transparent p-2 rounded-bl-xl ${isClassView ? 'text-indigo-700' : isJamiaView ? 'text-sky-700' : 'text-emerald-700'} font-bold text-sm`}>Rank #{idx + 1}</div>
                                                 
-                                                {isCustomView ? (
-                                                    <div className="flex flex-col gap-2 mt-4">
-                                                        {currentHeadings.map((h, i) => {
-                                                            const hLower = h.toLowerCase();
-                                                            const isAuto = autoKeywords.some(kw => hLower.includes(kw));
-                                                            const isRank = hLower.includes('rank');
-                                                            const isUnit = hLower.includes('unit');
-                                                            const isAmount = hLower.includes('amount') || hLower.includes('total') || hLower.includes('score');
-
-                                                            if(isRank) return null;
-                                                            
-                                                            let val = it.recordData[h] || "-";
-                                                            if(isUnit) val = <span className="font-['Bowlby_One_SC'] text-sky-500 text-lg">{it.units}</span>;
-                                                            if(isAmount) val = <span className="font-['Bowlby_One_SC'] text-emerald-600 text-lg">₹{it.amount.toLocaleString('en-IN')}</span>;
-
-                                                            return (
-                                                                <div key={i} className="flex justify-between border-b border-slate-50 pb-1 items-center">
-                                                                    <span className="text-xs font-bold text-slate-400 uppercase">{h}</span>
-                                                                    <span className="font-semibold text-slate-700">{val}</span>
-                                                                </div>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                ) : isRegionView ? ( 
+                                                {isRegionView ? ( 
                                                     <div><div className="font-bold text-indigo-700 text-xl leading-tight mb-1 uppercase mt-4 pr-16">{it.region}</div>
                                                     <div className="mt-3 flex flex-col"><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div></div>
                                                 ) : isClassView ? ( 
@@ -698,9 +742,9 @@
                                                     <div className="mt-3 flex flex-col"><span className="text-3xl font-['Bowlby_One_SC'] text-sky-500 leading-none">{it.units}</span><span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Total Units</span></div></div>
                                                 ) : ( 
                                                     <div>
-                                                        <div className="border-b pb-3 mb-3 mt-4 pr-16"><div className="font-bold text-slate-800 text-lg uppercase">{it.ustazName}{it.className !== activeTab && <span className="ml-2 text-[10px] text-white bg-indigo-500 px-1.5 py-0.5 rounded-full normal-case">Sec {it.className.slice(-1)}</span>}</div><div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div></div>
+                                                        <div className="border-b pb-3 mb-3 mt-4 pr-16"><div className="font-bold text-slate-800 text-lg uppercase">{it.ustazName}</div><div className="text-xs font-semibold text-indigo-500 mt-1">{it.jamiaName}</div></div>
                                                         <div className="grid grid-cols-3 gap-2 text-sm items-center">
-                                                            <div className="col-span-1"><span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span><span className="font-semibold text-slate-600">{it.region}</span></div>
+                                                            <div className="col-span-1"><span className="block text-[10px] uppercase text-slate-400 font-bold tracking-wider">Region</span><span className="font-semibold text-slate-600">{it.region || "-"}</span></div>
                                                             <div className="col-span-2 flex flex-col items-end"><span className="text-2xl font-['Bowlby_One_SC'] text-emerald-600 leading-none mb-1">₹{it.amount.toLocaleString('en-IN')}</span><span className="text-xs font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">{it.units} Units</span></div>
                                                         </div>
                                                     </div> 
