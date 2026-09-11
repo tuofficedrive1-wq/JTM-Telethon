@@ -138,7 +138,7 @@
             return { days, hours, minutes, seconds, expired: false }; 
         }
 
-        // --- POSTER COMPONENT (Unchanged styling, dynamic amounts) ---
+        // --- POSTER COMPONENT ---
         const ListPoster = ({ data, adminConfig }) => {
             if (!data) return null;
             const { className, items, isJamiaView, isClassView, isRegionView, isResult, type } = data;
@@ -255,7 +255,7 @@
                 let pollId;
                 
                 const loadData = async () => {
-                    // 1. Load Admin Settings First
+                    // 1. Load Admin Settings
                     let currentTarget = adminConfig.targetCol;
                     let currentMode = adminConfig.displayMode;
                     let currentTimer = adminConfig.timer;
@@ -349,6 +349,7 @@
                                     
                                     if(!targetColIdx) return { className: opt, winners: [] };
 
+                                    // FIX: Removed the x.amount > 0 filter so 0 values are shown
                                     let parsed = rows.map((r, idx) => {
                                         const value = parseNumericValue(r[targetColIdx]);
                                         return {
@@ -358,7 +359,7 @@
                                             amount: value,
                                             units: (value / UNIT_DIVISOR).toFixed(1)
                                         };
-                                    }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount) && x.amount > 0);
+                                    }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount));
                                     
                                     parsed.sort((a, b) => b.amount - a.amount);
                                     return { className: opt, winners: parsed.slice(0, 10) };
@@ -393,7 +394,8 @@
                                 } catch(e) { return { className: cls, totalAmount: 0, units: "0.0" }; }
                             });
                             const results = await Promise.all(promises);
-                            setDisplayedData(results.filter(r => r.totalAmount > 0).sort((a, b) => b.totalAmount - a.totalAmount));
+                            // FIX: Removed totalAmount > 0 filter
+                            setDisplayedData(results.sort((a, b) => b.totalAmount - a.totalAmount));
                         } 
                         else if (activeTab === "All Regions") {
                             const cfg = DEFAULT_SHEET_CONFIGS["All Regions"];
@@ -415,7 +417,7 @@
                             }
                             const formatted = Object.keys(regTotals).map(reg => ({
                                 id: reg, region: reg, totalAmount: regTotals[reg], units: (regTotals[reg] / UNIT_DIVISOR).toFixed(1)
-                            })).filter(r => r.totalAmount > 0).sort((a, b) => b.totalAmount - a.totalAmount);
+                            })).sort((a, b) => b.totalAmount - a.totalAmount); // FIX: Removed filter
                             setDisplayedData(formatted);
                         }
                         else if (activeTab === "All Jamiaat") {
@@ -436,7 +438,7 @@
                                         units: Number.isNaN(amountValue) ? "0.0" : (amountValue / UNIT_DIVISOR).toFixed(1),
                                         amount: Number.isNaN(amountValue) ? 0 : amountValue
                                     };
-                                }).filter(x => x.jamiaName !== "" && x.amount > 0);
+                                }).filter(x => x.jamiaName !== ""); // FIX: Removed x.amount > 0 filter
                                 parsed.sort((a, b) => b.amount - a.amount);
                                 setDisplayedData(parsed);
                             }
@@ -464,7 +466,7 @@
                                         amount: amount,
                                         units: (amount / UNIT_DIVISOR).toFixed(1)
                                     }
-                                }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount) && x.amount > 0);
+                                }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount)); // FIX: Removed x.amount > 0 filter
                                 parsed.sort((a, b) => b.amount - a.amount);
                                 setDisplayedData(parsed);
                             }
