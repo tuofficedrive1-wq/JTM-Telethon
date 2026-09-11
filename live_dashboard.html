@@ -103,13 +103,14 @@
             }
         }
 
-      function findColumnByCandidates(cols, candidates) {
-    const lower = cols.map((c) => String(c || "").toLowerCase().replace(/\s+/g, ''));
+     function findColumnByCandidates(cols, candidates) {
+    // Regex /[\s\-]+/g lagane se space aur hyphen dono ignore ho jayenge
+    const lower = cols.map((c) => String(c || "").toLowerCase().replace(/[\s\-]+/g, ''));
     for (let cand of candidates) {
         if(!cand) continue;
-        const target = String(cand).toLowerCase().replace(/\s+/g, '');
+        const target = String(cand).toLowerCase().replace(/[\s\-]+/g, '');
         const idx = lower.findIndex((c) => c === target);
-        if (idx >= 0) return idx; // Ye index number hi return karega
+        if (idx >= 0) return idx; 
     }
     return null;
 }
@@ -250,19 +251,21 @@
                     let currentTimer = adminConfig.timer;
 
                     // Admin sheet check
-                    try {
-                        const adminRes = await fetchSheetData(SHEET_ID, "AdminSettings");
-                        if(adminRes && adminRes.items) {
-                            adminRes.items.forEach(row => {
-                                const key = String(row[0] || "").trim();
-                                const val = String(row[1] || "").trim();
-                                if(key === "TargetColumn" && val) currentTarget = val;
-                                if(key === "DisplayMode" && val) currentMode = val;
-                                if(key === "CountdownTimer" && val) currentTimer = val;
-                            });
-                            setAdminConfig({ targetCol: currentTarget, displayMode: currentMode, timer: currentTimer });
-                        }
-                    } catch(e) { console.log("Admin Settings Sheet missing or error."); }
+                    
+try {
+    const adminRes = await fetchSheetData(SHEET_ID, "AdminSettings");
+    if(adminRes && adminRes.items) {
+        adminRes.items.forEach(row => {
+            // .toLowerCase() lagane se ab uppercase/lowercase ka masla nahi hoga
+            const key = String(row[0] || "").trim().toLowerCase();
+            const val = String(row[1] || "").trim();
+            if(key === "targetcolumn" && val) currentTarget = val;
+            if(key === "displaymode" && val) currentMode = val;
+            if(key === "countdowntimer" && val) currentTimer = val;
+        });
+        setAdminConfig({ targetCol: currentTarget, displayMode: currentMode, timer: currentTimer });
+    }
+} catch(e) { console.log("Admin Settings Sheet missing or error."); }
 
                     // Multiday Sum Logic (e.g. "11-Sep, 12-Se, 13-Se")
                     const targetColNames = currentTarget.split(',').map(s => s.trim()).filter(Boolean);
