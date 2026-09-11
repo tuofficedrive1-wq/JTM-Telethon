@@ -5,22 +5,26 @@
     <title>Telethon Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-xl shadow-lg w-96">
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 class="text-2xl font-bold text-indigo-900 mb-6">Dashboard Settings</h2>
         
         <div class="mb-4">
             <label class="block text-sm font-bold text-slate-700 mb-2">Kon si Date/Column show karni hai?</label>
-            <!-- Same names as your google sheet columns -->
             <input type="text" id="targetColumn" placeholder="e.g., 05 Sept or 28 Aug" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
         </div>
 
-        <div class="mb-6">
-            <label class="block text-sm font-bold text-slate-700 mb-2">Display Mode</label>
+        <div class="mb-4">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Display Mode (View Settings)</label>
             <select id="displayMode" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
                 <option value="Both">Raqam & Units Dono (Both)</option>
                 <option value="UnitsOnly">Sirf Units (Units Only)</option>
             </select>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Result Countdown Timer</label>
+            <input type="datetime-local" id="countdownTimer" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
         </div>
 
         <button onclick="updateSettings()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition">Update Dashboard</button>
@@ -29,7 +33,7 @@
 
     <script>
         // YAHAN APNA APPS SCRIPT KA COPIED URL DALEIN
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbznbr6QD11KT0F1YlQYScuMfULQetdrINEyHwZigRxpf5TR14vrkkSohkUKofjmkxk/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwyyQEsHJ2LB5dTDaLY1uJp150WrfMzEyWGrgnZ7iPppx9mTNEZu8DcOeky1mQA1IDL/exec";
 
         async function updateSettings() {
             const btn = document.querySelector('button');
@@ -38,7 +42,8 @@
             
             const data = {
                 targetColumn: document.getElementById('targetColumn').value,
-                displayMode: document.getElementById('displayMode').value
+                displayMode: document.getElementById('displayMode').value,
+                countdownTimer: document.getElementById('countdownTimer').value
             };
 
             try {
@@ -53,6 +58,9 @@
                 msg.className = "text-center text-sm mt-4 font-bold text-red-600";
             }
             btn.innerText = "Update Dashboard";
+            
+            // 3 second baad message hide karne ke liye
+            setTimeout(() => { msg.innerText = ""; }, 3000);
         }
     </script>
 </body>
