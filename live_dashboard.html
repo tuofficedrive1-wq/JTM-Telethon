@@ -61,9 +61,7 @@
         const NAME_CANDIDATES = ["Name", "Student Name"];
         const USTAZ_CANDIDATES = ["Ustaz Name", "USTAZ NAME", "Ustaz", "Ustad", "Instructor", "Teacher", "Class"];
         const JAMIA_CANDIDATES = ["Jamia Name", "JAMIA NAME", "Jamia", "Jamiah"];
-        const UNIT_CANDIDATES = ["Unit", "UNIT", "Units"];
         const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
-        const PHOTO_CANDIDATES = ["Photo", "Image", "Pic", "Profile Picture"];
 
         function gvizUrl(sheetId, sheetName) {
             return `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
@@ -92,9 +90,7 @@
                         const last = text.lastIndexOf('}');
                         if (first !== -1 && last !== -1 && last > first) jsonText = text.slice(first, last + 1);
                     }
-
                     if (!jsonText) throw new Error('Could not extract JSON.');
-
                     const data = JSON.parse(jsonText);
                     const cols = (data.table.cols || []).map((c, i) => (c.label || c.id || `col${i}`).toString());
                     const rows = (data.table.rows || []).map((r) => r.c.map((cell) => (cell ? (cell.f !== undefined ? cell.f : cell.v) : null)));
@@ -128,21 +124,17 @@
             if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
             const now = new Date();
             const difference = targetDate - now;
-
             if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
             const seconds = Math.floor((difference / 1000) % 60);
             const minutes = Math.floor((difference / 1000 / 60) % 60);
             const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
             const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-            
             return { days, hours, minutes, seconds, expired: false }; 
         }
 
-        // --- POSTER COMPONENT ---
         const ListPoster = ({ data, adminConfig }) => {
             if (!data) return null;
             const { className, items, isJamiaView, isClassView, isRegionView, isResult, type } = data;
-            const dateStr = new Date().toLocaleDateString('en-IN');
             const showAmount = adminConfig.displayMode !== "UnitsOnly";
 
             if (isResult) {
@@ -213,7 +205,7 @@
             const endTabs = ['All Regions', 'Result', 'Muqabla'];
             const allTabs = [...new Set([...topTabs, ...availableClasses, ...endTabs])];
 
-            const [adminConfig, setAdminConfig] = useState({ targetCol: "Raqam", displayMode: "Both", timer: "" });
+            const [adminConfig, setAdminConfig] = useState({ targetCol: "Total Amount (Grand)", displayMode: "Both", timer: "" });
             const [activeTab, setActiveTab] = useState("All Jamiaat");
             const [displayedData, setDisplayedData] = useState([]);
             const [resultData, setResultData] = useState({});
@@ -227,7 +219,6 @@
             const [isDownloading, setIsDownloading] = useState(false);
             const posterContainerRef = useRef(null);
 
-            // Timer Logic
             useEffect(() => {
                 if (!adminConfig.timer) {
                     setCountdownStr("Timer Not Set");
@@ -250,16 +241,14 @@
                 return () => clearInterval(timerId);
             }, [adminConfig.timer]);
 
-            // Main Data Polling
             useEffect(() => {
                 let pollId;
-                
                 const loadData = async () => {
-                    // 1. Load Admin Settings
                     let currentTarget = adminConfig.targetCol;
                     let currentMode = adminConfig.displayMode;
                     let currentTimer = adminConfig.timer;
 
+                    // Admin sheet check
                     try {
                         const adminRes = await fetchSheetData(SHEET_ID, "AdminSettings");
                         if(adminRes && adminRes.items) {
@@ -272,11 +261,11 @@
                             });
                             setAdminConfig({ targetCol: currentTarget, displayMode: currentMode, timer: currentTimer });
                         }
-                    } catch(e) { console.log("Admin config read error, using previous/default."); }
+                    } catch(e) { console.log("Admin Settings Sheet missing or error."); }
 
-                    const searchColumns = [currentTarget, "Raqam", "Amount"];
+                    // Multiday Sum Logic (e.g. "11-Sep, 12-Se, 13-Se")
+                    const targetColNames = currentTarget.split(',').map(s => s.trim()).filter(Boolean);
 
-                    // 2. Fetch specific tab data based on currentTarget
                     if (activeTab === "Muqabla") {
                         try {
                             const scores = {};
@@ -285,14 +274,14 @@
                                 if (!cfg) return;
                                 try {
                                     const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
-                                    const targetColIdx = findColumnByCandidates(cols, searchColumns);
+                                    const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
                                     let total = 0;
-                                    if(targetColIdx) {
-                                        rows.forEach(r => {
-                                            const val = parseNumericValue(r[targetColIdx]);
+                                    rows.forEach(r => {
+                                        targetColIndices.forEach(colIdx => {
+                                            const val = parseNumericValue(r[colIdx]);
                                             if (!Number.isNaN(val)) total += val;
                                         });
-                                    }
+                                    });
                                     scores[cls] = (total / UNIT_DIVISOR).toFixed(1);
                                 } catch(e) {}
                             });
@@ -302,17 +291,17 @@
                                 try {
                                     const { cols, items: rows } = await fetchSheetData(SHEET_ID, regionCfg.sheet);
                                     const regCol = findColumnByCandidates(cols, REGION_CANDIDATES);
-                                    const targetColIdx = findColumnByCandidates(cols, searchColumns);
+                                    const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
                                     const regTotals = {};
-                                    if(targetColIdx) {
-                                        rows.forEach(r => {
-                                            const reg = String(r[regCol] || "").trim();
-                                            if (reg) {
-                                                const val = parseNumericValue(r[targetColIdx]);
+                                    rows.forEach(r => {
+                                        const reg = String(r[regCol] || "").trim();
+                                        if (reg) {
+                                            targetColIndices.forEach(colIdx => {
+                                                const val = parseNumericValue(r[colIdx]);
                                                 if (!Number.isNaN(val)) regTotals[reg] = (regTotals[reg] || 0) + val;
-                                            }
-                                        });
-                                    }
+                                            });
+                                        }
+                                    });
                                     let hyd = 0; let kol = 0; let mum = 0; let ajmer = 0; let dehli = 0;
                                     Object.keys(regTotals).forEach(k => {
                                         const t = k.toLowerCase();
@@ -328,7 +317,6 @@
                                     scores['Dehli'] = (dehli / UNIT_DIVISOR).toFixed(1);
                                 } catch(e) {}
                             };
-                            
                             await Promise.all([...classPromises, regionPromise()]);
                             setMuqablaScores(scores);
                         } catch(e) { console.error(e); }
@@ -345,21 +333,24 @@
                                     const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
                                     const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
                                     const ustazCol = findColumnByCandidates(cols, USTAZ_CANDIDATES);
-                                    const targetColIdx = findColumnByCandidates(cols, searchColumns);
+                                    const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
                                     
-                                    if(!targetColIdx) return { className: opt, winners: [] };
+                                    if(targetColIndices.length === 0) return { className: opt, winners: [] };
 
-                                    // FIX: Removed the x.amount > 0 filter so 0 values are shown
                                     let parsed = rows.map((r, idx) => {
-                                        const value = parseNumericValue(r[targetColIdx]);
+                                        let amount = 0;
+                                        targetColIndices.forEach(colIdx => {
+                                            const val = parseNumericValue(r[colIdx]);
+                                            if (!Number.isNaN(val)) amount += val;
+                                        });
                                         return {
                                             id: idx,
                                             ustazName: String(r[ustazCol] || "").trim(),
                                             jamiaName: String(r[jamiaCol] || "").trim(),
-                                            amount: value,
-                                            units: (value / UNIT_DIVISOR).toFixed(1)
+                                            amount: amount,
+                                            units: (amount / UNIT_DIVISOR).toFixed(1)
                                         };
-                                    }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount));
+                                    }).filter(x => x.jamiaName !== "");
                                     
                                     parsed.sort((a, b) => b.amount - a.amount);
                                     return { className: opt, winners: parsed.slice(0, 10) };
@@ -382,63 +373,66 @@
                                 if(!cfg) return { className: cls, totalAmount: 0 };
                                 try {
                                     const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
-                                    const targetColIdx = findColumnByCandidates(cols, searchColumns);
-                                    if(!targetColIdx) return { className: cls, totalAmount: 0, units: "0.0" };
+                                    const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
+                                    if(targetColIndices.length === 0) return { className: cls, totalAmount: 0, units: "0.0" };
                                     
                                     let total = 0;
                                     rows.forEach(r => {
-                                        const val = parseNumericValue(r[targetColIdx]);
-                                        if(!Number.isNaN(val)) total += val;
+                                        targetColIndices.forEach(colIdx => {
+                                            const val = parseNumericValue(r[colIdx]);
+                                            if(!Number.isNaN(val)) total += val;
+                                        });
                                     });
                                     return { id: cls, className: cls, totalAmount: total, units: (total / UNIT_DIVISOR).toFixed(1) };
                                 } catch(e) { return { className: cls, totalAmount: 0, units: "0.0" }; }
                             });
                             const results = await Promise.all(promises);
-                            // FIX: Removed totalAmount > 0 filter
                             setDisplayedData(results.sort((a, b) => b.totalAmount - a.totalAmount));
                         } 
                         else if (activeTab === "All Regions") {
                             const cfg = DEFAULT_SHEET_CONFIGS["All Regions"];
                             const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
                             const regionCol = findColumnByCandidates(cols, REGION_CANDIDATES);
-                            const targetColIdx = findColumnByCandidates(cols, searchColumns);
+                            const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
                             const regTotals = {};
                             
-                            if(targetColIdx) {
-                                rows.forEach(r => {
-                                    const reg = String(r[regionCol] || "").trim();
-                                    if(reg) {
-                                        const val = parseNumericValue(r[targetColIdx]);
-                                        if(!Number.isNaN(val)) {
-                                            regTotals[reg] = (regTotals[reg] || 0) + val;
-                                        }
-                                    }
-                                });
-                            }
+                            rows.forEach(r => {
+                                const reg = String(r[regionCol] || "").trim();
+                                if(reg) {
+                                    targetColIndices.forEach(colIdx => {
+                                        const val = parseNumericValue(r[colIdx]);
+                                        if(!Number.isNaN(val)) regTotals[reg] = (regTotals[reg] || 0) + val;
+                                    });
+                                }
+                            });
                             const formatted = Object.keys(regTotals).map(reg => ({
                                 id: reg, region: reg, totalAmount: regTotals[reg], units: (regTotals[reg] / UNIT_DIVISOR).toFixed(1)
-                            })).sort((a, b) => b.totalAmount - a.totalAmount); // FIX: Removed filter
+                            })).sort((a, b) => b.totalAmount - a.totalAmount);
                             setDisplayedData(formatted);
                         }
                         else if (activeTab === "All Jamiaat") {
                             const cfg = DEFAULT_SHEET_CONFIGS["All Jamiaat"];
                             const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
                             const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
-                            const targetColIdx = findColumnByCandidates(cols, searchColumns);
+                            const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
                             
-                            if(!targetColIdx) {
+                            if(targetColIndices.length === 0) {
                                 setDisplayedData([]);
                             } else {
                                 const parsed = rows.map((r, idx) => {
-                                    const amountValue = parseNumericValue(r[targetColIdx]);
+                                    let amountValue = 0;
+                                    targetColIndices.forEach(colIdx => {
+                                        const val = parseNumericValue(r[colIdx]);
+                                        if(!Number.isNaN(val)) amountValue += val;
+                                    });
                                     return {
                                         id: idx,
                                         jamiaName: String(r[jamiaCol] || "").trim(),
                                         region: "", 
-                                        units: Number.isNaN(amountValue) ? "0.0" : (amountValue / UNIT_DIVISOR).toFixed(1),
-                                        amount: Number.isNaN(amountValue) ? 0 : amountValue
+                                        units: (amountValue / UNIT_DIVISOR).toFixed(1),
+                                        amount: amountValue
                                     };
-                                }).filter(x => x.jamiaName !== ""); // FIX: Removed x.amount > 0 filter
+                                }).filter(x => x.jamiaName !== "");
                                 parsed.sort((a, b) => b.amount - a.amount);
                                 setDisplayedData(parsed);
                             }
@@ -449,14 +443,18 @@
                             const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
                             const ustazCol = findColumnByCandidates(cols, USTAZ_CANDIDATES);
                             const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
-                            const targetColIdx = findColumnByCandidates(cols, searchColumns);
                             const regionCol = findColumnByCandidates(cols, REGION_CANDIDATES);
+                            const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
                             
-                            if(!targetColIdx) {
+                            if(targetColIndices.length === 0) {
                                 setDisplayedData([]);
                             } else {
                                 const parsed = rows.map((r, idx) => {
-                                    const amount = parseNumericValue(r[targetColIdx]);
+                                    let amount = 0;
+                                    targetColIndices.forEach(colIdx => {
+                                        const val = parseNumericValue(r[colIdx]);
+                                        if(!Number.isNaN(val)) amount += val;
+                                    });
                                     return {
                                         id: idx,
                                         ustazName: String(r[ustazCol] || "").trim(),
@@ -466,7 +464,7 @@
                                         amount: amount,
                                         units: (amount / UNIT_DIVISOR).toFixed(1)
                                     }
-                                }).filter(x => x.jamiaName !== "" && !Number.isNaN(x.amount)); // FIX: Removed x.amount > 0 filter
+                                }).filter(x => x.jamiaName !== "");
                                 parsed.sort((a, b) => b.amount - a.amount);
                                 setDisplayedData(parsed);
                             }
@@ -479,7 +477,6 @@
                 return () => clearInterval(pollId);
             }, [activeTab]);
 
-            // Poster Generator
             useEffect(() => {
                 if (!posterData) return;
                 const generateImage = async () => {
@@ -534,7 +531,7 @@
                             <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] text-blue-500 tracking-wider uppercase drop-shadow-sm mb-1">TELETHON 2026</h1>
                             <h2 className="text-2xl sm:text-3xl font-['Bebas_Neue'] text-slate-500 tracking-widest uppercase">LIVE LEADERBOARD</h2>
                             <div className="mt-3 inline-block bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-full font-bold text-sm shadow-sm border border-indigo-200">
-                                Current Data: {adminConfig.targetCol}
+                                Data View: {adminConfig.targetCol}
                             </div>
                         </header>
 
@@ -677,7 +674,7 @@
                                                 </div>
                                             </div>
                                         )}
-                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-8 text-center font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai for {adminConfig.targetCol}.</div> )}
+                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-8 text-center font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Google sheet ke is tab me Data abhi mojood nahi hai.</div> )}
                                     </div>
 
                                     {/* Mobile View */}
@@ -709,7 +706,7 @@
                                                 )}
                                             </div>
                                         ))}
-                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai for {adminConfig.targetCol}.</div> )}
+                                        {displayedData.length === 0 && !isLoading && ( <div className="text-slate-500 p-6 text-center text-sm font-medium bg-slate-50 rounded-xl border border-dashed border-slate-300">Data abhi mojood nahi hai.</div> )}
                                     </div>
                                 </div>
                             )}
