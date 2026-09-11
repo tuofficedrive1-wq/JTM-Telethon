@@ -415,32 +415,60 @@ try {
                             setDisplayedData(formatted);
                         }
                         else if (activeTab === "All Jamiaat") {
-                            const cfg = DEFAULT_SHEET_CONFIGS["All Jamiaat"];
-                            const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
-                            const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
-                            const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
-                            
-                            if(targetColIndices.length === 0) {
-                                setDisplayedData([]);
-                            } else {
-                                const parsed = rows.map((r, idx) => {
-                                    let amountValue = 0;
-                                    targetColIndices.forEach(colIdx => {
-                                        const val = parseNumericValue(r[colIdx]);
-                                        if(!Number.isNaN(val)) amountValue += val;
-                                    });
-                                    return {
-                                        id: idx,
-                                        jamiaName: String(r[jamiaCol] || "").trim(),
-                                        region: "", 
-                                        units: (amountValue / UNIT_DIVISOR).toFixed(1),
-                                        amount: amountValue
-                                    };
-                                }).filter(x => x.jamiaName !== "");
-                                parsed.sort((a, b) => b.amount - a.amount);
-                                setDisplayedData(parsed);
-                            }
+    // Ye code saari classes se data jama karke Jamia ka grand total banayega
+    const jamiaTotals = {};
+    const jamiaRegions = {};
+
+    const promises = availableClasses.map(async (cls) => {
+        const cfg = DEFAULT_SHEET_CONFIGS[cls];
+        if (!cfg) return;
+        try {
+            const { cols, items: rows } = await fetchSheetData(SHEET_ID, cfg.sheet);
+            const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
+            const regionCol = findColumnByCandidates(cols, REGION_CANDIDATES);
+            const targetColIndices = targetColNames.map(name => findColumnByCandidates(cols, [name])).filter(idx => idx !== null);
+            
+            if (jamiaCol !== null && targetColIndices.length > 0) {
+                rows.forEach(r => {
+                    const jName = String(r[jamiaCol] || "").trim();
+                    const rName = regionCol !== null ? String(r[regionCol] || "").trim() : "";
+                    
+                    if (jName) {
+                        let amountValue = 0;
+                        targetColIndices.forEach(colIdx => {
+                            const val = parseNumericValue(r[colIdx]);
+                            if (!Number.isNaN(val)) amountValue += val;
+                        });
+                        
+                        if (!jamiaTotals[jName]) {
+                            jamiaTotals[jName] = 0;
+                            jamiaRegions[jName] = rName;
                         }
+                        // Har class ka amount ussi Jamia mein plus ho jayega
+                        jamiaTotals[jName] += amountValue; 
+                        if (!jamiaRegions[jName] && rName) jamiaRegions[jName] = rName;
+                    }
+                });
+            }
+        } catch(e) { console.error(e); }
+    });
+
+    // Saari classes ka data fetch hone ka wait karega
+    await Promise.all(promises);
+
+    // Data ko dashboard ke format mein set karega
+    const parsed = Object.keys(jamiaTotals).map((jName, idx) => ({
+        id: idx,
+        jamiaName: jName,
+        region: jamiaRegions[jName] || "",
+        amount: jamiaTotals[jName],
+        units: (jamiaTotals[jName] / UNIT_DIVISOR).toFixed(1)
+    }));
+
+    // Sabse zyada amount wale Jamia ko upar (Top Rank) par rakhega
+    parsed.sort((a, b) => b.amount - a.amount);
+    setDisplayedData(parsed);
+}
                         else {
                             const cfg = DEFAULT_SHEET_CONFIGS[activeTab];
                             if(!cfg) return;
