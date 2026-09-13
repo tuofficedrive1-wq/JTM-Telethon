@@ -136,7 +136,8 @@
 
         const ListPoster = ({ data, adminConfig }) => {
             if (!data) return null;
-            const { className, items, isJamiaView, isClassView, isRegionView, isResult, type, viewLabel } = data;
+            // timerIsUp ko data se nikal liya gaya hai
+            const { className, items, isJamiaView, isClassView, isRegionView, isResult, type, viewLabel, timerIsUp } = data;
             const showAmount = adminConfig.displayMode !== "UnitsOnly";
 
             // Current date and time nikalne ka function footer ke liye
@@ -153,6 +154,14 @@
                 const mins = pad(now.getMinutes());
                 return `${dd}/${mm}/${yyyy} ${pad(hours)}:${mins} ${ampm}`;
             };
+
+            // Yahan check hoga ki WINNERS likhna hai ya LEADERBOARD
+            let subtitleText = "";
+            if (viewLabel && viewLabel !== "FULL LIST") {
+                subtitleText = timerIsUp ? `${viewLabel} WINNERS` : `${viewLabel} LEADERBOARD`; 
+            } else {
+                subtitleText = isClassView ? "OVERALL CLASSES RANKING" : isJamiaView ? "OVERALL JAMIAAT RANKING" : isRegionView ? "OVERALL REGION RANKING" : "ASATIZA RECORD";
+            }
 
             if (isResult) {
                 const topN = items.slice(0, type);
@@ -184,16 +193,30 @@
                 );
             }
 
-            // NAYA COLORFUL LIST POSTER DESIGN
             return (
                 <div id="poster-to-download" style={{ width: '1200px', minHeight: '800px', padding: '40px', backgroundColor: '#f4f9ff', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
                     
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                        <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '80px', color: '#1e3a8a', letterSpacing: '2px', margin: '0' }}>TELETHON 2026</h1>
-                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '40px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
-                            {viewLabel ? `${viewLabel} WINNERS` : (isClassView ? "OVERALL CLASSES RANKING" : isJamiaView ? "OVERALL JAMIAAT RANKING" : isRegionView ? "OVERALL REGION RANKING" : "ASATIZA RECORD")}
+                        {/* Naya Telethon 2026 Heading Design */}
+                        <h1 style={{ 
+                            fontFamily: "'Poppins', sans-serif", 
+                            fontSize: '75px', 
+                            fontWeight: '900',
+                            color: '#1e3a8a', 
+                            letterSpacing: '4px', 
+                            margin: '0',
+                            textTransform: 'uppercase',
+                            textShadow: '3px 3px 0px #bfdbfe, -1px -1px 0px #bfdbfe, 1px -1px 0px #bfdbfe, -1px 1px 0px #bfdbfe, 1px 1px 0px #bfdbfe'
+                        }}>
+                            TELETHON <span style={{ color: '#0ea5e9' }}>2026</span>
+                        </h1>
+                        
+                        {/* Subtitle - Isme WINNERS ya LEADERBOARD aayega timer ke hisab se */}
+                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '40px', color: '#6366f1', letterSpacing: '2px', margin: '5px 0 10px 0' }}>
+                            {subtitleText}
                         </p>
+                        
                         <h2 style={{ fontFamily: "'Bowlby One SC', sans-serif", fontSize: '65px', color: '#0ea5e9', letterSpacing: '3px', margin: 0, textTransform: 'uppercase' }}>
                             {isClassView ? "ALL CLASSES" : isJamiaView ? "ALL JAMIAAT" : isRegionView ? "ALL REGIONS" : className}
                         </h2>
@@ -218,7 +241,6 @@
                         {/* Table Body */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                             {items.map((it, idx) => {
-                                // Top 3 ranks ke liye colors aur medals
                                 let bgCol = '#ffffff';
                                 let icon = '';
                                 if (idx === 0) { bgCol = '#fef08a'; icon = '🥇 '; }
@@ -624,6 +646,9 @@ try {
         viewLabel = "TOP 10";
     }
     
+    // Check kar rahe hain ki kya timer khatam ho gaya hai
+    const timerIsUp = countdownStr === "Time Up!";
+    
     setPosterData({ 
         className: activeTab, 
         items: dataToPrint, 
@@ -631,7 +656,8 @@ try {
         isClassView, 
         isRegionView, 
         adminConfig,
-        viewLabel 
+        viewLabel,
+        timerIsUp // Isko poster ke andar bhej rahe hain
     }); 
 };
             const DownloadIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> );
