@@ -581,7 +581,7 @@ try {
 
             return (
                 <div className="min-h-screen bg-gray-50 pb-10">
-                    {posterData && ReactDOM.createPortal(<ListPoster data={posterData} adminConfig={adminConfig} />, posterContainerRef.current)}
+                    {posterData && document.getElementById('poster-container') && ReactDOM.createPortal(<ListPoster data={posterData} adminConfig={adminConfig} />, document.getElementById('poster-container'))}
 
                     <div className="max-w-7xl mx-auto p-4 sm:p-6">
                         <header className="mb-8 text-center">
