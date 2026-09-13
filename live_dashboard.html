@@ -159,7 +159,12 @@
                                     <div style={{ position: 'absolute', top: '-30px', width: '60px', height: '60px', background: rankColors, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 'bold' }}>{idx + 1}</div>
                                     <div style={{ textAlign: 'center', width: '100%', marginTop: '30px' }}>
                                         <h3 style={{ margin: 0, fontSize: '26px', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2' }}>{it.ustazName}</h3>
-                                        <p style={{ margin: '8px 0', fontSize: '18px', color: '#4338ca', fontWeight: '600' }}>{it.jamiaName}</p>
+                                       <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
+                                            {isClassView ? `OVERALL CLASSES RANKING - ${data.viewLabel || 'FULL LIST'}` : 
+                                             isJamiaView ? `OVERALL JAMIAAT RANKING - ${data.viewLabel || 'FULL LIST'}` : 
+                                             isRegionView ? `OVERALL REGION RANKING - ${data.viewLabel || 'FULL LIST'}` : 
+                                             `ASATIZA RECORD - ${className} (${data.viewLabel || 'FULL LIST'})`}
+                                        </p>
                                         <div style={{ display: 'inline-block', background: '#e0f2fe', color: '#0284c7', padding: '8px 16px', borderRadius: '10px', fontWeight: 'bold', fontSize: '20px' }}>{it.units} Units</div>
                                     </div>
                                 </div>
@@ -536,11 +541,31 @@ try {
             let isSpecialTab = activeTab === "Result" || activeTab === "Muqabla";
             const showAmount = adminConfig.displayMode !== "UnitsOnly";
 
-            const handleDownloadPoster = () => { 
-                if(displayedData.length === 0) return; 
-                setIsDownloading(true); 
-                setPosterData({ className: activeTab, items: displayedData, isJamiaView, isClassView, isRegionView, adminConfig }); 
-            };
+           const handleDownloadPoster = (type) => { 
+    if(displayedData.length === 0) return; 
+    setIsDownloading(true); 
+    
+    let dataToPrint = displayedData;
+    let viewLabel = "FULL LIST";
+    
+    if (type === 'top5') {
+        dataToPrint = displayedData.slice(0, 5);
+        viewLabel = "TOP 5";
+    } else if (type === 'top10') {
+        dataToPrint = displayedData.slice(0, 10);
+        viewLabel = "TOP 10";
+    }
+    
+    setPosterData({ 
+        className: activeTab, 
+        items: dataToPrint, 
+        isJamiaView, 
+        isClassView, 
+        isRegionView, 
+        adminConfig,
+        viewLabel 
+    }); 
+};
             const DownloadIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg> );
 
             const muqablaMatchups = [
@@ -655,9 +680,17 @@ try {
                                         <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 uppercase flex items-center gap-3">
                                             {activeTab} <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-['Inter'] font-bold tracking-normal">{displayedData.length} {isClassView ? 'Classes' : isJamiaView ? 'Jamiaat' : isRegionView ? 'Regions' : 'Records'}</span>
                                         </h2>
-                                        <button onClick={handleDownloadPoster} disabled={isDownloading || displayedData.length === 0} className="px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold transition">
-                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} Download Poster
+                                       <div className="flex flex-wrap gap-2">
+                                        <button onClick={() => handleDownloadPoster('top5')} disabled={isDownloading || displayedData.length === 0} className="px-3 py-2 text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2 font-semibold text-sm transition">
+                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} Top 5
                                         </button>
+                                        <button onClick={() => handleDownloadPoster('top10')} disabled={isDownloading || displayedData.length === 0} className="px-3 py-2 text-white bg-gradient-to-r from-sky-500 to-blue-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2 font-semibold text-sm transition">
+                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} Top 10
+                                        </button>
+                                        <button onClick={() => handleDownloadPoster('full')} disabled={isDownloading || displayedData.length === 0} className="px-3 py-2 text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2 font-semibold text-sm transition">
+                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />} Full List
+                                        </button>
+                                    </div>
                                     </div>
 
                                     <div className="hidden md:block">
