@@ -136,8 +136,23 @@
 
         const ListPoster = ({ data, adminConfig }) => {
             if (!data) return null;
-            const { className, items, isJamiaView, isClassView, isRegionView, isResult, type } = data;
+            const { className, items, isJamiaView, isClassView, isRegionView, isResult, type, viewLabel } = data;
             const showAmount = adminConfig.displayMode !== "UnitsOnly";
+
+            // Current date and time nikalne ka function footer ke liye
+            const getCurrentDateStr = () => {
+                const now = new Date();
+                const pad = (n) => n.toString().padStart(2, '0');
+                const dd = pad(now.getDate());
+                const mm = pad(now.getMonth() + 1);
+                const yyyy = now.getFullYear();
+                let hours = now.getHours();
+                const ampm = hours >= 12 ? 'pm' : 'am';
+                hours = hours % 12;
+                hours = hours ? hours : 12; 
+                const mins = pad(now.getMinutes());
+                return `${dd}/${mm}/${yyyy} ${pad(hours)}:${mins} ${ampm}`;
+            };
 
             if (isResult) {
                 const topN = items.slice(0, type);
@@ -159,12 +174,7 @@
                                     <div style={{ position: 'absolute', top: '-30px', width: '60px', height: '60px', background: rankColors, color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: 'bold' }}>{idx + 1}</div>
                                     <div style={{ textAlign: 'center', width: '100%', marginTop: '30px' }}>
                                         <h3 style={{ margin: 0, fontSize: '26px', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2' }}>{it.ustazName}</h3>
-                                       <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
-                                            {isClassView ? `OVERALL CLASSES RANKING - ${data.viewLabel || 'FULL LIST'}` : 
-                                             isJamiaView ? `OVERALL JAMIAAT RANKING - ${data.viewLabel || 'FULL LIST'}` : 
-                                             isRegionView ? `OVERALL REGION RANKING - ${data.viewLabel || 'FULL LIST'}` : 
-                                             `ASATIZA RECORD - ${className} (${data.viewLabel || 'FULL LIST'})`}
-                                        </p>
+                                        <p style={{ margin: '8px 0', fontSize: '18px', color: '#4338ca', fontWeight: '600' }}>{it.jamiaName}</p>
                                         <div style={{ display: 'inline-block', background: '#e0f2fe', color: '#0284c7', padding: '8px 16px', borderRadius: '10px', fontWeight: 'bold', fontSize: '20px' }}>{it.units} Units</div>
                                     </div>
                                 </div>
@@ -174,33 +184,91 @@
                 );
             }
 
+            // NAYA COLORFUL LIST POSTER DESIGN
             return (
-                <div id="poster-to-download" style={{ width: '1200px', minHeight: '800px', padding: '40px', background: 'linear-gradient(135deg, #f0f9ff, #eef2ff)', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
+                <div id="poster-to-download" style={{ width: '1200px', minHeight: '800px', padding: '40px', backgroundColor: '#f4f9ff', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column' }}>
+                    
+                    {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                        <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '72px', color: '#1e3a8a', letterSpacing: '2px', margin: 0 }}>TELETHON 2026 LEADERBOARD</h1>
-                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '38px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
-                            {isClassView ? "OVERALL CLASSES RANKING" : isJamiaView ? "OVERALL JAMIAAT RANKING" : isRegionView ? "OVERALL REGION RANKING" : `ASATIZA RECORD - ${className}`}
+                        <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '80px', color: '#1e3a8a', letterSpacing: '2px', margin: '0' }}>TELETHON 2026</h1>
+                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '40px', color: '#6366f1', letterSpacing: '2px', margin: '-5px 0 10px 0' }}>
+                            {viewLabel ? `${viewLabel} WINNERS` : (isClassView ? "OVERALL CLASSES RANKING" : isJamiaView ? "OVERALL JAMIAAT RANKING" : isRegionView ? "OVERALL REGION RANKING" : "ASATIZA RECORD")}
                         </p>
+                        <h2 style={{ fontFamily: "'Bowlby One SC', sans-serif", fontSize: '65px', color: '#0ea5e9', letterSpacing: '3px', margin: 0, textTransform: 'uppercase' }}>
+                            {isClassView ? "ALL CLASSES" : isJamiaView ? "ALL JAMIAAT" : isRegionView ? "ALL REGIONS" : className}
+                        </h2>
                     </div>
+
+                    {/* Table Container */}
                     <div style={{ flexGrow: 1 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {items.map((it, idx) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', padding: '16px', background: 'rgba(255,255,255,0.8)', borderRadius: '12px', fontSize: '20px', color: '#1e293b', fontWeight: 600, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                    <div style={{ display: 'flex', gap: '20px', flex: 1 }}>
-                                        <span style={{color: '#64748b', fontSize:'24px', fontWeight:'bold', width: '80px'}}>#{idx + 1}</span>
-                                        {!isRegionView && !isClassView && !isJamiaView && <span style={{textTransform: 'uppercase', flex: 1.5}}>{it.ustazName}</span>}
-                                        {isRegionView && <span style={{color: '#4338ca', textTransform: 'uppercase', flex: 2}}>{it.region}</span>}
-                                        {isClassView && <span style={{color: '#4338ca', textTransform: 'uppercase', flex: 2}}>{it.className}</span>}
-                                        {isJamiaView && <span style={{color: '#4338ca', flex: 2}}>{it.jamiaName}</span>}
-                                        {!isRegionView && !isClassView && <span style={{color: '#4338ca', flex: 1.5}}>{it.jamiaName || it.region}</span>}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '20px', justifyContent: 'flex-end' }}>
-                                        {showAmount && !isRegionView && !isClassView && !isJamiaView && <span style={{color: '#059669', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px'}}>₹{it.amount.toLocaleString('en-IN')}</span>}
-                                        <span style={{color: '#0ea5e9', fontFamily: "'Bowlby One SC', sans-serif", fontSize:'22px', textAlign: 'right', minWidth: '80px'}}>{it.units}</span>
-                                    </div>
-                                </div>
-                            ))}
+                        
+                        {/* Table Head */}
+                        <div style={{ display: 'flex', backgroundColor: '#dbeafe', padding: '15px 25px', borderRadius: '15px 15px 0 0', fontWeight: 'bold', color: '#1e3a8a', fontSize: '20px' }}>
+                            <div style={{ flex: '0.5' }}>Rank</div>
+                            {!isRegionView && !isClassView && !isJamiaView && <div style={{ flex: '2' }}>Ustaz Name</div>}
+                            {isRegionView && <div style={{ flex: '3' }}>Region Name</div>}
+                            {isClassView && <div style={{ flex: '3' }}>Class Name</div>}
+                            {isJamiaView && <div style={{ flex: '2.5' }}>Jamia Name</div>}
+                            {!isRegionView && !isClassView && <div style={{ flex: '2' }}>Jamia Name</div>}
+                            {isJamiaView && <div style={{ flex: '1.5' }}>Region</div>}
+                            {showAmount && <div style={{ flex: '1.5', textAlign: 'right' }}>Amount</div>}
+                            <div style={{ flex: '1', textAlign: 'right' }}>Unit</div>
                         </div>
+
+                        {/* Table Body */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                            {items.map((it, idx) => {
+                                // Top 3 ranks ke liye colors aur medals
+                                let bgCol = '#ffffff';
+                                let icon = '';
+                                if (idx === 0) { bgCol = '#fef08a'; icon = '🥇 '; }
+                                else if (idx === 1) { bgCol = '#f1f5f9'; icon = '🥈 '; }
+                                else if (idx === 2) { bgCol = '#fed7aa'; icon = '🥉 '; }
+
+                                return (
+                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', backgroundColor: bgCol, padding: '16px 25px', borderRadius: '15px', fontSize: '22px', fontWeight: 'bold', color: '#1e293b', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}>
+                                        <div style={{ flex: '0.5' }}>{idx + 1}</div>
+                                        
+                                        {!isRegionView && !isClassView && !isJamiaView && (
+                                            <div style={{ flex: '2', textTransform: 'uppercase', color: '#334155' }}>{it.ustazName}</div>
+                                        )}
+                                        {isRegionView && (
+                                            <div style={{ flex: '3', textTransform: 'uppercase', color: '#111827' }}>{icon}{it.region}</div>
+                                        )}
+                                        {isClassView && (
+                                            <div style={{ flex: '3', textTransform: 'uppercase', color: '#111827' }}>{icon}{it.className}</div>
+                                        )}
+                                        {isJamiaView && (
+                                            <div style={{ flex: '2.5', textTransform: 'uppercase', color: '#111827' }}>{icon}{it.jamiaName}</div>
+                                        )}
+                                        
+                                        {!isRegionView && !isClassView && (
+                                            <div style={{ flex: '2', textTransform: 'uppercase', color: '#111827' }}>{icon}{it.jamiaName || it.region}</div>
+                                        )}
+                                        
+                                        {isJamiaView && (
+                                            <div style={{ flex: '1.5', color: '#475569', fontSize: '18px' }}>{it.region}</div>
+                                        )}
+
+                                        {showAmount && (
+                                            <div style={{ flex: '1.5', textAlign: 'right', color: '#059669', fontFamily: "'Bowlby One SC', sans-serif" }}>
+                                                ₹{(it.amount || it.totalAmount || 0).toLocaleString('en-IN')}
+                                            </div>
+                                        )}
+                                        
+                                        <div style={{ flex: '1', textAlign: 'right', color: '#6366f1' }}>
+                                            {it.units}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #e2e8f0', color: '#475569', fontSize: '18px', fontWeight: '600' }}>
+                        <div>Majlis Talimi Umoor India</div>
+                        <div>Date: {getCurrentDateStr()}</div>
                     </div>
                 </div>
             );
